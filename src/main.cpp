@@ -34,8 +34,7 @@ int main(int argc, char* argv[]) {
 #endif
 
   // Create the scene for the application to run
-  // @NOTE: Ownership and responsibility is given to the app
-  // so no need to call delete
+  // @NOTE: Ownership and responsibility is NOT given to the app
   auto scene = new TestScene();
 
   // Initialise and start the game
@@ -45,7 +44,6 @@ int main(int argc, char* argv[]) {
       multiThread && multiThreadSuccess,
       debug,
       outputToTerminal);
-  App::switchScene(scene);
   App::start();
   App::shutdown();
   return 0;

@@ -12,6 +12,7 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "Resources.h"
 #include "Console.h"
 
 // Forward declaration
@@ -39,7 +40,7 @@ class App {
     static void start();
 
     // Change the screen that is used and rendered
-    static void switchScene(Scene* scene);
+    static bool switchScene(const std::string& sceneID);
 
     // Get a pointer to const window
     static const sf::RenderWindow* getWindow();
@@ -89,6 +90,9 @@ class App {
 
     // Mutex to protect the window for rendering
     static std::mutex windowMutex_;
+
+    // Resource management
+    static Resources resources_;
 
     // Scene management
     static Scene* currentScene_;

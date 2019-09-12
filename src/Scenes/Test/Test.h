@@ -13,7 +13,8 @@ class TestScene: public Scene {
     // When scene starts
     void begin() override {
       Scene::begin();
-      Console::log("Beginning testing..");
+      auto size = circle_.getLocalBounds();
+      circle_.setOrigin(size.width * 0.5f, size.height * 0.5f);
     }
 
     // Perform logic every frame
@@ -66,7 +67,7 @@ class TestScene: public Scene {
     void addDebugDetails() override {
       ImGui::Begin("Debug");
       auto pos = circle_.getPosition();
-      ImGui::Text("Circle location: (%f, %f)", pos.x, pos.y);
+      ImGui::Text("Circle location: (%d, %d)", (int)pos.x, (int)pos.y);
       ImGui::Text("Boosting?: %s", 
           applySpeedMultiplier ? "true" : "false");
       ImGui::End();

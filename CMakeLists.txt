@@ -36,11 +36,14 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
   # Core
   src/App.h
   src/App.cpp
+  src/Resources.h
+  src/Resources.cpp
   src/Scene.h
   src/Scene.cpp
 
   # Scenes
   src/Scenes/Test/Test.h
+  src/Scenes/TicTacToe/TicTacToe.h
 
   # Development
   src/Console.h

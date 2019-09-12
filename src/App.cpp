@@ -11,6 +11,7 @@ bool App::multiThread_ = false;
 std::mutex App::windowMutex_;
 bool App::debug_ = false;
 App::Status App::status_ = App::Status::Uninitialised;
+Resources App::resources_ = Resources();
 Scene* App::currentScene_ = nullptr;
 sf::Vector2f App::mousePosition_ = sf::Vector2f();
 sf::Vector2f App::displaySize_ = sf::Vector2f();
@@ -59,7 +60,8 @@ App::initialise(
   const auto size = window_->getSize();
   displaySize_ = sf::Vector2f(size.x, size.y);
 
-  // @TODO: Load assets
+  // Load assets
+  resources_.load();
 
   // Enable debugging functionality
   ImGui::SFML::Init(*window_);
@@ -347,15 +349,28 @@ App::shutdown() {
   // Reset status
   status_ = App::Status::Uninitialised;
 
-  // @TODO: Release any resources before shutting down
+  // Resources are released via the App going out of scope
+  // But you can force it which may be desired when calling shutdown
+  resources_.release();
 
   // Shut down console debugging
   Console::shutdown();
 }
 
 // Change to the new screen
-void 
-App::switchScene(Scene* scene) {
+bool 
+App::switchScene(const std::string& sceneID) {
+
+  // Log what we're attempting
+  Console::log("Switching to scene: %s", sceneID.c_str());
+
+  // Try to retrieve a scene from resources
+  auto scene = resources_.getScene(sceneID);
+
+  // Easy out if scene doesn't exist
+  if (scene == nullptr) {
+    return false;
+  }
 
   // Switch away from old screen
   if (currentScene_ != nullptr) {
@@ -369,6 +384,9 @@ App::switchScene(Scene* scene) {
   if (currentScene_ != nullptr) {
     currentScene_->showScene();
   }
+
+  // Declare that the scene switch succeeded
+  return true;
 }
 
 // Update imgui interfaces
@@ -384,6 +402,21 @@ App::handleImgui() {
   static bool showImguiDemo = false;
   ImGui::Begin("Debug", NULL, flags);
   if (ImGui::BeginMenuBar()) {
+
+    // Show scene switcher
+    if (ImGui::BeginMenu("Scenes")) {
+      bool showDemo = false;
+      bool showTicTacToe = false;
+      ImGui::MenuItem("Test", NULL, &showDemo);
+      ImGui::MenuItem("Tic-Tac-Toe", NULL, &showTicTacToe);
+      ImGui::EndMenu();
+
+      // Change scenes if user clicks the buttons
+      if (showDemo) switchScene("test");
+      else if (showTicTacToe) switchScene("ticTacToe");
+    }
+
+    // Show different tools
     if (ImGui::BeginMenu("View")) {
       ImGui::MenuItem("Demo imgui", NULL, &showImguiDemo);
       ImGui::MenuItem("Console", NULL, &showConsole_);
@@ -394,6 +427,7 @@ App::handleImgui() {
       }
       ImGui::EndMenu();
     }
+
     ImGui::EndMenuBar();
   }
 

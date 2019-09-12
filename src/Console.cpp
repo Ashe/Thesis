@@ -65,7 +65,7 @@ Console::create(const char* title, bool* p_open) {
   }
 
   // Text at the top
-  ImGui::TextWrapped("This console allows you to interact with the application's Lua environment.");
+  ImGui::TextWrapped("This console allows you to interact with the application");
   ImGui::TextWrapped("For a list of basic commands, type 'HELP'.");
 
   // Clear the log on click
