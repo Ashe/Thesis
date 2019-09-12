@@ -362,13 +362,14 @@ bool
 App::switchScene(const std::string& sceneID) {
 
   // Log what we're attempting
-  Console::log("Switching to scene: %s", sceneID.c_str());
+  Console::log("Switching to scene: %s..", sceneID.c_str());
 
   // Try to retrieve a scene from resources
   auto scene = resources_.getScene(sceneID);
 
   // Easy out if scene doesn't exist
   if (scene == nullptr) {
+    Console::log(".. failed.");
     return false;
   }
 
@@ -405,14 +406,14 @@ App::handleImgui() {
 
     // Show scene switcher
     if (ImGui::BeginMenu("Scenes")) {
-      bool showDemo = false;
+      bool showWelcome = false;
       bool showTicTacToe = false;
-      ImGui::MenuItem("Test", NULL, &showDemo);
+      ImGui::MenuItem("Welcome", NULL, &showWelcome);
       ImGui::MenuItem("Tic-Tac-Toe", NULL, &showTicTacToe);
       ImGui::EndMenu();
 
       // Change scenes if user clicks the buttons
-      if (showDemo) switchScene("test");
+      if (showWelcome) switchScene("welcome");
       else if (showTicTacToe) switchScene("ticTacToe");
     }
 
@@ -439,25 +440,21 @@ App::handleImgui() {
 
   // Info
   ImGui::Spacing();
-  ImGui::Text(std::string(
-    "FPS: " + std::to_string(fps_)).c_str());
-  ImGui::Text(std::string(
-    "Window Size: " + 
-    std::to_string((int)displaySize_.x) + "x" + 
-    std::to_string((int)displaySize_.y)).c_str());
+  ImGui::Text("FPS: %u", fps_);
+  ImGui::Text("Window Size: %d x %d",
+      (int)displaySize_.x,
+      (int)displaySize_.y);
 
   // Camera
   const auto viewCentre = view.getCenter();
-  ImGui::Text(std::string(
-    "Camera Position: (" + 
-    std::to_string((int)viewCentre.x) + "," + 
-    std::to_string((int)viewCentre.y) + ")").c_str());
+  ImGui::Text("Camera Position: (%d, %d)",
+      (int)viewCentre.x,
+      (int)viewCentre.y);
 
   // Mouse
-  ImGui::Text(std::string(
-    "Mouse Position: (" + 
-    std::to_string((int)mousePosition_.x) + "," + 
-    std::to_string((int)mousePosition_.y) + ")").c_str());
+  ImGui::Text("Mouse Position: (%d, %d)",
+      (int)mousePosition_.x,
+      (int)mousePosition_.y);
   ImGui::Spacing();
 
   // End default debug window

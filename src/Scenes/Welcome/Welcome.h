@@ -1,13 +1,13 @@
-// Test.h
-// A basic scene for testing the app engine
+// Welcome.h
+// A welcome scene for the application
 
-#ifndef TEST_H
-#define TEST_H
+#ifndef WELCOME_H
+#define WELCOME_H
 
 #include "../../Scene.h"
 
-// Child of Scene class
-class TestScene: public Scene {
+// Simply direct the user to the scene switcher
+class WelcomeScene: public Scene {
   public:
 
     // When scene starts
@@ -65,7 +65,9 @@ class TestScene: public Scene {
 
     // Show location of circle on details
     void addDebugDetails() override {
-      ImGui::Begin("Debug");
+      ImGui::Begin("Welcome!");
+      ImGui::Text("Use the scene switcher in the Debug Menu to navigate.");
+      ImGui::Spacing();
       auto pos = circle_.getPosition();
       ImGui::Text("Circle location: (%d, %d)", (int)pos.x, (int)pos.y);
       ImGui::Text("Boosting?: %s", 

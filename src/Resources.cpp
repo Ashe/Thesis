@@ -4,13 +4,13 @@
 #include "Resources.h"
 
 // Avoid cyclic dependencies by including in cpp file
-#include "Scenes/Test/Test.h"
+#include "Scenes/Welcome/Welcome.h"
 #include "Scenes/TicTacToe/TicTacToe.h"
 
 // Load initial, necessary resources
 void
 Resources::load() {
-  addScene("test", std::make_unique<TestScene>());
+  addScene("welcome", std::make_unique<WelcomeScene>());
   addScene("ticTacToe", std::make_unique<TicTacToeScene>());
 }
 

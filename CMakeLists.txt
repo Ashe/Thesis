@@ -42,7 +42,7 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
   src/Scene.cpp
 
   # Scenes
-  src/Scenes/Test/Test.h
+  src/Scenes/Welcome/Welcome.h
   src/Scenes/TicTacToe/TicTacToe.h
 
   # Development

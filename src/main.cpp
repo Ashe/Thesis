@@ -2,7 +2,6 @@
 // Entry point of program
 
 #include "App.h"
-#include "Scenes/Test/Test.h"
 
 #ifdef linux
 #include <X11/Xlib.h>
@@ -33,10 +32,6 @@ int main(int argc, char* argv[]) {
   else { printf("Error: Failed to call XInitThreads, code %d\n", i); }
 #endif
 
-  // Create the scene for the application to run
-  // @NOTE: Ownership and responsibility is NOT given to the app
-  auto scene = new TestScene();
-
   // Initialise and start the game
   App::initialise(
       "App", 
@@ -44,6 +39,7 @@ int main(int argc, char* argv[]) {
       multiThread && multiThreadSuccess,
       debug,
       outputToTerminal);
+  App::switchScene("welcome");
   App::start();
   App::shutdown();
   return 0;
