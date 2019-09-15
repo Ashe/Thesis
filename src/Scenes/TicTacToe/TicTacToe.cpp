@@ -37,22 +37,118 @@ TicTacToeScene::onUpdate(const sf::Time& dt) {
 void
 TicTacToeScene::onEvent(const sf::Event& event) {
 
+  // If the user clicks
+  if (event.type == sf::Event::MouseButtonPressed) {
+
+    // If its left mouse:
+    if (event.mouseButton.button == sf::Mouse::Left) {
+
+      // Get the current state for playmaking
+      const auto statePair = getState(currentState_);
+
+      // Make the move IF
+      // - The state found was valid
+      // - It's PlayerX's turn AND they're human OR
+      // - It's PlayerO's turn AND they're human
+      if (statePair.first
+          && ((statePair.second.currentTurn == Player::X
+            && playerX == Controller::Human)
+          || (statePair.second.currentTurn == Player::O
+            && playerO == Controller::Human))) {
+
+        // Get the new state after making a move
+        const auto newState = 
+            makeMove(statePair.second, mouseTile_.x, mouseTile_.y);
+
+        // If the move was successful
+        if (newState.first) {
+
+          // Log successful move
+          const auto controllerString = getControllerAsString(
+              statePair.second.currentTurn == Player::X ? playerX : playerO);
+          Console::log("%d> Player %s (%s) made move: (%d, %d)",
+              currentState_,
+              statePair.second.currentTurn == Player::X ? "X" : "O",
+              controllerString.c_str(),
+              mouseTile_.x, mouseTile_.y);
+
+          // Erase future data
+          states_.erase(states_.begin() + currentState_ + 1, states_.end());
+      
+          // Add new state and move currentState_ to the last state
+          states_.push_back(newState.second);
+          currentState_ = states_.size() - 1;
+          if (currentState_ < 0) { currentState_ = 0; }
+        }
+      }
+    }
+  }
+
   // If the window has been resized, handle graphics
-  if (event.type == sf::Event::Resized) {
+  else if (event.type == sf::Event::Resized) {
     resizeGame();
   }
+}
+
+// Make a move and get a new state
+std::pair<bool, const GameState>
+TicTacToeScene::makeMove(const GameState& state, int x, int y) {
+
+  // If its left mouse:
+  if (x >= 0 && x < BOARDSIZE && y >= 0 && y < BOARDSIZE) {
+
+    // If the desired tile is unnocupied
+    if (state.boardState[y][x] == Player::N) {
+
+      // Duplicate state and make the move
+      auto newState = state;
+      newState.boardState[y][x] = state.currentTurn;
+
+      // Add a new move
+      newState.turnNumber += 1;
+
+      // Alternate who's turn it is
+      newState.currentTurn = state.currentTurn == Player::X 
+        ? Player::O : Player::X;
+
+      // Return the new state with a success flag
+      return std::make_pair(true, newState);
+    }
+  }
+
+  // Signify that things went wrong
+  return std::make_pair(false, GameState());
 }
 
 // Render the render the game board and state
 void
 TicTacToeScene::onRender(sf::RenderWindow& window) {
 
-  // Draw the background first
-  window.draw(board_);
+  // Try to get the current state
+  auto statePair = getState(currentState_);
 
-  // Draw the state of the game
-  // @TODO: Load the gamestate rather than making the fresh on
-  drawGameState(window, states_[0]);
+  // If a state was found
+  if (statePair.first) {
+
+    // Draw the background first
+    window.draw(board_);
+
+    // Draw the state of the game
+    drawGameState(window, statePair.second);
+  }
+}
+
+// Get a gamestate safely
+std::pair<bool, const GameState> 
+TicTacToeScene::getState(unsigned int n) const {
+
+  // Fetch the correct state if possible
+  if (n >= 0 && n < states_.size()) {
+    return std::make_pair(true, states_[n]);
+  }
+
+  // If nothing found, return invalid pair
+  return std::make_pair(false, GameState());
 }
 
 // Whenever the scene is re-shown, ensure graphics are correct
@@ -96,7 +192,9 @@ void
 TicTacToeScene::addDebugDetails() {
 
   // Retrieve the current state
-  const auto state = states_[0];
+  const auto statePair = getState(currentState_);
+  if (!statePair.first) { return; }
+  const auto state = statePair.second;
 
   ImGui::Begin("State Viewer");
   ImGui::Text("State: %u", currentState_);
@@ -105,18 +203,20 @@ TicTacToeScene::addDebugDetails() {
     ImGui::SameLine();
     if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
       --currentState_;
+      Console::log("Switched to prev state: %d", currentState_);
     }
   }
   if (currentState_ < states_.size() - 1) {
     ImGui::SameLine();
     if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
       ++currentState_;
+      Console::log("Switched to next state: %d", currentState_);
     }
   }
   ImGui::Text("X Controller: %s", getControllerAsString(playerX).c_str());
   ImGui::Text("O Controller: %s", getControllerAsString(playerO).c_str());
   ImGui::Text("Turn: %u (%s)", 
-      state.currentTurn,
+      state.turnNumber,
       state.currentTurn == Player::X ? "X" : "O");
   ImGui::Text("Next tile: (%d, %d)",
       mouseTile_.x, mouseTile_.y);
@@ -192,6 +292,7 @@ TicTacToeScene::drawIcon(
       left_ + x * tileSize_, 
       top_ + y * tileSize_);
 
+  // Select the correct colour based on params
   const sf::Color colour =
       player == Player::X ?
           (hovered ? playerXColourHovered_ : playerXColour_) :

@@ -5,6 +5,7 @@
 #define TICTACTOE_H
 
 #include <math.h>
+#include <utility>
 #include "../../Scene.h"
 
 #define BOARDSIZE 3
@@ -35,7 +36,7 @@ struct GameState {
   // State of the board
   Player boardState[BOARDSIZE][BOARDSIZE] = {
     { N, N, N },
-    { X, X, O },
+    { N, N, N },
     { N, N, N }
   };
 };
@@ -99,6 +100,15 @@ class TicTacToeScene : public Scene {
     // Key Positions
     sf::Vector2f center_;
     float top_, left_, right_, bottom_;
+
+    // Make a move and get a new state
+    std::pair<bool, const GameState> makeMove(
+        const GameState& state, 
+        int x, 
+        int y);
+
+    // Get a gamestate safely
+    std::pair<bool, const GameState> getState(unsigned int n) const;
 
     // Adjust graphics for current game size
     void resizeGame();
