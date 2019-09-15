@@ -10,20 +10,22 @@
 class TicTacToeScene : public Scene {
   public:
 
-    // When the tic-tac-toe screen is shown
-    void onShow() override {
-    }
+    // Whenever the scene is re-shown, ensure graphics are correct
+    void onShow() override;
 
-    // Every logical frame
-    void onUpdate(const sf::Time& dt) override {
-    }
+    // Handle input and game size changes
+    void onEvent(const sf::Event& event) override;
 
-    // Render the state of the game
-    void onRender(sf::RenderWindow& window) override {
-    }
+    // Render the render the game board and state
+    void onRender(sf::RenderWindow& window) override;
 
   private:
 
+    // The tic-tac-toe board
+    sf::VertexArray board_;
+
+    // Adjust graphics for current game size
+    void resizeGame();
 };
 
 #endif
