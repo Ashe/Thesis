@@ -4,9 +4,17 @@
 #ifndef TICTACTOE_H
 #define TICTACTOE_H
 
+#include <math.h>
 #include "../../Scene.h"
 
 #define BOARDSIZE 3
+
+// Representation of who can play
+// @TODO: Factor this out so that other scenes can use it
+enum Controller {
+  Human,
+  Random
+};
 
 // Representation of players
 enum Player {
@@ -18,14 +26,17 @@ enum Player {
 // Simple gamestate structure
 struct GameState {
 
+  // Turn number
+  unsigned int turnNumber = 0;
+
   // Track who's turn it is
   Player currentTurn = Player::X;
 
   // State of the board
   Player boardState[BOARDSIZE][BOARDSIZE] = {
-    { N, N, O },
+    { N, N, N },
     { X, X, O },
-    { N, N, O }
+    { N, N, N }
   };
 };
 
@@ -33,8 +44,13 @@ struct GameState {
 class TicTacToeScene : public Scene {
   public:
 
-    // Whenever the scene is re-shown, ensure graphics are correct
-    void onShow() override;
+    // @TODO: Delete this
+    void onBegin() override {
+      states_.push_back(GameState());
+    }
+
+    // Update the currently hovered tile
+    void onUpdate(const sf::Time& dt) override;
 
     // Handle input and game size changes
     void onEvent(const sf::Event& event) override;
@@ -42,11 +58,29 @@ class TicTacToeScene : public Scene {
     // Render the render the game board and state
     void onRender(sf::RenderWindow& window) override;
 
+    // Whenever the scene is re-shown, ensure graphics are correct
+    void onShow() override;
+
+    // Add details to debug windows
+    void addDebugDetails() override;
+
   private:
 
+    // Tracker for which state to view
+    unsigned int currentState_;
+
+    // States of the game
+    std::vector<GameState> states_;
+
+    // Who is playing who
+    Controller playerX = Controller::Human;
+    Controller playerO = Controller::Human;
+
     // Player colours
-    sf::Color playerXColour_ = sf::Color::Blue;
-    sf::Color playerOColour_ = sf::Color::Red;
+    sf::Color playerXColour_ = sf::Color(0, 117, 252);
+    sf::Color playerXColourHovered_ = sf::Color(0, 0, 130);
+    sf::Color playerOColour_ = sf::Color(255, 0, 0);
+    sf::Color playerOColourHovered_ = sf::Color(130, 0, 0);
 
     // Player icons
     sf::VertexArray playerIconX_;
@@ -54,6 +88,9 @@ class TicTacToeScene : public Scene {
 
     // The tic-tac-toe board
     sf::VertexArray board_;
+
+    // The mouse hovered tile
+    sf::Vector2i mouseTile_;
 
     // Key dimensions
     float gameSize_;
@@ -68,6 +105,17 @@ class TicTacToeScene : public Scene {
 
     // Draw a specific gamestate
     void drawGameState(sf::RenderWindow& window, const GameState& state);
+
+    // Draw an icon in a tile
+    void drawIcon(
+        sf::RenderWindow& window, 
+        unsigned int x, 
+        unsigned int y, 
+        Player player,
+        bool hovered = false);
+
+    // Get a string of the kind of controller
+    std::string getControllerAsString(const Controller& controller);
 };
 
 #endif
