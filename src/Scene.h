@@ -24,17 +24,24 @@ class Scene {
     ~Scene();
 
     // Update the app every frame
-    virtual void update(const sf::Time& dt);
+    virtual void onUpdate(const sf::Time& dt);
 
     // Perform any rendering
-    virtual void render(sf::RenderWindow& window);
+    virtual void onRender(sf::RenderWindow& window);
 
     // Handle app input
-    virtual void handleEvent(const sf::Event& event);
+    virtual void onEvent(const sf::Event& event);
 
-    // Perform logic when shown or hidden
-    virtual void showScene();
-    virtual void hideScene();
+    // Show the scene
+    void showScene();
+
+    // Hide the scene
+    void hideScene();
+
+    // Called when user closes window or you call App::quit()
+    // DO NOT call this, this is called by App.h
+    // This MUST call App::terminate() to safely close the app
+    void quit();
 
     // Add a menu entry to the debug menu
     virtual void addDebugMenuEntries();
@@ -42,15 +49,19 @@ class Scene {
     // Add functionality to the default window
     virtual void addDebugDetails();
 
-    // Called when user closes window or you call App::quit()
-    // DO NOT call this, this is called by App.h
-    // This MUST call App::terminate() to safely close the app
-    virtual void quit();
-
   protected:
 
     // Called when first shown before update
-    virtual void begin();
+    virtual void onBegin();
+
+    // Called when the scene is shown
+    virtual void onShow();
+
+    // Called when the scene is hidden
+    virtual void onHide();
+
+    // Safe callback for quit() for scene logic
+    virtual void onQuit();
 
   private:
 

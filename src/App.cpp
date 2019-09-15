@@ -187,7 +187,7 @@ App::update(const sf::Time& dt) {
 
   // Update the screen if the pointer is set
   if (currentScene_ != nullptr) {
-    currentScene_->update(dt);
+    currentScene_->onUpdate(dt);
   }
 
   // Update IMGUI debug interfaces
@@ -240,7 +240,7 @@ App::render() {
   // Render the app if pointer is set
   if (currentScene_ != nullptr) {
     window_->setView(view);
-    currentScene_->render(*window_);
+    currentScene_->onRender(*window_);
   }
 
   // Render IMGUI debug interface
@@ -298,7 +298,7 @@ App::handleEvent(const sf::Event& event) {
 
   // Pass events to scene
   if (currentScene_ != nullptr && passToGame) {
-    currentScene_->handleEvent(event);
+    currentScene_->onEvent(event);
   }
 }
 

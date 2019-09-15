@@ -16,45 +16,59 @@ Scene::Scene(const Scene& other)
 // Destructor
 Scene::~Scene() {}
 
-// Called when the scene is started
-void
-Scene::begin() {
-
-  // Flag that the scene has started
-  hasBegun_ = true;
-}
-
 // When the screen is shown
 void
 Scene::showScene() {
 
   // Begin the scene if it hasn't yet
   if (!hasBegun_) {
-    begin();
+    onBegin();
+    hasBegun_ = true;
   }
+  onShow();
 }
 
 // When the screen is hidden
 void
-Scene::hideScene() {}
+Scene::hideScene() {
+  onHide();
+}
 
-// Update the app every frame
-void
-Scene::update(const sf::Time& dt) {}
-
-// Render the app every frame
-void
-Scene::render(sf::RenderWindow& window) {}
-
-// Handle keypresses
-void
-Scene::handleEvent(const sf::Event& event) {}
-
-// When the app has requested to quit
+// When the scene is about to be quit
 void
 Scene::quit() {
   Console::log("Quitting scene..");
+  onQuit();
   App::terminate();
+}
+
+// Called when the scene is started
+void
+Scene::onBegin() {}
+
+// Update the app every frame
+void
+Scene::onUpdate(const sf::Time& dt) {}
+
+// Render the app every frame
+void
+Scene::onRender(sf::RenderWindow& window) {}
+
+// Handle keypresses
+void
+Scene::onEvent(const sf::Event& event) {}
+
+// Logic to perform when showing the scene
+void
+Scene::onShow() {}
+
+// Logic to perform when hiding the scene
+void
+Scene::onHide() {}
+
+// When the app has requested to quit
+void
+Scene::onQuit() {
 }
 
 /////////////////////

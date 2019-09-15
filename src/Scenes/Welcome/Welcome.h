@@ -11,15 +11,13 @@ class WelcomeScene: public Scene {
   public:
 
     // When scene starts
-    void begin() override {
-      Scene::begin();
+    void onBegin() override {
       auto size = circle_.getLocalBounds();
       circle_.setOrigin(size.width * 0.5f, size.height * 0.5f);
     }
 
     // Perform logic every frame
-    void update(const sf::Time& dt) override {
-      Scene::update(dt);
+    void onUpdate(const sf::Time& dt) override {
 
       // Move circle towards mouse
       const auto circlePos = circle_.getPosition();
@@ -30,14 +28,12 @@ class WelcomeScene: public Scene {
     }
 
     // Basic debug rendering
-    void render(sf::RenderWindow& window) override {
-      Scene::render(window);
+    void onRender(sf::RenderWindow& window) override {
       window.draw(circle_);
     }
 
     // Handle SFML events
-    void handleEvent(const sf::Event& event) override {
-      Scene::handleEvent(event);
+    void onEvent(const sf::Event& event) override {
 
       // Check for mouse events
       if (event.type == sf::Event::MouseButtonPressed) {
