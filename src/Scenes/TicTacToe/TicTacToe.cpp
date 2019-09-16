@@ -52,9 +52,9 @@ TicTacToeScene::onEvent(const sf::Event& event) {
       // - It's PlayerO's turn AND they're human
       if (statePair.first
           && ((statePair.second.currentTurn == Player::X
-            && playerX == Controller::Human)
+            && playerX_ == Controller::Human)
           || (statePair.second.currentTurn == Player::O
-            && playerO == Controller::Human))) {
+            && playerO_ == Controller::Human))) {
 
         // Get the new state after making a move
         const auto newState = 
@@ -72,11 +72,13 @@ TicTacToeScene::onEvent(const sf::Event& event) {
       
           // Add new state and move currentState_ to the last state
           states_.push_back(newState.second);
+
+          // Check for AI interactions on the latest state
+          continueGame();
+
+          // Observe the latest state after AI moves
           currentState_ = states_.size() - 1;
           if (currentState_ < 0) { currentState_ = 0; }
-
-          // Check for AI interactions
-          continueGame();
         }
       }
     }
@@ -86,6 +88,22 @@ TicTacToeScene::onEvent(const sf::Event& event) {
   else if (event.type == sf::Event::Resized) {
     resizeGame();
   }
+}
+
+// Reset the game back to initial state
+void
+TicTacToeScene::resetGame() {
+
+  // Clear and re-initialise gamestate
+  states_.clear();
+  states_.push_back(GameState());
+
+  // Start the game
+  continueGame();
+
+  // Set current state to the most up-to-date state
+  currentState_ = states_.size() - 1;
+  if (currentState_ < 0) { currentState_ = 0; }
 }
 
 // Recursive function for checking and performing AI moves
@@ -106,8 +124,8 @@ TicTacToeScene::continueGame() {
   }
 
   // If it's a HUMAN turn, do nothing
-  if ((state.currentTurn == Player::X && playerX == Controller::Human)
-      || (state.currentTurn == Player::O && playerO == Controller::Human)) {
+  if ((state.currentTurn == Player::X && playerX_== Controller::Human)
+      || (state.currentTurn == Player::O && playerO_== Controller::Human)) {
     return;
   }
 
@@ -125,9 +143,8 @@ TicTacToeScene::continueGame() {
         // Log move
         logMove(stateNo, state.currentTurn, i, j);
 
-        // Update state collection and observed state number
+        // Update state collection
         states_.push_back(attempt.second);
-        currentState_ = stateCount;
 
         // Continue the game in case AI is next
         continueGame();
@@ -139,7 +156,7 @@ TicTacToeScene::continueGame() {
 
 // Make a move and get a new state
 std::pair<bool, const GameState>
-TicTacToeScene::makeMove(const GameState& state, int x, int y) {
+TicTacToeScene::makeMove(const GameState& state, int x, int y)  const{
 
   // If its left mouse:
   if (x >= 0 && x < BOARDSIZE && y >= 0 && y < BOARDSIZE) {
@@ -215,8 +232,8 @@ TicTacToeScene::drawGameState(
   // Draw mouse's hovered tile IF
   // - It's a human's turn
   // - There's nothing occupying the current tile
-  if (((state.currentTurn == Player::X && playerX == Controller::Human)
-        || (state.currentTurn == Player::O && playerO == Controller::Human))
+  if (((state.currentTurn == Player::X && playerX_== Controller::Human)
+        || (state.currentTurn == Player::O && playerO_== Controller::Human))
       && mouseTile_.x < 3 && mouseTile_.y < 3
       && mouseTile_.x >= 0 && mouseTile_.y >= 0
       && state.boardState[mouseTile_.y][mouseTile_.x] == Player::N) {
@@ -246,27 +263,39 @@ TicTacToeScene::addDebugDetails() {
   ImGui::Begin("State Viewer");
   ImGui::Text("State: %u", currentState_);
   ImGui::PushButtonRepeat(true);
-  if (currentState_ > 0) {
-    ImGui::SameLine();
-    if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
+    if (currentState_ > 0) {
       --currentState_;
       Console::log("Switched to prev state: %d", currentState_);
     }
   }
-  if (currentState_ < states_.size() - 1) {
-    ImGui::SameLine();
-    if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
+    if (currentState_ < states_.size() - 1) {
       ++currentState_;
       Console::log("Switched to next state: %d", currentState_);
     }
   }
-  ImGui::Text("X Controller: %s", getControllerAsString(playerX).c_str());
-  ImGui::Text("O Controller: %s", getControllerAsString(playerO).c_str());
+
+  static const char* combo[] = {"Human", "Random"};
+  ImGui::Text("X Controller: ");
+  ImGui::SameLine();
+  ImGui::Combo("", 
+      reinterpret_cast<int*>(&playerX_), 
+      combo, IM_ARRAYSIZE(combo));
+  ImGui::Text("O Controller: ");
+  ImGui::SameLine();
+  ImGui::Combo(" ", 
+      reinterpret_cast<int*>(&playerO_), 
+      combo, IM_ARRAYSIZE(combo));
+
   ImGui::Text("Turn: %u (%s)", 
       state.turnNumber,
       state.currentTurn == Player::X ? "X" : "O");
-  ImGui::Text("Next tile: (%d, %d)",
+  ImGui::Text("Hovered tile: (%d, %d)",
       mouseTile_.x, mouseTile_.y);
+  if (ImGui::Button("Reset")) { resetGame(); }
   ImGui::End();
 }
 
@@ -368,7 +397,7 @@ TicTacToeScene::drawIcon(
 void 
 TicTacToeScene::logMove(int stateNo, Player currentTurn, int x, int y) const {
   const auto controllerString = getControllerAsString(
-      currentTurn == Player::X ? playerX : playerO);
+      currentTurn == Player::X ? playerX_: playerO_);
   Console::log("%d> Player %s (%s) made move: (%d, %d)",
       stateNo,
       currentTurn == Player::X ? "X" : "O",

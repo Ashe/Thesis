@@ -14,7 +14,8 @@
 // @TODO: Factor this out so that other scenes can use it
 enum Controller {
   Human,
-  Random
+  Random,
+  COUNT
 };
 
 // Representation of players
@@ -75,8 +76,8 @@ class TicTacToeScene : public Scene {
     std::vector<GameState> states_;
 
     // Who is playing who
-    Controller playerX = Controller::Human;
-    Controller playerO = Controller::Random;
+    Controller playerX_ = Controller::Human;
+    Controller playerO_ = Controller::Human;
 
     // Player colours
     sf::Color playerXColour_ = sf::Color(0, 117, 252);
@@ -105,11 +106,14 @@ class TicTacToeScene : public Scene {
     // Recursive function for checking and performing AI moves
     void continueGame();
 
-    // Make a move and get a new state
+    // Reset's the state of tic-tac-toe back to the beginning
+    void resetGame();
+
+    // Pure: Attempts to make the move on the game state and returns new state
     std::pair<bool, const GameState> makeMove(
         const GameState& state, 
         int x, 
-        int y);
+        int y) const;
 
     // Get a gamestate safely
     std::pair<bool, const GameState> getState(unsigned int n) const;
