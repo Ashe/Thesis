@@ -75,6 +75,10 @@ class TicTacToeScene : public Scene {
     // States of the game
     std::vector<GameState> states_;
 
+    // Has the game been won at some point?
+    bool isGameOver_;
+    Player winner_;
+
     // Who is playing who
     Controller playerX_ = Controller::Human;
     Controller playerO_ = Controller::Human;
@@ -134,6 +138,9 @@ class TicTacToeScene : public Scene {
 
     // Log to console the move that was just performed
     void logMove(int stateNo, Player currentTurn, int x, int y) const;
+
+    // Get a string of the player
+    std::string getPlayerAsString(const Player& player) const;
 
     // Get a string of the kind of controller
     std::string getControllerAsString(const Controller& controller) const;

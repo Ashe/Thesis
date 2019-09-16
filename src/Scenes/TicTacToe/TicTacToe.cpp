@@ -97,6 +97,7 @@ TicTacToeScene::resetGame() {
   // Clear and re-initialise gamestate
   states_.clear();
   states_.push_back(GameState());
+  isGameOver_ = false;
 
   // Start the game
   continueGame();
@@ -115,11 +116,13 @@ TicTacToeScene::continueGame() {
   if (stateCount <= 0) { return; }
   const unsigned int stateNo = stateCount - 1;
   const auto state = states_[stateNo];
+  isGameOver_ = false;
 
   // Check if the game is over
   // @TODO: Check for a winner
   if (state.turnNumber >= 9) {
     Console::log("Game Over.");
+    isGameOver_ = true;
     return;
   }
 
@@ -295,6 +298,15 @@ TicTacToeScene::addDebugDetails() {
       state.currentTurn == Player::X ? "X" : "O");
   ImGui::Text("Hovered tile: (%d, %d)",
       mouseTile_.x, mouseTile_.y);
+  if(isGameOver_) {
+    if(winner_ != Player::N) {
+      ImGui::Text("Game over. Winner is player %s", 
+          getPlayerAsString(winner_).c_str());
+    }
+    else {
+      ImGui::Text("Game over! It's a tie.");
+    }
+  }
   if (ImGui::Button("Reset")) { resetGame(); }
   ImGui::End();
 }
@@ -403,6 +415,16 @@ TicTacToeScene::logMove(int stateNo, Player currentTurn, int x, int y) const {
       currentTurn == Player::X ? "X" : "O",
       controllerString.c_str(),
       x, y);
+}
+
+// Get a string of the player
+std::string 
+TicTacToeScene::getPlayerAsString(const Player& player) const {
+  switch(player) {
+    case Player::X: return "X"; break;
+    case Player::O: return "O"; break;
+    default: return ""; break;
+  }
 }
 
 // Get a string of the kind of controller
