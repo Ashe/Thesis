@@ -48,6 +48,7 @@ class TicTacToeScene : public Scene {
     // @TODO: Delete this
     void onBegin() override {
       states_.push_back(GameState());
+      continueGame();
     }
 
     // Update the currently hovered tile
@@ -75,7 +76,7 @@ class TicTacToeScene : public Scene {
 
     // Who is playing who
     Controller playerX = Controller::Human;
-    Controller playerO = Controller::Human;
+    Controller playerO = Controller::Random;
 
     // Player colours
     sf::Color playerXColour_ = sf::Color(0, 117, 252);
@@ -101,6 +102,9 @@ class TicTacToeScene : public Scene {
     sf::Vector2f center_;
     float top_, left_, right_, bottom_;
 
+    // Recursive function for checking and performing AI moves
+    void continueGame();
+
     // Make a move and get a new state
     std::pair<bool, const GameState> makeMove(
         const GameState& state, 
@@ -124,8 +128,11 @@ class TicTacToeScene : public Scene {
         Player player,
         bool hovered = false);
 
+    // Log to console the move that was just performed
+    void logMove(int stateNo, Player currentTurn, int x, int y) const;
+
     // Get a string of the kind of controller
-    std::string getControllerAsString(const Controller& controller);
+    std::string getControllerAsString(const Controller& controller) const;
 };
 
 #endif

@@ -64,12 +64,7 @@ TicTacToeScene::onEvent(const sf::Event& event) {
         if (newState.first) {
 
           // Log successful move
-          const auto controllerString = getControllerAsString(
-              statePair.second.currentTurn == Player::X ? playerX : playerO);
-          Console::log("%d> Player %s (%s) made move: (%d, %d)",
-              currentState_,
-              statePair.second.currentTurn == Player::X ? "X" : "O",
-              controllerString.c_str(),
+          logMove(currentState_, statePair.second.currentTurn, 
               mouseTile_.x, mouseTile_.y);
 
           // Erase future data
@@ -79,6 +74,9 @@ TicTacToeScene::onEvent(const sf::Event& event) {
           states_.push_back(newState.second);
           currentState_ = states_.size() - 1;
           if (currentState_ < 0) { currentState_ = 0; }
+
+          // Check for AI interactions
+          continueGame();
         }
       }
     }
@@ -87,6 +85,55 @@ TicTacToeScene::onEvent(const sf::Event& event) {
   // If the window has been resized, handle graphics
   else if (event.type == sf::Event::Resized) {
     resizeGame();
+  }
+}
+
+// Recursive function for checking and performing AI moves
+void
+TicTacToeScene::continueGame() {
+
+  // Get the latest game state
+  const unsigned int stateCount = states_.size();
+  if (stateCount <= 0) { return; }
+  const unsigned int stateNo = stateCount - 1;
+  const auto state = states_[stateNo];
+
+  // Check if the game is over
+  // @TODO: Check for a winner
+  if (state.turnNumber >= 9) {
+    Console::log("Game Over.");
+    return;
+  }
+
+  // If it's a HUMAN turn, do nothing
+  if ((state.currentTurn == Player::X && playerX == Controller::Human)
+      || (state.currentTurn == Player::O && playerO == Controller::Human)) {
+    return;
+  }
+
+  // If it's an AI turn, allow them to make their move
+  // @TODO: Change this to be less predictable
+  for (int j = 0; j < BOARDSIZE; ++j) {
+    for (int i = 0; i < BOARDSIZE; ++i) {
+
+      // Attempt to make a move
+      const auto attempt = makeMove(state, i, j);
+
+      // If AI successfully made their move, update and continue game
+      if (attempt.first) {
+
+        // Log move
+        logMove(stateNo, state.currentTurn, i, j);
+
+        // Update state collection and observed state number
+        states_.push_back(attempt.second);
+        currentState_ = stateCount;
+
+        // Continue the game in case AI is next
+        continueGame();
+        return;
+      }
+    }
   }
 }
 
@@ -317,9 +364,21 @@ TicTacToeScene::drawIcon(
   }
 }
 
+// Log to console the move that was just performed
+void 
+TicTacToeScene::logMove(int stateNo, Player currentTurn, int x, int y) const {
+  const auto controllerString = getControllerAsString(
+      currentTurn == Player::X ? playerX : playerO);
+  Console::log("%d> Player %s (%s) made move: (%d, %d)",
+      stateNo,
+      currentTurn == Player::X ? "X" : "O",
+      controllerString.c_str(),
+      x, y);
+}
+
 // Get a string of the kind of controller
 std::string 
-TicTacToeScene::getControllerAsString(const Controller& controller) {
+TicTacToeScene::getControllerAsString(const Controller& controller) const {
   switch(controller) {
     case Controller::Random: return "Random"; break;
     default: return "Human"; break;
