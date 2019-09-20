@@ -28,11 +28,14 @@ enum Player {
 // Simple gamestate structure
 struct GameState {
 
-  // Turn number
-  unsigned int turnNumber = 0;
+  // Starting player
+  static const Player firstPlayer;
+
+  // Turn number (indexed at 1 for ease of reading)
+  unsigned int turnNumber = 1;
 
   // Track who's turn it is
-  Player currentTurn = Player::X;
+  Player currentTurn = firstPlayer;
 
   // State of the board
   Player boardState[BOARDSIZE][BOARDSIZE] = {
@@ -115,10 +118,15 @@ class TicTacToeScene : public Scene {
     ///////////////////////////////////////////
     // PURE FUNCTIONS:
     // - Functions without side effects
-    // - Used to transform or read game state
+    // - Used to transform or read game states
     ///////////////////////////////////////////
 
+    // Check if the game has been won by a player
+    // Returns (isGameOver, winner)
+    static std::pair<bool, const Player> checkGameover(const GameState& state);
+
     // Attempts to make the move on the game state and returns new state
+    // Returns (isStateValid, newState)
     static std::pair<bool, const GameState> makeMove(
         const GameState& state, 
         int x, 

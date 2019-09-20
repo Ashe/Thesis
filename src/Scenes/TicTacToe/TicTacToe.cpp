@@ -3,13 +3,15 @@
 
 #include "TicTacToe.h"
 
+// Static variables
+const Player GameState::firstPlayer = Player::X;
+
 ///////////////////////////////////////////
 // SCENE FUNCTIONS:
 // - Mandatory functions for the scene
 ///////////////////////////////////////////
 
 // Update the currently hovered tile
-// @TODO: Move the tile around
 void 
 TicTacToeScene::onUpdate(const sf::Time& dt) {
 
@@ -184,7 +186,54 @@ TicTacToeScene::addDebugDetails() {
 // - Used to transform or read game state
 ///////////////////////////////////////////
 
-// Make a move and get a new state
+// Check if the game has been won by a player
+// Returns (isGameOver, winner)
+std::pair<bool, const Player>
+TicTacToeScene::checkGameover(const GameState& state) {
+
+  // Prepare to inspect the board
+  const auto b = state.boardState;
+
+  // Check row victories (player occupied, all three elements in row are equal)
+  for (int j = 0; j < BOARDSIZE; ++j) {
+    if (b[j][0] != Player::N && b[j][0] == b[j][1] && b[j][1] == b[j][2]) {
+      return std::make_pair(true, b[j][0]);
+    }
+  }
+
+  // Check col victories (player occupied, all three elements in row are equal)
+  for (int i = 0; i < BOARDSIZE; ++i) {
+    if (b[0][i] != Player::N && b[0][i] == b[1][i] && b[1][i] == b[2][i]) {
+      return std::make_pair(true, b[0][i]);
+    }
+  }
+
+  // Check for \ diagonal
+  if (b[0][0] != Player::N && b[0][0] == b[1][1] && b[1][1] == b[2][2]) {
+    return std::make_pair(true, b[0][0]);
+  }
+
+  // Check for / diagonal
+  if (b[2][0] != Player::N && b[2][0] == b[1][1] && b[1][1] == b[0][2]) {
+    return std::make_pair(true, b[2][0]);
+  }
+
+  // Check to see if there are still empty spaces
+  // If there are, use false to flag that the game is still in progress
+  for (int j = 0; j < BOARDSIZE; ++j) {
+    for (int i = 0; i < BOARDSIZE; ++i) {
+      if (b[j][i] == Player::N) {
+        return std::make_pair(false, Player::N);
+      }
+    }
+  }
+
+  // If execution reaches here, board is full but no winner
+  return std::make_pair(true, Player::N);
+}
+
+// Attempts to make the move on the game state and returns new state
+// Returns (isStateValid, newState)
 std::pair<bool, const GameState>
 TicTacToeScene::makeMove(const GameState& state, int x, int y) {
 
@@ -198,12 +247,14 @@ TicTacToeScene::makeMove(const GameState& state, int x, int y) {
       auto newState = state;
       newState.boardState[y][x] = state.currentTurn;
 
-      // Add a new move
-      newState.turnNumber += 1;
-
       // Alternate who's turn it is
       newState.currentTurn = state.currentTurn == Player::X 
         ? Player::O : Player::X;
+
+      // If we have cycled back to the first player, increment turn number
+      if (newState.currentTurn == GameState::firstPlayer) {
+        newState.turnNumber += 1;
+      }
 
       // Return the new state with a success flag
       return std::make_pair(true, newState);
@@ -231,10 +282,19 @@ TicTacToeScene::continueGame() {
   isGameOver_ = false;
 
   // Check if the game is over
-  // @TODO: Check for a winner
-  if (state.turnNumber >= 9) {
-    Console::log("Game Over.");
+  const auto result = checkGameover(state);
+  if (result.first) {
     isGameOver_ = true;
+    winner_ = result.second;
+    Console::log("Game Over.");
+    if (winner_ == Player::N) { 
+      Console::log("It's a tie!"); 
+    }
+    else { 
+      Console::log(
+          "Winner is player: %s!", 
+          getPlayerAsString(winner_).c_str());
+    }
     return;
   }
 
