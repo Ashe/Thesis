@@ -65,14 +65,13 @@ TicTacToeScene::onEvent(const sf::Event& event) {
 
         // Get the new state after making a move
         const auto newState = 
-            makeMove(statePair.second, mouseTile_.x, mouseTile_.y);
+            makeMove(statePair.second, Move(mouseTile_));
 
         // If the move was successful
         if (newState.first) {
 
           // Log successful move
-          logMove(currentState_, statePair.second.currentTurn, 
-              mouseTile_.x, mouseTile_.y);
+          logMove(currentState_, statePair.second.currentTurn, mouseTile_);
 
           // Erase future data
           states_.erase(states_.begin() + currentState_ + 1, states_.end());
@@ -235,7 +234,11 @@ TicTacToeScene::checkGameover(const GameState& state) {
 // Attempts to make the move on the game state and returns new state
 // Returns (isStateValid, newState)
 std::pair<bool, const GameState>
-TicTacToeScene::makeMove(const GameState& state, int x, int y) {
+TicTacToeScene::makeMove(const GameState& state, Move move) {
+
+  // Extract data from move
+  const int x = move.x;
+  const int y = move.y;
 
   // If its left mouse:
   if (x >= 0 && x < BOARDSIZE && y >= 0 && y < BOARDSIZE) {
@@ -310,13 +313,14 @@ TicTacToeScene::continueGame() {
     for (int i = 0; i < BOARDSIZE; ++i) {
 
       // Attempt to make a move
-      const auto attempt = makeMove(state, i, j);
+      const auto move = Move(i, j);
+      const auto attempt = makeMove(state, move);
 
       // If AI successfully made their move, update and continue game
       if (attempt.first) {
 
         // Log move
-        logMove(stateNo, state.currentTurn, i, j);
+        logMove(stateNo, state.currentTurn, move);
 
         // Update state collection
         states_.push_back(attempt.second);
@@ -435,14 +439,14 @@ TicTacToeScene::drawGameState(
       && state.boardState[mouseTile_.y][mouseTile_.x] == Player::N) {
 
     // Draw the hovered mouse icon
-    drawIcon(window, mouseTile_.x, mouseTile_.y, state.currentTurn, true);
+    drawIcon(window, Move(mouseTile_), state.currentTurn, true);
   }
 
   // Draw icons each tile of the board
   for (int j = 0; j < BOARDSIZE; ++j) {
     for (int i = 0; i < BOARDSIZE; ++i) {
       const Player tile = state.boardState[j][i];
-      drawIcon(window, i, j, tile);
+      drawIcon(window, Move(i, j), tile);
     }
   }
 }
@@ -451,15 +455,14 @@ TicTacToeScene::drawGameState(
 void 
 TicTacToeScene::drawIcon(
     sf::RenderWindow& window, 
-    unsigned int x, 
-    unsigned int y, 
+    Move move,
     Player player,
     bool hovered) {
 
   // Grab the player who owns the tile
   const auto pos = sf::Vector2f(
-      left_ + x * tileSize_, 
-      top_ + y * tileSize_);
+      left_ + move.x * tileSize_, 
+      top_ + move.y * tileSize_);
 
   // Select the correct colour based on params
   const sf::Color colour =
@@ -488,14 +491,14 @@ TicTacToeScene::drawIcon(
 
 // Log to console the move that was just performed
 void 
-TicTacToeScene::logMove(int stateNo, Player currentTurn, int x, int y) const {
+TicTacToeScene::logMove(int stateNo, Player currentTurn, Move move) const {
   const auto controllerString = getControllerAsString(
       currentTurn == Player::X ? playerX_: playerO_);
   Console::log("%d> Player %s (%s) made move: (%d, %d)",
       stateNo,
       currentTurn == Player::X ? "X" : "O",
       controllerString.c_str(),
-      x, y);
+      move.x, move.y);
 }
 
 // Get a string of the player

@@ -25,6 +25,9 @@ enum Player {
   O
 };
 
+// Representation of moves
+typedef sf::Vector2i Move;
+
 // Simple gamestate structure
 struct GameState {
 
@@ -129,8 +132,7 @@ class TicTacToeScene : public Scene {
     // Returns (isStateValid, newState)
     static std::pair<bool, const GameState> makeMove(
         const GameState& state, 
-        int x, 
-        int y);
+        Move move);
   
     ///////////////////////////////////////////
     // IMPURE FUNCTIONS:
@@ -160,13 +162,12 @@ class TicTacToeScene : public Scene {
     // Draw an icon in a tile
     void drawIcon(
         sf::RenderWindow& window, 
-        unsigned int x, 
-        unsigned int y, 
+        Move move,
         Player player,
         bool hovered = false);
 
     // Log to console the move that was just performed
-    void logMove(int stateNo, Player currentTurn, int x, int y) const;
+    void logMove(int stateNo, Player currentTurn, Move move) const;
 
     // Get a string of the player
     static std::string getPlayerAsString(const Player& player);
