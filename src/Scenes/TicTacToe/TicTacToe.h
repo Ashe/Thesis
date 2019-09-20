@@ -46,6 +46,11 @@ struct GameState {
 class TicTacToeScene : public Scene {
   public:
 
+    ///////////////////////////////////////////
+    // SCENE FUNCTIONS:
+    // - Mandatory functions for the scene
+    ///////////////////////////////////////////
+
     // @TODO: Delete this
     void onBegin() override {
       states_.push_back(GameState());
@@ -107,20 +112,36 @@ class TicTacToeScene : public Scene {
     sf::Vector2f center_;
     float top_, left_, right_, bottom_;
 
+    ///////////////////////////////////////////
+    // PURE FUNCTIONS:
+    // - Functions without side effects
+    // - Used to transform or read game state
+    ///////////////////////////////////////////
+
+    // Attempts to make the move on the game state and returns new state
+    static std::pair<bool, const GameState> makeMove(
+        const GameState& state, 
+        int x, 
+        int y);
+  
+    ///////////////////////////////////////////
+    // IMPURE FUNCTIONS:
+    // - Mutate the state of the scene
+    ///////////////////////////////////////////
+    
     // Recursive function for checking and performing AI moves
     void continueGame();
 
     // Reset's the state of tic-tac-toe back to the beginning
     void resetGame();
 
-    // Pure: Attempts to make the move on the game state and returns new state
-    std::pair<bool, const GameState> makeMove(
-        const GameState& state, 
-        int x, 
-        int y) const;
-
     // Get a gamestate safely
     std::pair<bool, const GameState> getState(unsigned int n) const;
+
+    ///////////////////////////////////////////
+    // GRAPHICAL / LOGGING:
+    // - Non-logic pure or impure functions
+    ///////////////////////////////////////////
 
     // Adjust graphics for current game size
     void resizeGame();
@@ -140,10 +161,10 @@ class TicTacToeScene : public Scene {
     void logMove(int stateNo, Player currentTurn, int x, int y) const;
 
     // Get a string of the player
-    std::string getPlayerAsString(const Player& player) const;
+    static std::string getPlayerAsString(const Player& player);
 
     // Get a string of the kind of controller
-    std::string getControllerAsString(const Controller& controller) const;
+    static std::string getControllerAsString(const Controller& controller);
 };
 
 #endif

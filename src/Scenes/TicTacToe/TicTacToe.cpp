@@ -3,6 +3,11 @@
 
 #include "TicTacToe.h"
 
+///////////////////////////////////////////
+// SCENE FUNCTIONS:
+// - Mandatory functions for the scene
+///////////////////////////////////////////
+
 // Update the currently hovered tile
 // @TODO: Move the tile around
 void 
@@ -90,103 +95,6 @@ TicTacToeScene::onEvent(const sf::Event& event) {
   }
 }
 
-// Reset the game back to initial state
-void
-TicTacToeScene::resetGame() {
-
-  // Clear and re-initialise gamestate
-  states_.clear();
-  states_.push_back(GameState());
-  isGameOver_ = false;
-
-  // Start the game
-  continueGame();
-
-  // Set current state to the most up-to-date state
-  currentState_ = states_.size() - 1;
-  if (currentState_ < 0) { currentState_ = 0; }
-}
-
-// Recursive function for checking and performing AI moves
-void
-TicTacToeScene::continueGame() {
-
-  // Get the latest game state
-  const unsigned int stateCount = states_.size();
-  if (stateCount <= 0) { return; }
-  const unsigned int stateNo = stateCount - 1;
-  const auto state = states_[stateNo];
-  isGameOver_ = false;
-
-  // Check if the game is over
-  // @TODO: Check for a winner
-  if (state.turnNumber >= 9) {
-    Console::log("Game Over.");
-    isGameOver_ = true;
-    return;
-  }
-
-  // If it's a HUMAN turn, do nothing
-  if ((state.currentTurn == Player::X && playerX_== Controller::Human)
-      || (state.currentTurn == Player::O && playerO_== Controller::Human)) {
-    return;
-  }
-
-  // If it's an AI turn, allow them to make their move
-  // @TODO: Change this to be less predictable
-  for (int j = 0; j < BOARDSIZE; ++j) {
-    for (int i = 0; i < BOARDSIZE; ++i) {
-
-      // Attempt to make a move
-      const auto attempt = makeMove(state, i, j);
-
-      // If AI successfully made their move, update and continue game
-      if (attempt.first) {
-
-        // Log move
-        logMove(stateNo, state.currentTurn, i, j);
-
-        // Update state collection
-        states_.push_back(attempt.second);
-
-        // Continue the game in case AI is next
-        continueGame();
-        return;
-      }
-    }
-  }
-}
-
-// Make a move and get a new state
-std::pair<bool, const GameState>
-TicTacToeScene::makeMove(const GameState& state, int x, int y)  const{
-
-  // If its left mouse:
-  if (x >= 0 && x < BOARDSIZE && y >= 0 && y < BOARDSIZE) {
-
-    // If the desired tile is unnocupied
-    if (state.boardState[y][x] == Player::N) {
-
-      // Duplicate state and make the move
-      auto newState = state;
-      newState.boardState[y][x] = state.currentTurn;
-
-      // Add a new move
-      newState.turnNumber += 1;
-
-      // Alternate who's turn it is
-      newState.currentTurn = state.currentTurn == Player::X 
-        ? Player::O : Player::X;
-
-      // Return the new state with a success flag
-      return std::make_pair(true, newState);
-    }
-  }
-
-  // Signify that things went wrong
-  return std::make_pair(false, GameState());
-}
-
 // Render the render the game board and state
 void
 TicTacToeScene::onRender(sf::RenderWindow& window) {
@@ -205,53 +113,12 @@ TicTacToeScene::onRender(sf::RenderWindow& window) {
   }
 }
 
-// Get a gamestate safely
-std::pair<bool, const GameState> 
-TicTacToeScene::getState(unsigned int n) const {
-
-  // Fetch the correct state if possible
-  if (n >= 0 && n < states_.size()) {
-    return std::make_pair(true, states_[n]);
-  }
-
-  // If nothing found, return invalid pair
-  return std::make_pair(false, GameState());
-}
-
 // Whenever the scene is re-shown, ensure graphics are correct
 void
 TicTacToeScene::onShow() {
 
   // Ensure board sizes are corect
   resizeGame();
-}
-
-// Draw the given state
-void
-TicTacToeScene::drawGameState(
-    sf::RenderWindow& window, 
-    const GameState& state) {
-
-  // Draw mouse's hovered tile IF
-  // - It's a human's turn
-  // - There's nothing occupying the current tile
-  if (((state.currentTurn == Player::X && playerX_== Controller::Human)
-        || (state.currentTurn == Player::O && playerO_== Controller::Human))
-      && mouseTile_.x < 3 && mouseTile_.y < 3
-      && mouseTile_.x >= 0 && mouseTile_.y >= 0
-      && state.boardState[mouseTile_.y][mouseTile_.x] == Player::N) {
-
-    // Draw the hovered mouse icon
-    drawIcon(window, mouseTile_.x, mouseTile_.y, state.currentTurn, true);
-  }
-
-  // Draw icons each tile of the board
-  for (int j = 0; j < BOARDSIZE; ++j) {
-    for (int i = 0; i < BOARDSIZE; ++i) {
-      const Player tile = state.boardState[j][i];
-      drawIcon(window, i, j, tile);
-    }
-  }
 }
 
 // Add details to info debug windows
@@ -311,6 +178,132 @@ TicTacToeScene::addDebugDetails() {
   ImGui::End();
 }
 
+///////////////////////////////////////////
+// PURE FUNCTIONS:
+// - Functions without side effects
+// - Used to transform or read game state
+///////////////////////////////////////////
+
+// Make a move and get a new state
+std::pair<bool, const GameState>
+TicTacToeScene::makeMove(const GameState& state, int x, int y) {
+
+  // If its left mouse:
+  if (x >= 0 && x < BOARDSIZE && y >= 0 && y < BOARDSIZE) {
+
+    // If the desired tile is unnocupied
+    if (state.boardState[y][x] == Player::N) {
+
+      // Duplicate state and make the move
+      auto newState = state;
+      newState.boardState[y][x] = state.currentTurn;
+
+      // Add a new move
+      newState.turnNumber += 1;
+
+      // Alternate who's turn it is
+      newState.currentTurn = state.currentTurn == Player::X 
+        ? Player::O : Player::X;
+
+      // Return the new state with a success flag
+      return std::make_pair(true, newState);
+    }
+  }
+
+  // Signify that things went wrong
+  return std::make_pair(false, GameState());
+}
+
+///////////////////////////////////////////
+// IMPURE FUNCTIONS:
+// - Mutate the state of the scene
+///////////////////////////////////////////
+
+// Recursive function for checking and performing AI moves
+void
+TicTacToeScene::continueGame() {
+
+  // Get the latest game state
+  const unsigned int stateCount = states_.size();
+  if (stateCount <= 0) { return; }
+  const unsigned int stateNo = stateCount - 1;
+  const auto state = states_[stateNo];
+  isGameOver_ = false;
+
+  // Check if the game is over
+  // @TODO: Check for a winner
+  if (state.turnNumber >= 9) {
+    Console::log("Game Over.");
+    isGameOver_ = true;
+    return;
+  }
+
+  // If it's a HUMAN turn, do nothing
+  if ((state.currentTurn == Player::X && playerX_== Controller::Human)
+      || (state.currentTurn == Player::O && playerO_== Controller::Human)) {
+    return;
+  }
+
+  // If it's an AI turn, allow them to make their move
+  // @TODO: Change this to be less predictable
+  for (int j = 0; j < BOARDSIZE; ++j) {
+    for (int i = 0; i < BOARDSIZE; ++i) {
+
+      // Attempt to make a move
+      const auto attempt = makeMove(state, i, j);
+
+      // If AI successfully made their move, update and continue game
+      if (attempt.first) {
+
+        // Log move
+        logMove(stateNo, state.currentTurn, i, j);
+
+        // Update state collection
+        states_.push_back(attempt.second);
+
+        // Continue the game in case AI is next
+        continueGame();
+        return;
+      }
+    }
+  }
+}
+
+// Reset the game back to initial state
+void
+TicTacToeScene::resetGame() {
+
+  // Clear and re-initialise gamestate
+  states_.clear();
+  states_.push_back(GameState());
+  isGameOver_ = false;
+
+  // Start the game
+  continueGame();
+
+  // Set current state to the most up-to-date state
+  currentState_ = states_.size() - 1;
+  if (currentState_ < 0) { currentState_ = 0; }
+}
+
+// Get a gamestate safely
+std::pair<bool, const GameState> 
+TicTacToeScene::getState(unsigned int n) const {
+
+  // Fetch the correct state if possible
+  if (n >= 0 && n < states_.size()) {
+    return std::make_pair(true, states_[n]);
+  }
+
+  // If nothing found, return invalid pair
+  return std::make_pair(false, GameState());
+}
+
+///////////////////////////////////////////
+// GRAPHICAL / LOGGING:
+// - Non-logic pure or impure functions
+///////////////////////////////////////////
+
 // Adjust graphics for current game size
 void
 TicTacToeScene::resizeGame() {
@@ -366,6 +359,34 @@ TicTacToeScene::resizeGame() {
   board_[15].position = sf::Vector2f(right_, bottom_);
 }
 
+// Draw the given state
+void
+TicTacToeScene::drawGameState(
+    sf::RenderWindow& window, 
+    const GameState& state) {
+
+  // Draw mouse's hovered tile IF
+  // - It's a human's turn
+  // - There's nothing occupying the current tile
+  if (((state.currentTurn == Player::X && playerX_== Controller::Human)
+        || (state.currentTurn == Player::O && playerO_== Controller::Human))
+      && mouseTile_.x < 3 && mouseTile_.y < 3
+      && mouseTile_.x >= 0 && mouseTile_.y >= 0
+      && state.boardState[mouseTile_.y][mouseTile_.x] == Player::N) {
+
+    // Draw the hovered mouse icon
+    drawIcon(window, mouseTile_.x, mouseTile_.y, state.currentTurn, true);
+  }
+
+  // Draw icons each tile of the board
+  for (int j = 0; j < BOARDSIZE; ++j) {
+    for (int i = 0; i < BOARDSIZE; ++i) {
+      const Player tile = state.boardState[j][i];
+      drawIcon(window, i, j, tile);
+    }
+  }
+}
+
 // Draw an icon in a tile
 void 
 TicTacToeScene::drawIcon(
@@ -419,7 +440,7 @@ TicTacToeScene::logMove(int stateNo, Player currentTurn, int x, int y) const {
 
 // Get a string of the player
 std::string 
-TicTacToeScene::getPlayerAsString(const Player& player) const {
+TicTacToeScene::getPlayerAsString(const Player& player) {
   switch(player) {
     case Player::X: return "X"; break;
     case Player::O: return "O"; break;
@@ -429,7 +450,7 @@ TicTacToeScene::getPlayerAsString(const Player& player) const {
 
 // Get a string of the kind of controller
 std::string 
-TicTacToeScene::getControllerAsString(const Controller& controller) const {
+TicTacToeScene::getControllerAsString(const Controller& controller) {
   switch(controller) {
     case Controller::Random: return "Random"; break;
     default: return "Human"; break;
