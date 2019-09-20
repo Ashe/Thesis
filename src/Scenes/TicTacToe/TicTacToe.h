@@ -8,6 +8,8 @@
 #include <utility>
 #include "../../Scene.h"
 
+#include "../../Controllers/Random/Random.h"
+
 #define BOARDSIZE 3
 
 // Representation of who can play
@@ -123,6 +125,9 @@ class TicTacToeScene : public Scene {
     // - Functions without side effects
     // - Used to transform or read game states
     ///////////////////////////////////////////
+    
+    // Get a collection of valid moves one could make
+    static std::vector<Move> getValidMoves(const GameState& state);
 
     // Check if the game has been won by a player
     // Returns (isGameOver, winner)
@@ -132,7 +137,7 @@ class TicTacToeScene : public Scene {
     // Returns (isStateValid, newState)
     static std::pair<bool, const GameState> makeMove(
         const GameState& state, 
-        Move move);
+        const Move& move);
   
     ///////////////////////////////////////////
     // IMPURE FUNCTIONS:
@@ -147,6 +152,9 @@ class TicTacToeScene : public Scene {
 
     // Get a gamestate safely
     std::pair<bool, const GameState> getState(unsigned int n) const;
+
+    // Check which controller is currently playing
+    Controller getControllerOfCurrentPlayer(const Player& player) const;
 
     ///////////////////////////////////////////
     // GRAPHICAL / LOGGING:

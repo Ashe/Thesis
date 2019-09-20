@@ -57,11 +57,9 @@ TicTacToeScene::onEvent(const sf::Event& event) {
       // - The state found was valid
       // - It's PlayerX's turn AND they're human OR
       // - It's PlayerO's turn AND they're human
-      if (statePair.first
-          && ((statePair.second.currentTurn == Player::X
-            && playerX_ == Controller::Human)
-          || (statePair.second.currentTurn == Player::O
-            && playerO_ == Controller::Human))) {
+      if (statePair.first && 
+          getControllerOfCurrentPlayer(statePair.second.currentTurn) 
+              == Controller::Human) {
 
         // Get the new state after making a move
         const auto newState = 
@@ -168,7 +166,7 @@ TicTacToeScene::addDebugDetails() {
       mouseTile_.x, mouseTile_.y);
   if(isGameOver_) {
     if(winner_ != Player::N) {
-      ImGui::Text("Game over. Winner is player %s", 
+      ImGui::Text("Game over! Winner is player %s.", 
           getPlayerAsString(winner_).c_str());
     }
     else {
@@ -184,6 +182,28 @@ TicTacToeScene::addDebugDetails() {
 // - Functions without side effects
 // - Used to transform or read game state
 ///////////////////////////////////////////
+
+// Get a collection of valid moves one could make
+std::vector<Move>
+TicTacToeScene::getValidMoves(const GameState& state) {
+
+  // Prepare to collect moves from the state
+  std::vector<Move> moves;
+
+  // Iterate through the board and collect any tiles that aren't occupied
+  const auto board = state.boardState;
+  for (int j = 0; j < BOARDSIZE; ++j) {
+    for (int i = 0; i < BOARDSIZE; ++i) {
+      const auto tile = board[j][i];
+      if (tile == Player::N) {
+        moves.push_back(Move(i, j));
+      }
+    }
+  }
+
+  // Return findings
+  return moves;
+}
 
 // Check if the game has been won by a player
 // Returns (isGameOver, winner)
@@ -234,7 +254,7 @@ TicTacToeScene::checkGameover(const GameState& state) {
 // Attempts to make the move on the game state and returns new state
 // Returns (isStateValid, newState)
 std::pair<bool, const GameState>
-TicTacToeScene::makeMove(const GameState& state, Move move) {
+TicTacToeScene::makeMove(const GameState& state, const Move& move) {
 
   // Extract data from move
   const int x = move.x;
@@ -301,35 +321,33 @@ TicTacToeScene::continueGame() {
     return;
   }
 
+  // Check what controller is currently playing
+  const auto controller = getControllerOfCurrentPlayer(state.currentTurn);
+  auto attempt = std::make_pair(false, GameState());
+
   // If it's a HUMAN turn, do nothing
-  if ((state.currentTurn == Player::X && playerX_== Controller::Human)
-      || (state.currentTurn == Player::O && playerO_== Controller::Human)) {
+  if (controller == Controller::Human) {
     return;
   }
 
-  // If it's an AI turn, allow them to make their move
-  // @TODO: Change this to be less predictable
-  for (int j = 0; j < BOARDSIZE; ++j) {
-    for (int i = 0; i < BOARDSIZE; ++i) {
+  // If its a random, invoke Random::takeTurn
+  else if (controller == Controller::Random) {
+    attempt = RandomController::takeTurn<GameState, Player, Move> (
+        state, getValidMoves, makeMove);
+  }
 
-      // Attempt to make a move
-      const auto move = Move(i, j);
-      const auto attempt = makeMove(state, move);
+  // If AI successfully made their move, update and continue game
+  if (attempt.first) {
 
-      // If AI successfully made their move, update and continue game
-      if (attempt.first) {
+    // Log move
+    //logMove(stateNo, state.currentTurn, move);
 
-        // Log move
-        logMove(stateNo, state.currentTurn, move);
+    // Update state collection
+    states_.push_back(attempt.second);
 
-        // Update state collection
-        states_.push_back(attempt.second);
-
-        // Continue the game in case AI is next
-        continueGame();
-        return;
-      }
-    }
+    // Continue the game in case AI is next
+    continueGame();
+    return;
   }
 }
 
@@ -361,6 +379,15 @@ TicTacToeScene::getState(unsigned int n) const {
 
   // If nothing found, return invalid pair
   return std::make_pair(false, GameState());
+}
+
+// Check which controller is currently playing
+Controller
+TicTacToeScene::getControllerOfCurrentPlayer(const Player& player) const {
+  if (player == Player::X) { return playerX_; }
+  else if (player == Player::O) { return playerO_; }
+  Console::log("[Error] Couldn't get controller of current player.");
+  return Controller::Human;
 }
 
 ///////////////////////////////////////////
