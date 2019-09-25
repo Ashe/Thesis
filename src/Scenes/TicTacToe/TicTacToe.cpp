@@ -288,6 +288,13 @@ TicTacToeScene::makeMove(const GameState& state, const Move& move) {
   return std::make_pair(false, GameState());
 }
 
+// Check if a move is valid
+bool 
+TicTacToeScene::isValidMove(const Move& move) {
+  return move.x >= 0 && move.x < BOARDSIZE && 
+      move.y >= 0 && move.y < BOARDSIZE;
+}
+
 ///////////////////////////////////////////
 // IMPURE FUNCTIONS:
 // - Mutate the state of the scene
@@ -332,7 +339,7 @@ TicTacToeScene::continueGame() {
 
   // If its a random, invoke Random::takeTurn
   else if (controller == Controller::Random) {
-    attempt = RandomController::takeTurn<GameState, Player, Move> (
+    attempt = RandomController::decide<GameState, Move> (
         state, getValidMoves, makeMove);
   }
 

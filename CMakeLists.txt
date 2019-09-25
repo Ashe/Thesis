@@ -48,6 +48,7 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
 
   # Controller
   src/Controllers/Random/Random.h
+  src/Controllers/AStar/AStar.h
 
   # Development
   src/Console.h

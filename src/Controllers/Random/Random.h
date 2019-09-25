@@ -13,15 +13,16 @@
 // Seperate functions here from other controllers
 namespace RandomController {
 
-  // Evaluates options and returns a new state after making a move
-  template <class S, class P, class M>
-  std::pair<bool, S> takeTurn(
+  // Evaluates options and returns a new state after taking action
+  // Templates: State, Action
+  template <class S, class A>
+  std::pair<bool, S> decide(
       const S& state,
-      std::function<std::vector<M>(const S&)> getOptions,
-      std::function<std::pair<bool, const S>(const S&, const M&)> makeMove) {
+      std::function<std::vector<A>(const S&)> getOptions,
+      std::function<std::pair<bool, const S>(const S&, const A&)> takeAction) {
 
     // Get options to play
-    std::vector<M> options = getOptions(state);
+    std::vector<A> options = getOptions(state);
 
     // Make a random-number-generator
     std::random_device random;
@@ -32,7 +33,7 @@ namespace RandomController {
 
     // Try to make moves, and if one succeeds, return it
     for (auto i = options.begin(); i != options.end(); ++i) {
-      const auto attempt = makeMove(state, *i);
+      const auto attempt = takeAction(state, *i);
       if (attempt.first) {
         return attempt;
       }

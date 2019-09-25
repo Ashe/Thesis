@@ -9,6 +9,7 @@
 #include "../../Scene.h"
 
 #include "../../Controllers/Random/Random.h"
+#include "../../Controllers/AStar/AStar.h"
 
 #define BOARDSIZE 3
 
@@ -138,6 +139,9 @@ class TicTacToeScene : public Scene {
     static std::pair<bool, const GameState> makeMove(
         const GameState& state, 
         const Move& move);
+
+    // Check if a move is valid
+    static bool isValidMove(const Move& move);
   
     ///////////////////////////////////////////
     // IMPURE FUNCTIONS:
