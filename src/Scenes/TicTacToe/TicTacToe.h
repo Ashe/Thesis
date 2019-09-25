@@ -16,28 +16,32 @@
 
 #define BOARDSIZE 3
 
-// Simple gamestate structure
-struct GameState {
-
-  // Starting player
-  static const TicTacToe::Player firstPlayer;
-
-  // Turn number (indexed at 1 for ease of reading)
-  unsigned int turnNumber = 1;
-
-  // Track who's turn it is
-  TicTacToe::Player currentTurn = firstPlayer;
-
-  // State of the board
-  TicTacToe::Player boardState[BOARDSIZE][BOARDSIZE] = {
-    { TicTacToe::Player::N, TicTacToe::Player::N, TicTacToe::Player::N },
-    { TicTacToe::Player::N, TicTacToe::Player::N, TicTacToe::Player::N },
-    { TicTacToe::Player::N, TicTacToe::Player::N, TicTacToe::Player::N }
-  };
-};
 
 // Encapsulate TicTacToe related classes
 namespace TicTacToe {
+
+  // Simple gamestate structure
+  struct GameState {
+
+    // Starting player
+    static const Player firstPlayer;
+
+    // Turn number (indexed at 1 for ease of reading)
+    unsigned int turnNumber = 1;
+
+    // Track who's turn it is
+    Player currentTurn = firstPlayer;
+
+    // Track previous move
+    Move previousMove = Move(-1, -1);
+
+    // State of the board
+    Player boardState[BOARDSIZE][BOARDSIZE] = {
+      { Player::N, Player::N, Player::N },
+      { Player::N, Player::N, Player::N },
+      { Player::N, Player::N, Player::N }
+    };
+  };
 
   // Basic game of tic-tac-toe
   class Game : public Scene {
@@ -144,6 +148,9 @@ namespace TicTacToe {
 
       // Get a gamestate safely
       std::pair<bool, const GameState> getState(unsigned int n) const;
+
+      // Check if a human player can make a move
+      bool isGamePlayable();
 
       // Check which controller is currently playing
       Controller::Type getControllerOfCurrentPlayer(const Player& player) const;

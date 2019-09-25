@@ -4,7 +4,8 @@
 #include "TicTacToe.h"
 
 // Static variables
-const TicTacToe::Player GameState::firstPlayer = TicTacToe::Player::X;
+const TicTacToe::Player TicTacToe::GameState::firstPlayer = 
+    TicTacToe::Player::X;
 
 ///////////////////////////////////////////
 // SCENE FUNCTIONS:
@@ -55,10 +56,10 @@ TicTacToe::Game::onEvent(const sf::Event& event) {
 
       // Make the move IF
       // - The state found was valid
-      // - It's PlayerX's turn AND they're human OR
-      // - It's PlayerO's turn AND they're human
-      if (statePair.first && 
-          getControllerOfCurrentPlayer(statePair.second.currentTurn) 
+      // - The game hasn't been won OR we're not on the last state
+      // - The current player is human
+      if (statePair.first && isGamePlayable()
+          && getControllerOfCurrentPlayer(statePair.second.currentTurn) 
               == Controller::Type::Human) {
 
         // Get the new state after making a move
@@ -252,7 +253,7 @@ TicTacToe::Game::checkGameover(const GameState& state) {
 
 // Attempts to make the move on the game state and returns new state
 // Returns (isStateValid, newState)
-std::pair<bool, const GameState>
+std::pair<bool, const TicTacToe::GameState>
 TicTacToe::Game::makeMove(const GameState& state, const Move& move) {
 
   // Extract data from move
@@ -268,6 +269,9 @@ TicTacToe::Game::makeMove(const GameState& state, const Move& move) {
       // Duplicate state and make the move
       auto newState = state;
       newState.boardState[y][x] = state.currentTurn;
+
+      // Record move
+      newState.previousMove = Move(x, y);
 
       // Alternate who's turn it is
       newState.currentTurn = state.currentTurn == Player::X 
@@ -355,7 +359,7 @@ TicTacToe::Game::continueGame() {
   if (attempt.first) {
 
     // Log move
-    //logMove(stateNo, state.currentTurn, move);
+    logMove(stateNo, state.currentTurn, state.previousMove);
 
     // Update state collection
     states_.push_back(attempt.second);
@@ -384,7 +388,7 @@ TicTacToe::Game::resetGame() {
 }
 
 // Get a gamestate safely
-std::pair<bool, const GameState> 
+std::pair<bool, const TicTacToe::GameState> 
 TicTacToe::Game::getState(unsigned int n) const {
 
   // Fetch the correct state if possible
@@ -394,6 +398,12 @@ TicTacToe::Game::getState(unsigned int n) const {
 
   // If nothing found, return invalid pair
   return std::make_pair(false, GameState());
+}
+
+// Check if a human can make a move
+bool
+TicTacToe::Game::isGamePlayable() {
+  return !isGameOver_ || currentState_ != states_.size() - 1;
 }
 
 // Check which controller is currently playing
@@ -473,11 +483,12 @@ TicTacToe::Game::drawGameState(
 
   // Draw mouse's hovered tile IF
   // - It's a human's turn
+  // - The game is still playable
+  // - It's a valid move
   // - There's nothing occupying the current tile
-  if (((state.currentTurn == Player::X && playerX_== Controller::Type::Human)
-        || (state.currentTurn == Player::O && playerO_== Controller::Type::Human))
-      && mouseTile_.x < 3 && mouseTile_.y < 3
-      && mouseTile_.x >= 0 && mouseTile_.y >= 0
+  if (getControllerOfCurrentPlayer(state.currentTurn) == Controller::Type::Human
+      && isGamePlayable()
+      && isValidMove(Move(mouseTile_))
       && state.boardState[mouseTile_.y][mouseTile_.x] == Player::N) {
 
     // Draw the hovered mouse icon
