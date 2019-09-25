@@ -6,186 +6,169 @@
 
 #include <math.h>
 #include <utility>
-#include "../../Scene.h"
 
-#include "../../Controllers/Random/Random.h"
-#include "../../Controllers/AStar/AStar.h"
+#include "../../Scene.h"
+#include "../../Controller/Common.h"
+#include "../../Controller/Random/Random.h"
+#include "../../Controller/AStar/AStar.h"
+
+#include "Common.h"
 
 #define BOARDSIZE 3
-
-// Representation of who can play
-// @TODO: Factor this out so that other scenes can use it
-enum Controller {
-  Human,
-  Random,
-  COUNT
-};
-
-// Representation of players
-enum Player {
-  N,
-  X,
-  O
-};
-
-// Representation of moves
-typedef sf::Vector2i Move;
 
 // Simple gamestate structure
 struct GameState {
 
   // Starting player
-  static const Player firstPlayer;
+  static const TicTacToe::Player firstPlayer;
 
   // Turn number (indexed at 1 for ease of reading)
   unsigned int turnNumber = 1;
 
   // Track who's turn it is
-  Player currentTurn = firstPlayer;
+  TicTacToe::Player currentTurn = firstPlayer;
 
   // State of the board
-  Player boardState[BOARDSIZE][BOARDSIZE] = {
-    { N, N, N },
-    { N, N, N },
-    { N, N, N }
+  TicTacToe::Player boardState[BOARDSIZE][BOARDSIZE] = {
+    { TicTacToe::Player::N, TicTacToe::Player::N, TicTacToe::Player::N },
+    { TicTacToe::Player::N, TicTacToe::Player::N, TicTacToe::Player::N },
+    { TicTacToe::Player::N, TicTacToe::Player::N, TicTacToe::Player::N }
   };
 };
 
-// Basic game of tic-tac-toe
-class TicTacToeScene : public Scene {
-  public:
+// Encapsulate TicTacToe related classes
+namespace TicTacToe {
 
-    ///////////////////////////////////////////
-    // SCENE FUNCTIONS:
-    // - Mandatory functions for the scene
-    ///////////////////////////////////////////
+  // Basic game of tic-tac-toe
+  class Game : public Scene {
+    public:
 
-    // @TODO: Delete this
-    void onBegin() override {
-      states_.push_back(GameState());
-      continueGame();
-    }
+      ///////////////////////////////////////////
+      // SCENE FUNCTIONS:
+      // - Mandatory functions for the scene
+      ///////////////////////////////////////////
 
-    // Update the currently hovered tile
-    void onUpdate(const sf::Time& dt) override;
+      // @TODO: Delete this
+      void onBegin() override {
+        states_.push_back(GameState());
+        continueGame();
+      }
 
-    // Handle input and game size changes
-    void onEvent(const sf::Event& event) override;
+      // Update the currently hovered tile
+      void onUpdate(const sf::Time& dt) override;
 
-    // Render the render the game board and state
-    void onRender(sf::RenderWindow& window) override;
+      // Handle input and game size changes
+      void onEvent(const sf::Event& event) override;
 
-    // Whenever the scene is re-shown, ensure graphics are correct
-    void onShow() override;
+      // Render the render the game board and state
+      void onRender(sf::RenderWindow& window) override;
 
-    // Add details to debug windows
-    void addDebugDetails() override;
+      // Whenever the scene is re-shown, ensure graphics are correct
+      void onShow() override;
 
-  private:
+      // Add details to debug windows
+      void addDebugDetails() override;
 
-    // Tracker for which state to view
-    unsigned int currentState_;
+    private:
 
-    // States of the game
-    std::vector<GameState> states_;
+      // Tracker for which state to view
+      unsigned int currentState_;
 
-    // Has the game been won at some point?
-    bool isGameOver_;
-    Player winner_;
+      // States of the game
+      std::vector<GameState> states_;
 
-    // Who is playing who
-    Controller playerX_ = Controller::Human;
-    Controller playerO_ = Controller::Human;
+      // Has the game been won at some point?
+      bool isGameOver_;
+      Player winner_;
 
-    // Player colours
-    sf::Color playerXColour_ = sf::Color(0, 117, 252);
-    sf::Color playerXColourHovered_ = sf::Color(0, 0, 130);
-    sf::Color playerOColour_ = sf::Color(255, 0, 0);
-    sf::Color playerOColourHovered_ = sf::Color(130, 0, 0);
+      // Who is playing who
+      Controller::Type playerX_ = Controller::Type::Human;
+      Controller::Type playerO_ = Controller::Type::Human;
 
-    // Player icons
-    sf::VertexArray playerIconX_;
-    sf::CircleShape playerIconO_;
+      // Player colours
+      sf::Color playerXColour_ = sf::Color(0, 117, 252);
+      sf::Color playerXColourHovered_ = sf::Color(0, 0, 130);
+      sf::Color playerOColour_ = sf::Color(255, 0, 0);
+      sf::Color playerOColourHovered_ = sf::Color(130, 0, 0);
 
-    // The tic-tac-toe board
-    sf::VertexArray board_;
+      // Player icons
+      sf::VertexArray playerIconX_;
+      sf::CircleShape playerIconO_;
 
-    // The mouse hovered tile
-    sf::Vector2i mouseTile_;
+      // The tic-tac-toe board
+      sf::VertexArray board_;
 
-    // Key dimensions
-    float gameSize_;
-    float tileSize_;
+      // The mouse hovered tile
+      sf::Vector2i mouseTile_;
 
-    // Key Positions
-    sf::Vector2f center_;
-    float top_, left_, right_, bottom_;
+      // Key dimensions
+      float gameSize_;
+      float tileSize_;
 
-    ///////////////////////////////////////////
-    // PURE FUNCTIONS:
-    // - Functions without side effects
-    // - Used to transform or read game states
-    ///////////////////////////////////////////
+      // Key Positions
+      sf::Vector2f center_;
+      float top_, left_, right_, bottom_;
+
+      ///////////////////////////////////////////
+      // PURE FUNCTIONS:
+      // - Functions without side effects
+      // - Used to transform or read game states
+      ///////////////////////////////////////////
+      
+      // Get a collection of valid moves one could make
+      static std::vector<Move> getValidMoves(const GameState& state);
+
+      // Check if the game has been won by a player
+      // Returns (isGameOver, winner)
+      static std::pair<bool, const Player> checkGameover(const GameState& state);
+
+      // Attempts to make the move on the game state and returns new state
+      // Returns (isStateValid, newState)
+      static std::pair<bool, const GameState> makeMove(
+          const GameState& state, 
+          const Move& move);
+
+      // Check if a move is valid
+      static bool isValidMove(const Move& move);
     
-    // Get a collection of valid moves one could make
-    static std::vector<Move> getValidMoves(const GameState& state);
+      ///////////////////////////////////////////
+      // IMPURE FUNCTIONS:
+      // - Mutate the state of the scene
+      ///////////////////////////////////////////
+      
+      // Recursive function for checking and performing AI moves
+      void continueGame();
 
-    // Check if the game has been won by a player
-    // Returns (isGameOver, winner)
-    static std::pair<bool, const Player> checkGameover(const GameState& state);
+      // Reset's the state of tic-tac-toe back to the beginning
+      void resetGame();
 
-    // Attempts to make the move on the game state and returns new state
-    // Returns (isStateValid, newState)
-    static std::pair<bool, const GameState> makeMove(
-        const GameState& state, 
-        const Move& move);
+      // Get a gamestate safely
+      std::pair<bool, const GameState> getState(unsigned int n) const;
 
-    // Check if a move is valid
-    static bool isValidMove(const Move& move);
-  
-    ///////////////////////////////////////////
-    // IMPURE FUNCTIONS:
-    // - Mutate the state of the scene
-    ///////////////////////////////////////////
-    
-    // Recursive function for checking and performing AI moves
-    void continueGame();
+      // Check which controller is currently playing
+      Controller::Type getControllerOfCurrentPlayer(const Player& player) const;
 
-    // Reset's the state of tic-tac-toe back to the beginning
-    void resetGame();
+      ///////////////////////////////////////////
+      // GRAPHICAL / LOGGING:
+      // - Non-logic pure or impure functions
+      ///////////////////////////////////////////
 
-    // Get a gamestate safely
-    std::pair<bool, const GameState> getState(unsigned int n) const;
+      // Adjust graphics for current game size
+      void resizeGame();
 
-    // Check which controller is currently playing
-    Controller getControllerOfCurrentPlayer(const Player& player) const;
+      // Draw a specific gamestate
+      void drawGameState(sf::RenderWindow& window, const GameState& state);
 
-    ///////////////////////////////////////////
-    // GRAPHICAL / LOGGING:
-    // - Non-logic pure or impure functions
-    ///////////////////////////////////////////
+      // Draw an icon in a tile
+      void drawIcon(
+          sf::RenderWindow& window, 
+          Move move,
+          Player player,
+          bool hovered = false);
 
-    // Adjust graphics for current game size
-    void resizeGame();
-
-    // Draw a specific gamestate
-    void drawGameState(sf::RenderWindow& window, const GameState& state);
-
-    // Draw an icon in a tile
-    void drawIcon(
-        sf::RenderWindow& window, 
-        Move move,
-        Player player,
-        bool hovered = false);
-
-    // Log to console the move that was just performed
-    void logMove(int stateNo, Player currentTurn, Move move) const;
-
-    // Get a string of the player
-    static std::string getPlayerAsString(const Player& player);
-
-    // Get a string of the kind of controller
-    static std::string getControllerAsString(const Controller& controller);
-};
+      // Log to console the move that was just performed
+      void logMove(int stateNo, Player currentTurn, Move move) const;
+  };
+}
 
 #endif

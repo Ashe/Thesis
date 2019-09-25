@@ -1,8 +1,8 @@
-// Random.h
+// Controller/Random.h
 // A controller for randomly making moves without making decisions
 
-#ifndef RANDOM_H
-#define RANDOM_H
+#ifndef CONTROLLER_RANDOM_H
+#define CONTROLLER_RANDOM_H
 
 #include <vector>
 #include <utility>
@@ -11,7 +11,7 @@
 #include <random>
 
 // Seperate functions here from other controllers
-namespace RandomController {
+namespace Controller::Random {
 
   // Evaluates options and returns a new state after taking action
   // Templates: State, Action

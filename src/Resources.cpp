@@ -11,7 +11,7 @@
 void
 Resources::load() {
   addScene("welcome", std::make_unique<WelcomeScene>());
-  addScene("ticTacToe", std::make_unique<TicTacToeScene>());
+  addScene("ticTacToe", std::make_unique<TicTacToe::Game>());
 }
 
 // Add a new Scene to be managed

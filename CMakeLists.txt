@@ -41,14 +41,16 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
   src/Scene.h
   src/Scene.cpp
 
+  # Controllers
+  src/Controller/Common.h
+  src/Controller/Random/Random.h
+  src/Controller/AStar/AStar.h
+
   # Scenes
   src/Scenes/Welcome/Welcome.h
   src/Scenes/TicTacToe/TicTacToe.h
   src/Scenes/TicTacToe/TicTacToe.cpp
-
-  # Controller
-  src/Controllers/Random/Random.h
-  src/Controllers/AStar/AStar.h
+  src/Scenes/TicTacToe/Common.h
 
   # Development
   src/Console.h

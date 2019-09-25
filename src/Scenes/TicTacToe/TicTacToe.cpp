@@ -4,7 +4,7 @@
 #include "TicTacToe.h"
 
 // Static variables
-const Player GameState::firstPlayer = Player::X;
+const TicTacToe::Player GameState::firstPlayer = TicTacToe::Player::X;
 
 ///////////////////////////////////////////
 // SCENE FUNCTIONS:
@@ -13,7 +13,7 @@ const Player GameState::firstPlayer = Player::X;
 
 // Update the currently hovered tile
 void 
-TicTacToeScene::onUpdate(const sf::Time& dt) {
+TicTacToe::Game::onUpdate(const sf::Time& dt) {
 
   // Easy out: no tilesize
   if (tileSize_ == 0.f) { mouseTile_ = sf::Vector2i(-1, -1); }
@@ -42,7 +42,7 @@ TicTacToeScene::onUpdate(const sf::Time& dt) {
 
 // Handle input and game size changes
 void
-TicTacToeScene::onEvent(const sf::Event& event) {
+TicTacToe::Game::onEvent(const sf::Event& event) {
 
   // If the user clicks
   if (event.type == sf::Event::MouseButtonPressed) {
@@ -59,7 +59,7 @@ TicTacToeScene::onEvent(const sf::Event& event) {
       // - It's PlayerO's turn AND they're human
       if (statePair.first && 
           getControllerOfCurrentPlayer(statePair.second.currentTurn) 
-              == Controller::Human) {
+              == Controller::Type::Human) {
 
         // Get the new state after making a move
         const auto newState = 
@@ -96,7 +96,7 @@ TicTacToeScene::onEvent(const sf::Event& event) {
 
 // Render the render the game board and state
 void
-TicTacToeScene::onRender(sf::RenderWindow& window) {
+TicTacToe::Game::onRender(sf::RenderWindow& window) {
 
   // Try to get the current state
   auto statePair = getState(currentState_);
@@ -114,7 +114,7 @@ TicTacToeScene::onRender(sf::RenderWindow& window) {
 
 // Whenever the scene is re-shown, ensure graphics are correct
 void
-TicTacToeScene::onShow() {
+TicTacToe::Game::onShow() {
 
   // Ensure board sizes are corect
   resizeGame();
@@ -122,7 +122,7 @@ TicTacToeScene::onShow() {
 
 // Add details to info debug windows
 void
-TicTacToeScene::addDebugDetails() {
+TicTacToe::Game::addDebugDetails() {
 
   // Retrieve the current state
   const auto statePair = getState(currentState_);
@@ -147,17 +147,16 @@ TicTacToeScene::addDebugDetails() {
     }
   }
 
-  static const char* combo[] = {"Human", "Random"};
   ImGui::Text("X Controller: ");
   ImGui::SameLine();
   ImGui::Combo("", 
       reinterpret_cast<int*>(&playerX_), 
-      combo, IM_ARRAYSIZE(combo));
+      Controller::typeList, IM_ARRAYSIZE(Controller::typeList));
   ImGui::Text("O Controller: ");
   ImGui::SameLine();
   ImGui::Combo(" ", 
       reinterpret_cast<int*>(&playerO_), 
-      combo, IM_ARRAYSIZE(combo));
+      Controller::typeList, IM_ARRAYSIZE(Controller::typeList));
 
   ImGui::Text("Turn: %u (%s)", 
       state.turnNumber,
@@ -166,8 +165,8 @@ TicTacToeScene::addDebugDetails() {
       mouseTile_.x, mouseTile_.y);
   if(isGameOver_) {
     if(winner_ != Player::N) {
-      ImGui::Text("Game over! Winner is player %s.", 
-          getPlayerAsString(winner_).c_str());
+      ImGui::Text("Game over! Winner is player: %s.", 
+          TicTacToe::playerToString(winner_).c_str());
     }
     else {
       ImGui::Text("Game over! It's a tie.");
@@ -184,8 +183,8 @@ TicTacToeScene::addDebugDetails() {
 ///////////////////////////////////////////
 
 // Get a collection of valid moves one could make
-std::vector<Move>
-TicTacToeScene::getValidMoves(const GameState& state) {
+std::vector<TicTacToe::Move>
+TicTacToe::Game::getValidMoves(const GameState& state) {
 
   // Prepare to collect moves from the state
   std::vector<Move> moves;
@@ -207,8 +206,8 @@ TicTacToeScene::getValidMoves(const GameState& state) {
 
 // Check if the game has been won by a player
 // Returns (isGameOver, winner)
-std::pair<bool, const Player>
-TicTacToeScene::checkGameover(const GameState& state) {
+std::pair<bool, const TicTacToe::Player>
+TicTacToe::Game::checkGameover(const GameState& state) {
 
   // Prepare to inspect the board
   const auto b = state.boardState;
@@ -254,7 +253,7 @@ TicTacToeScene::checkGameover(const GameState& state) {
 // Attempts to make the move on the game state and returns new state
 // Returns (isStateValid, newState)
 std::pair<bool, const GameState>
-TicTacToeScene::makeMove(const GameState& state, const Move& move) {
+TicTacToe::Game::makeMove(const GameState& state, const Move& move) {
 
   // Extract data from move
   const int x = move.x;
@@ -290,7 +289,7 @@ TicTacToeScene::makeMove(const GameState& state, const Move& move) {
 
 // Check if a move is valid
 bool 
-TicTacToeScene::isValidMove(const Move& move) {
+TicTacToe::Game::isValidMove(const Move& move) {
   return move.x >= 0 && move.x < BOARDSIZE && 
       move.y >= 0 && move.y < BOARDSIZE;
 }
@@ -302,7 +301,7 @@ TicTacToeScene::isValidMove(const Move& move) {
 
 // Recursive function for checking and performing AI moves
 void
-TicTacToeScene::continueGame() {
+TicTacToe::Game::continueGame() {
 
   // Get the latest game state
   const unsigned int stateCount = states_.size();
@@ -316,15 +315,10 @@ TicTacToeScene::continueGame() {
   if (result.first) {
     isGameOver_ = true;
     winner_ = result.second;
-    Console::log("Game Over.");
-    if (winner_ == Player::N) { 
-      Console::log("It's a tie!"); 
-    }
-    else { 
-      Console::log(
-          "Winner is player: %s!", 
-          getPlayerAsString(winner_).c_str());
-    }
+    Console::log("Game Over. %s",
+        winner_ == Player::N ?
+          "It's a tie!" :
+          std::string("Winner is player: " + playerToString(winner_)).c_str());
     return;
   }
 
@@ -333,14 +327,28 @@ TicTacToeScene::continueGame() {
   auto attempt = std::make_pair(false, GameState());
 
   // If it's a HUMAN turn, do nothing
-  if (controller == Controller::Human) {
+  if (controller == Controller::Type::Human) {
     return;
   }
 
-  // If its a random, invoke Random::takeTurn
-  else if (controller == Controller::Random) {
-    attempt = RandomController::decide<GameState, Move> (
+  // If its a random, invoke RandomController::Type::decide
+  else if (controller == Controller::Type::Random) {
+    attempt = Controller::Random::decide<GameState, Move> (
         state, getValidMoves, makeMove);
+  }
+
+  // If it's an AStar, invoke AStarController::Type::decide
+  else if (controller == Controller::Type::AStar) {
+    Console::log("[Error] AStar not yet implemented.");
+    //attempt = AStarController::Type::decide<GameState, Move, COST>(
+    //    state,
+    //    LOWESTCOST,
+    //    HIGHESTCOST,
+    //    getValidMoves,
+    //    ISSTATEGOAL,
+    //    HEURISTIC,
+    //    WEIGHACTION,
+    //    makeMove);
   }
 
   // If AI successfully made their move, update and continue game
@@ -360,7 +368,7 @@ TicTacToeScene::continueGame() {
 
 // Reset the game back to initial state
 void
-TicTacToeScene::resetGame() {
+TicTacToe::Game::resetGame() {
 
   // Clear and re-initialise gamestate
   states_.clear();
@@ -377,7 +385,7 @@ TicTacToeScene::resetGame() {
 
 // Get a gamestate safely
 std::pair<bool, const GameState> 
-TicTacToeScene::getState(unsigned int n) const {
+TicTacToe::Game::getState(unsigned int n) const {
 
   // Fetch the correct state if possible
   if (n >= 0 && n < states_.size()) {
@@ -389,12 +397,12 @@ TicTacToeScene::getState(unsigned int n) const {
 }
 
 // Check which controller is currently playing
-Controller
-TicTacToeScene::getControllerOfCurrentPlayer(const Player& player) const {
+Controller::Type
+TicTacToe::Game::getControllerOfCurrentPlayer(const Player& player) const {
   if (player == Player::X) { return playerX_; }
   else if (player == Player::O) { return playerO_; }
   Console::log("[Error] Couldn't get controller of current player.");
-  return Controller::Human;
+  return Controller::Type::Human;
 }
 
 ///////////////////////////////////////////
@@ -404,7 +412,7 @@ TicTacToeScene::getControllerOfCurrentPlayer(const Player& player) const {
 
 // Adjust graphics for current game size
 void
-TicTacToeScene::resizeGame() {
+TicTacToe::Game::resizeGame() {
 
   // Get display size
   const auto displaySize = App::getDisplaySize();
@@ -459,15 +467,15 @@ TicTacToeScene::resizeGame() {
 
 // Draw the given state
 void
-TicTacToeScene::drawGameState(
+TicTacToe::Game::drawGameState(
     sf::RenderWindow& window, 
     const GameState& state) {
 
   // Draw mouse's hovered tile IF
   // - It's a human's turn
   // - There's nothing occupying the current tile
-  if (((state.currentTurn == Player::X && playerX_== Controller::Human)
-        || (state.currentTurn == Player::O && playerO_== Controller::Human))
+  if (((state.currentTurn == Player::X && playerX_== Controller::Type::Human)
+        || (state.currentTurn == Player::O && playerO_== Controller::Type::Human))
       && mouseTile_.x < 3 && mouseTile_.y < 3
       && mouseTile_.x >= 0 && mouseTile_.y >= 0
       && state.boardState[mouseTile_.y][mouseTile_.x] == Player::N) {
@@ -487,7 +495,7 @@ TicTacToeScene::drawGameState(
 
 // Draw an icon in a tile
 void 
-TicTacToeScene::drawIcon(
+TicTacToe::Game::drawIcon(
     sf::RenderWindow& window, 
     Move move,
     Player player,
@@ -525,31 +533,12 @@ TicTacToeScene::drawIcon(
 
 // Log to console the move that was just performed
 void 
-TicTacToeScene::logMove(int stateNo, Player currentTurn, Move move) const {
-  const auto controllerString = getControllerAsString(
+TicTacToe::Game::logMove(int stateNo, Player currentTurn, Move move) const {
+  const auto controllerString = Controller::typeToString(
       currentTurn == Player::X ? playerX_: playerO_);
   Console::log("%d> Player %s (%s) made move: (%d, %d)",
       stateNo,
       currentTurn == Player::X ? "X" : "O",
       controllerString.c_str(),
       move.x, move.y);
-}
-
-// Get a string of the player
-std::string 
-TicTacToeScene::getPlayerAsString(const Player& player) {
-  switch(player) {
-    case Player::X: return "X"; break;
-    case Player::O: return "O"; break;
-    default: return ""; break;
-  }
-}
-
-// Get a string of the kind of controller
-std::string 
-TicTacToeScene::getControllerAsString(const Controller& controller) {
-  switch(controller) {
-    case Controller::Random: return "Random"; break;
-    default: return "Human"; break;
-  }
 }

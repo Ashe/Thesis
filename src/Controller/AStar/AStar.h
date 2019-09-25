@@ -1,8 +1,8 @@
-// AStar.h
+// Controller/AStar.h
 // A controller that employs the A* pathfinding algorithm
 
-#ifndef ASTAR_H
-#define ASTAR_H
+#ifndef CONTROLLER_ASTAR_H
+#define CONTROLLER_ASTAR_H
 
 #include <set>
 #include <map>
@@ -12,7 +12,7 @@
 #include <functional>
 
 // Seperate functions here from other controllers
-namespace AStarController {
+namespace Controller::AStar {
 
 // // A* finds a path from start to goal.
 // // h is the heuristic function. 
