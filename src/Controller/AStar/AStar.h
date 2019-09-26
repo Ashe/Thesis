@@ -4,8 +4,9 @@
 #ifndef CONTROLLER_ASTAR_H
 #define CONTROLLER_ASTAR_H
 
-#include <set>
-#include <map>
+#include "../../Console.h"
+
+#include <unordered_map>
 #include <vector>
 #include <utility>
 #include <algorithm>
@@ -64,29 +65,30 @@ namespace Controller::AStar {
   template <class S, class A, class C>
   std::pair<bool, S> decide(
       const S& startingState,
-      const C& lowestCost,
-      const C& highestCost,
+      const C& minimumCost,
+      const C& maximumCost,
       std::function<std::vector<A>(const S&)> getPossibleActions,
-      std::function<bool(const S&)> isStateGoal,
+      std::function<bool(const S&, const S&)> isStateGoal,
       std::function<C(const S&)> heuristic,
-      std::function<C(const S&, const A&)> weighAction,
-      std::function<std::pair<bool, const S>(const S&, const A&)> takeAction) {
+      std::function<C(const S&, const S&, const A&)> weighAction,
+      std::function<std::pair<bool, const S>(const S&, const A&)> takeAction,
+      std::function<bool(const C&, const C&)> compareCost) {// = std::min) {
 
     // All available states to explore
-    std::set<S> remaining = {startingState};
+    std::vector<S> remaining = {startingState};
 
     // Keep track of states already evaluated
-    std::set<A> evaluated = {};
+    std::vector<S> evaluated = {};
     
     // Map of which action led to which thought state
-    std::map<S, A> cameFrom;
+    std::unordered_map<S, A> cameFrom;
 
     // How much decision power gained so far in each state
-    std::map<S, C> gScore;
-    gScore[startingState] = lowestCost;
+    std::unordered_map<S, C> gScore;
+    gScore[startingState] = minimumCost;
 
     // Map of predicted decision power from current state
-    std::map<S, C> fScore;
+    std::unordered_map<S, C> fScore;
     fScore[startingState] = heuristic(startingState);
 
     // Keep processing until there are no states left to check
@@ -94,37 +96,36 @@ namespace Controller::AStar {
 
       // Get the highest priority state to operate on
       auto current = std::min_element(remaining.begin(), remaining.end(),
-          [&fScore, &highestCost](const S& a, const S& b) {
+          [&fScore, &maximumCost, &compareCost](const S& a, const S& b) {
 
         // Find fScores of a and b
         const C& fA = fScore.find(a) != fScore.end() ?
-            fScore[a] : highestCost;
+            fScore[a] : maximumCost;
         const C& fB = fScore.find(b) != fScore.end() ?
-            fScore[b] : highestCost;
+            fScore[b] : maximumCost;
 
         // Return whether fA should come before fB
-        return fA < fB;
+        return compareCost(fA, fB);
       });
 
       // If we've arrived at a node that can be considered the goal, stop
-      if (isStateGoal(*current)) {
-        // @TODO: Return decision
-        printf("HELLO? I think we found a winner?\n");
+      const S state = *current;
+      if (isStateGoal(startingState, state)) {
+        return std::make_pair(true, state);
       }
 
       // No longer consider the current state
-      const S state = *current;
       evaluated.insert(evaluated.end(), state);
       remaining.erase(current);
 
       // Initialise gScore of state if it's not there
       if (gScore.find(state) == gScore.end()) {
-        gScore[state] = highestCost;
+        gScore[state] = maximumCost;
       }
       
       // Get possible (neighbour) states by trying all possible actions
       const std::vector<A> actions = getPossibleActions(state);
-      const std::vector<std::pair<S, A>> states;
+      std::vector<std::pair<S, A>> states;
       std::for_each(actions.begin(), actions.end(),
           [&states, &evaluated, &state, &takeAction] 
               (const A& action) {
@@ -134,25 +135,25 @@ namespace Controller::AStar {
 
         // Consider any valid states that haven't been evaluated
         if (attempt.first 
-            && evaluated.find(attempt.second) != evaluated.end()) {
-          states.insert(states.end(), 
-              std::make_pair(attempt.second, action));
+            && std::find(evaluated.begin(), evaluated.end(), attempt.second)
+                == evaluated.end()) {
+          states.insert(states.end(), std::make_pair(attempt.second, action));
         }
       });
 
       // For each neighbour
       std::for_each(states.begin(), states.end(),
-          [&remaining, &cameFrom, &gScore, &fScore, &state, &highestCost, 
+          [&remaining, &cameFrom, &gScore, &fScore, &state, &maximumCost, 
               &weighAction, &heuristic] (const std::pair<S, A>& future) {
 
         // Initialise gScore of neighbour if it's not there
-        if (gScore.find(state) == gScore.end()) {
-          gScore[future.first] = highestCost;
+        if (gScore.find(future.first) == gScore.end()) {
+          gScore[future.first] = maximumCost;
         }
 
         // Work out cost of taking this action with the current state
         const C tentative_gScore = gScore[state] + 
-            weighAction(state, future.second);
+            weighAction(state, future.first, future.second);
 
         // If our projected score is better than the one recorded
         if (tentative_gScore < gScore[future.first]) {
@@ -167,7 +168,8 @@ namespace Controller::AStar {
           fScore[future.first] = tentative_gScore + heuristic(future.first);
 
           // If the current future isn't queued to be evaluated next, add it
-          if (remaining.find(future.first) == remaining.end()) {
+          if (std::find(remaining.begin(), remaining.end(), future.first) 
+              == remaining.end()) {
             remaining.insert(remaining.end(), future.first);
           }
         }

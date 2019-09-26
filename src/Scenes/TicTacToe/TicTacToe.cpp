@@ -298,6 +298,154 @@ TicTacToe::Game::isValidMove(const Move& move) {
       move.y >= 0 && move.y < BOARDSIZE;
 }
 
+// Check to see if a given state is a desirable 'goal' node
+// If a move has been made and it's the other player's turn, its a goal
+bool
+TicTacToe::Game::isStateGoal(const GameState& from, const GameState& to) {
+  return from.currentTurn != to.currentTurn;
+}
+
+// Estimate the cost to get to a suitable destination node
+TicTacToe::Cost
+TicTacToe::Game::estimateCostHeuristic(const GameState& state) {
+  
+  // This function needs to calculate a Cost to reach a goal node
+  // In TicTacToe, the goal node is one move away 
+  // Thus, no penalties are taken as we are already there
+  return minimumCost;
+}
+
+// Determine the cost of performing a move with a given state
+TicTacToe::Cost
+TicTacToe::Game::weighMove(
+    const GameState& from, 
+    const GameState& to, 
+    const Move& move) {
+
+  // Firstly, work out who's playing
+  const auto player = from.currentTurn;
+  const auto opponent = player == Player::X ? Player::O : Player::X;
+
+  // Check if this move makes the player the winner //////////////////////
+  // If so, no penalties for choosing this one
+  const auto result = checkGameover(to);
+  if (result.first && result.second == player) {
+    return minimumCost;
+  }
+
+  // Check for near-wins /////////////////////////////////////////////////
+  unsigned int playerNearWins = 0;
+  unsigned int opponentNearWins = 0;
+  unsigned int playerCount = 0;
+  unsigned int opponentCount = 0;
+  unsigned int unoccupiedCount = 0;
+
+  // Rows
+  // @NOTE: To save time, on this pass, also count unoccupied spaces
+  for (int j = 0; j < BOARDSIZE; ++j) {
+
+    playerCount = 0;
+    opponentCount = 0;
+    for (int i = 0; i < BOARDSIZE; ++i) {
+      const auto occupied = to.boardState[j][i];
+      if (occupied == player) { ++playerCount; }
+      else if (occupied == opponent) { ++opponentCount; }
+      else { ++unoccupiedCount; }
+    }
+
+    // Check if the current row has n-1/n marks and can win
+    if (playerCount >= BOARDSIZE - 1 && opponentCount == 0) {
+      ++playerNearWins;
+    }
+    else if (opponentCount >= BOARDSIZE - 1 && playerCount == 0) {
+      ++opponentNearWins;
+    }
+  }
+
+  // Columns
+  for (int i = 0; i < BOARDSIZE; ++i) {
+
+    playerCount = 0;
+    opponentCount = 0;
+    for (int j = 0; j < BOARDSIZE; ++j) {
+      const auto occupied = to.boardState[j][i];
+      if (occupied == player) { ++playerCount; }
+      else if (occupied == opponent) { ++opponentCount; }
+    }
+
+    // Check if the current row has n-1/n marks and can win
+    if (playerCount >= BOARDSIZE - 1 && opponentCount == 0) {
+      ++playerNearWins;
+    }
+    else if (opponentCount >= BOARDSIZE - 1 && playerCount == 0) {
+      ++opponentNearWins;
+    }
+  }
+
+  // \ Diagonal
+  playerCount = 0;
+  opponentCount = 0;
+  for (int d = 0; d < BOARDSIZE; ++d) {
+    const auto occupied = to.boardState[d][d];
+    if (occupied == player) { ++playerCount; }
+    else if (occupied == opponent) { ++opponentCount; }
+  }
+  if (playerCount >= BOARDSIZE - 1 && opponentCount == 0) {
+    ++playerNearWins;
+  }
+  else if (opponentCount >= BOARDSIZE - 1 && playerCount == 0) {
+    ++opponentNearWins;
+  }
+
+  // / Diagonal
+  playerCount = 0;
+  opponentCount = 0;
+  for (int d = 0; d < BOARDSIZE; ++d) {
+    const auto occupied = to.boardState[BOARDSIZE - d - 1][d];
+    if (occupied == player) { ++playerCount; }
+    else if (occupied == opponent) { ++opponentCount; }
+  }
+  if (playerCount >= BOARDSIZE - 1 && opponentCount == 0) {
+    ++playerNearWins;
+  }
+  else if (opponentCount >= BOARDSIZE - 1 && playerCount == 0) {
+    ++opponentNearWins;
+  }
+
+  // Count opponent near wins ////////////////////////////////////////////
+  
+  // If the enemy can now win, the logic penalty scales with the number
+  if (opponentNearWins >= 1) {
+    return Cost { opponentNearWin + 
+        opponentNearWinAdditional * (opponentNearWins - 1) };
+  }
+
+  // Final non-gameover cost /////////////////////////////////////////////
+
+  // Now that the instant-game overs are out the way, 
+  // apply a penalty for each occupied square
+  // This means that letting the game go on for longer is not as interesting
+  auto logicPenalty = unoccupiedCount * unnocupiedPenalty;
+
+  // Check if the current player might be able to win
+  // If so, reduce the number if possible
+  if (playerNearWins >= 1) {
+    const auto reduction = nearWinInitialBonus +
+        nearWinAdditionalBonus * (playerNearWins - 1);
+
+    // Apply the penalty if possible
+    if (logicPenalty < reduction) {
+      logicPenalty = 0;
+    }
+    else {
+      logicPenalty -= reduction;
+    }
+  }
+
+  // Return the final calculated cost
+  return Cost{logicPenalty};
+}
+
 ///////////////////////////////////////////
 // IMPURE FUNCTIONS:
 // - Mutate the state of the scene
@@ -343,16 +491,16 @@ TicTacToe::Game::continueGame() {
 
   // If it's an AStar, invoke AStarController::Type::decide
   else if (controller == Controller::Type::AStar) {
-    Console::log("[Error] AStar not yet implemented.");
-    //attempt = AStarController::Type::decide<GameState, Move, COST>(
-    //    state,
-    //    LOWESTCOST,
-    //    HIGHESTCOST,
-    //    getValidMoves,
-    //    ISSTATEGOAL,
-    //    HEURISTIC,
-    //    WEIGHACTION,
-    //    makeMove);
+    attempt = Controller::AStar::decide<GameState, Move, Cost>(
+        state,
+        minimumCost,
+        maximumCost,
+        getValidMoves,
+        isStateGoal,
+        estimateCostHeuristic,
+        weighMove,
+        makeMove,
+        std::less<Cost>());
   }
 
   // If AI successfully made their move, update and continue game
@@ -368,6 +516,10 @@ TicTacToe::Game::continueGame() {
     continueGame();
     return;
   }
+
+  // Debug error if unsuccessful
+  Console::log("[Error] AI (%s) was unable to make a decision.",
+      Controller::typeToString(controller).c_str());
 }
 
 // Reset the game back to initial state

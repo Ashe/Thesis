@@ -13,35 +13,11 @@
 #include "../../Controller/AStar/AStar.h"
 
 #include "Common.h"
-
-#define BOARDSIZE 3
-
+#include "GameState.h"
+#include "Cost.h"
 
 // Encapsulate TicTacToe related classes
 namespace TicTacToe {
-
-  // Simple gamestate structure
-  struct GameState {
-
-    // Starting player
-    static const Player firstPlayer;
-
-    // Turn number (indexed at 1 for ease of reading)
-    unsigned int turnNumber = 1;
-
-    // Track who's turn it is
-    Player currentTurn = firstPlayer;
-
-    // Track previous move
-    Move previousMove = Move(-1, -1);
-
-    // State of the board
-    Player boardState[BOARDSIZE][BOARDSIZE] = {
-      { Player::N, Player::N, Player::N },
-      { Player::N, Player::N, Player::N },
-      { Player::N, Player::N, Player::N }
-    };
-  };
 
   // Basic game of tic-tac-toe
   class Game : public Scene {
@@ -124,7 +100,8 @@ namespace TicTacToe {
 
       // Check if the game has been won by a player
       // Returns (isGameOver, winner)
-      static std::pair<bool, const Player> checkGameover(const GameState& state);
+      static std::pair<bool, const Player> checkGameover(
+          const GameState& state);
 
       // Attempts to make the move on the game state and returns new state
       // Returns (isStateValid, newState)
@@ -134,6 +111,19 @@ namespace TicTacToe {
 
       // Check if a move is valid
       static bool isValidMove(const Move& move);
+
+      // Check to see if a state is a valid destination point
+      // Here, only one move can be made, so any valid move could be a goal
+      static bool isStateGoal(const GameState& from, const GameState& to);
+
+      // Estimate the cost to get to a suitable destination node
+      static Cost estimateCostHeuristic(const GameState& state);
+
+      // Determine the cost of performing a move with given state
+      static Cost weighMove(
+          const GameState& from, 
+          const GameState& to, 
+          const Move& move);
     
       ///////////////////////////////////////////
       // IMPURE FUNCTIONS:

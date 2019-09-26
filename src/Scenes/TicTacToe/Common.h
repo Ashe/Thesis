@@ -7,6 +7,9 @@
 // Keep dependencies to a minimum
 #include <SFML/Graphics.hpp>
 
+// Define how big the board is
+#define BOARDSIZE 3
+
 // Encapsulate Tic-Tac-Toe only types
 namespace TicTacToe {
 
