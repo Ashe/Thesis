@@ -270,9 +270,6 @@ TicTacToe::Game::makeMove(const GameState& state, const Move& move) {
       auto newState = state;
       newState.boardState[y][x] = state.currentTurn;
 
-      // Record move
-      newState.previousMove = Move(x, y);
-
       // Alternate who's turn it is
       newState.currentTurn = state.currentTurn == Player::X 
         ? Player::O : Player::X;
@@ -476,7 +473,7 @@ TicTacToe::Game::continueGame() {
 
   // Check what controller is currently playing
   const auto controller = getControllerOfCurrentPlayer(state.currentTurn);
-  auto attempt = std::make_pair(false, GameState());
+  auto attempt = std::make_pair(false, std::stack<Move>());
 
   // If it's a HUMAN turn, do nothing
   if (controller == Controller::Type::Human) {
@@ -504,17 +501,25 @@ TicTacToe::Game::continueGame() {
   }
 
   // If AI successfully made their move, update and continue game
-  if (attempt.first) {
+  if (attempt.first && attempt.second.size() > 0) {
 
-    // Log move
-    logMove(stateNo, state.currentTurn, state.previousMove);
+    // Make the move requested by AI
+    const auto move = attempt.second.top();
+    const auto tryMove = makeMove(state, move);
 
-    // Update state collection
-    states_.push_back(attempt.second);
+    // Double check the move is valid
+    if (tryMove.first) {
 
-    // Continue the game in case AI is next
-    continueGame();
-    return;
+      // Log move
+      logMove(stateNo, state.currentTurn, move);
+
+      // Update state collection
+      states_.push_back(tryMove.second);
+
+      // Continue the game in case AI is next
+      continueGame();
+      return;
+    }
   }
 
   // Debug error if unsuccessful

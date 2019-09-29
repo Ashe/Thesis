@@ -6,8 +6,10 @@
 
 #include "../../Console.h"
 
+#include <cassert>
 #include <unordered_map>
 #include <vector>
+#include <stack>
 #include <utility>
 #include <algorithm>
 #include <functional>
@@ -23,9 +25,9 @@ namespace Controller::AStar {
 //     // Initially, only the start node is known.
 //     openSet := {start}
 //
-//     // For node n, cameFrom[n] is the node immediately 
+//     // For node n, history[n] is the node immediately 
 //     // preceding it on the cheapest path from start to n currently known.
-//     cameFrom := an empty map
+//     history := an empty map
 //
 //     // For node n, gScore[n] is the cost of the 
 //     // cheapest path from start to n currently known.
@@ -39,7 +41,7 @@ namespace Controller::AStar {
 //     while openSet is not empty
 //         current := the node in openSet having the lowest fScore[] value
 //         if current = goal
-//             return reconstruct_path(cameFrom, current)
+//             return reconstruct_path(history, current)
 //
 //         openSet.Remove(current)
 //         closedSet.Add(current)
@@ -51,7 +53,7 @@ namespace Controller::AStar {
 //             tentative_gScore := gScore[current] + d(current, neighbor)
 //             if tentative_gScore < gScore[neighbor]
 //                 // This path to neighbor is better than any previous one. Record it!
-//                 cameFrom[neighbor] := current
+//                 history[neighbor] := current
 //                 gScore[neighbor] := tentative_gScore
 //                 fScore[neighbor] := gScore[neighbor] + h(neighbor)
 //                 if neighbor not in openSet
@@ -60,10 +62,10 @@ namespace Controller::AStar {
 //       // Open set is empty but goal was never reached
 //       return failure
 
-  // Evaluates options and returns a new state after making a move
+  // Evaluates options and returns a stack of actions to take
   // Templates: thought STATE, ACTION, decision COST
   template <class S, class A, class C>
-  std::pair<bool, S> decide(
+  std::pair<bool, std::stack<A>> decide(
       const S& startingState,
       const C& minimumCost,
       const C& maximumCost,
@@ -81,7 +83,8 @@ namespace Controller::AStar {
     std::vector<S> evaluated = {};
     
     // Map of which action led to which thought state
-    std::unordered_map<S, A> cameFrom;
+    // Map<future State, Pair<previous State, Action taken>>
+    std::unordered_map<S, std::pair<S, A>> history;
 
     // How much decision power gained so far in each state
     std::unordered_map<S, C> gScore;
@@ -111,7 +114,36 @@ namespace Controller::AStar {
       // If we've arrived at a node that can be considered the goal, stop
       const S state = *current;
       if (isStateGoal(startingState, state)) {
-        return std::make_pair(true, state);
+
+        // Reconstruct the processes taken to get here
+        S pathNode = state;
+        std::stack<A> actionsTaken;
+
+        // Build the path of actions from finish to start
+        while (!(pathNode == startingState)) {
+
+          // Find how we got to the current state
+          const auto it = history.find(pathNode);
+          if (it != history.end()) {
+
+            // Get the data contained in the kvp
+            const auto previous = it->second;
+
+            // Focus on the previous state for next iteration
+            pathNode = previous.first;
+
+            // Add action to the stack
+            actionsTaken.push(previous.second);
+          }
+
+          // This shouldn't trigger as all routes should be traceable
+          // However, if it does, stop the infinite loop
+          else {
+            assert(false);
+            return std::make_pair(false, actionsTaken);
+          }
+        }
+        return std::make_pair(true, actionsTaken);
       }
 
       // No longer consider the current state
@@ -143,7 +175,7 @@ namespace Controller::AStar {
 
       // For each neighbour
       std::for_each(states.begin(), states.end(),
-          [&remaining, &cameFrom, &gScore, &fScore, &state, &maximumCost, 
+          [&remaining, &history, &gScore, &fScore, &state, &maximumCost, 
               &weighAction, &heuristic] (const std::pair<S, A>& future) {
 
         // Initialise gScore of neighbour if it's not there
@@ -159,7 +191,9 @@ namespace Controller::AStar {
         if (tentative_gScore < gScore[future.first]) {
 
           // Record how we got to this node (insert new state and the action)
-          cameFrom.insert(future);
+          history.insert(std::make_pair(
+                future.first, 
+                std::make_pair(state, future.second)));
 
           // Update the gScore to the lower score
           gScore[future.first] = tentative_gScore;
@@ -177,7 +211,7 @@ namespace Controller::AStar {
     }
 
     // Return unsuccessfully with the current state
-    return std::make_pair(false, startingState);
+    return std::make_pair(false, std::stack<A>());
   }
 }
 

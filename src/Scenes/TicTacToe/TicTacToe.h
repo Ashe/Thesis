@@ -5,6 +5,7 @@
 #define TICTACTOE_H
 
 #include <math.h>
+#include <stack>
 #include <utility>
 
 #include "../../Scene.h"

@@ -22,9 +22,6 @@ namespace TicTacToe {
     // Track who's turn it is
     Player currentTurn = firstPlayer;
 
-    // Track previous move
-    Move previousMove = Move(-1, -1);
-
     // State of the board
     Player boardState[BOARDSIZE][BOARDSIZE] = {
       { Player::N, Player::N, Player::N },
