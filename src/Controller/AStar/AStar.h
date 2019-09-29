@@ -70,7 +70,7 @@ namespace Controller::AStar {
       const C& minimumCost,
       const C& maximumCost,
       std::function<std::vector<A>(const S&)> getPossibleActions,
-      std::function<bool(const S&, const S&)> isStateGoal,
+      std::function<bool(const S&, const S&)> isStateEndpoint,
       std::function<C(const S&)> heuristic,
       std::function<C(const S&, const S&, const A&)> weighAction,
       std::function<std::pair<bool, const S>(const S&, const A&)> takeAction,
@@ -113,7 +113,7 @@ namespace Controller::AStar {
 
       // If we've arrived at a node that can be considered the goal, stop
       const S state = *current;
-      if (isStateGoal(startingState, state)) {
+      if (isStateEndpoint(startingState, state)) {
 
         // Reconstruct the processes taken to get here
         S pathNode = state;
