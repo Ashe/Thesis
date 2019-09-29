@@ -1,7 +1,7 @@
 # Pathfinding to the right decision - Ashley Smith
 ## Overview
 
-This project aims to investigate further uses for established pathfinding algorithms. Traditionally, algorithms such as A* are about getting from $A$ to $B$ when given some data like a roadmap of a city or a grid of tiles or points for a video game. When implemented, these algorithms will be given this data as a graph of nodes where the edges represent things like distance, maximum speed or the traversal time, all of which are based on moving from one node to the next. In this project, I want to attempt to substitute these types for *any* type in a similar way to how we use algebra to factor out variables. In functional programming, functions themselves can be treated as variables, and so by adopting similar methods we ignore the details about *how* and *why* we are pathfinding and *what with*.
+This project aims to investigate further uses for established pathfinding algorithms. Traditionally, algorithms such as A* are about getting from $A$ to $B$ when given some data like a roadmap of a city or a grid of tiles or points for a video game. When implemented, these algorithms will be given this data as a graph of nodes where the edges represent things like distance, maximum speed or the traversal time, all of which are based on moving from one node to the next. In this project, I want to attempt to substitute these types for *any* type in a similar way to how we use algebra to factor out variables. In functional programming, functions themselves can be treated as variables, and so by adopting similar methods we ignore the details about *how* and *why* we are pathfinding and *what with* in order to use A* in other situations.
 
 ## Uses
 
@@ -52,6 +52,16 @@ Normally in these situations the nodes contain coordinates to the locations they
 
 Now we have to amend the algorithm with `Action` and `State` taken into consideration. The nodes of the graph to traverse are `State`s and the edges between them are `Action`s. This gives us some possible interactions such as many `Action`s leading us to the same `State`, although in the current example it'd be impossible to move in a different direction and end up in the same place as if the agent had decided to move differently.
 
+```mermaid
+graph TD;
+    A[Injured, enemy close] -- Kill Enemy -->B[Injured, no enemy];
+    A-- Run away -->C[Injured];
+    A-- Use medkit -->D[Die];
+    A-- Stand Still -->D;
+    B-- Use medkit-->E[Safe];
+    C-- Use medkit -->E;
+```
+
 ### Step 2: Revisiting the graph
 The next thing that needs attention is the graph itself. Rather than passing in the graph of nodes, it'd make things a lot more flexible if the programmer could decide how this graph is found. One of the main reasons I think this is a good move is that we know longer know what a `State` or `Action` really is, and so the algorithm no longer has a say as to what `Action`s are available to take. In terms of the standard implementation, the `Action` that can be taken from any given `State` would simply be derived from the neighbours of the current node. However, what if some `Action`s are one way? What if you can only take an `Action` from a specific state, or after taking a chain of `Action`s previously?
 
@@ -61,6 +71,17 @@ std::function<std::vector<A>(const S&)> getPossibleActions
 
 All of these would normally require special consideration, so instead of providing any kind of graph, we will allow the programmer to inject their graph through a function. In the test harness, this function is called `getPossibleActions`. This function will return a list of actions for any given state. It is then up to the programmer to pack enough information into the state such that they can derive what the agent could do at this point in time. For a traditional graph, this would just be a traditional look up function in an `std::map` of connections. However, this also allows for more abstract concepts - in Tic-Tac-Toe, there is no navigation. Instead, the possible `Action`s returned by this function are actually coordinates representing the different moves the AI could take. 
 
+```mermaid
+graph LR;
+    A[1, 1]-- Walk 1, 0 across grass-->B[2, 1];
+    B-- Walk -1, 0 across grass -->A;
+    B-- Walk -1, -1 down stairs -->C[1, 0]
+    C-- Walk 1 1 up stairs -->B;
+    C-- Descend 0 -1 down ladder -->D[1, -1];
+    D-- Ascend 0 1 up ladder -->C;
+    A-- Jump down pit 0, -2 -->D;
+```
+
 ### Step 3: Removing the notion of a destination
 ```cpp
 std::function<bool(const S&, const S&)> isStateEndpoint
@@ -68,6 +89,14 @@ std::function<bool(const S&, const S&)> isStateEndpoint
 It would be very difficult to provide a single `State` as a destination for a problem like this. Again, I factored out the process of comparing a given `State` to a destination into the function `isStateEndpoint`, as in, 'should the decision making process be terminated once this `State` has been reached?'
 
 For our example, this function would return `true` when the coordinates contained in the given `State` match those desired. Again though, you can take this further as multiple `State`s can be endpoints - in the Tic-Tac-Toe scene, every action leads to an endpoint as only one move can be made at a time. The condition that makes this function return `true` is simply that the turn tracker has been incremented.
+
+```mermaid
+graph TD;
+    A[X's Turn: Empty]-- Top left--> B[O's Turn: top left]
+    A-- Top center -->C[O's Turn: top center]
+    A-- Top right -->D[O's Turn: top right]
+    A-- other moves -->E[...]
+```
 
 ### Step 4: Abstracting weight of an edge
 With abstract `State`s and `Action`s in play, a problem arises from trying to choose what to do. The next amendment is this idea of `Cost`. Again, we don't care what a `State` or an `Action` consists or, nor do we care about the `Cost` of taking a given action. It is important to note that doing the same `Action` from a different `State` may result in a different `Cost` - an obvious example being the throwing of a grenade in the agent's own base versus the opponent's. On it's own, the `Cost` class doesn't do much, but it is important to multiple functions in this implementation.
@@ -91,6 +120,16 @@ std::function<C(const S&, const S&, const A&)> weighAction
 The function `weighAction` takes two `State`s and an `Action`. The first `State` is the current one, whereas the second is the resulting `State` after the given `Action` has been taken. This function is critical as it is what separates the good decisions from the bad. For navigation, this is trivial as you can simply use distance, travel time or something similar. 
 
 In the Tic-Tac-Toe example, the `Cost` class uses the idea of `logicPenalties` that penalise the agent for making bad decisions. While it is down to the programmer to create this function, these checks are all encapsulated in this one function, allowing the programmer to have different evaluation functions used in multiple agents. The penalties are completely arbitrary and tweaking the values can completely change what the agent values. Randomness could also be implemented at this stage by increasing the cost by a random amount to slightly influence decisions between `Action`s with similar `Cost`s.
+
+```mermaid
+graph LR;
+    A[One single enemy ahead]-- Move close -->B[Enemy close];
+    A-- Move to cover -->C[Enemy ahead, protected];
+    A-- Run away -->D[100% safe]
+    B-- Shotgun -->E[70% chance to kill, exposed];
+    C-- Shotgun-->F[30% chance to hit, protected];
+```
+A small scenario has been drawn in the chart above detailing an encounter with an enemy in a game like Worms. In reality there'd be more weapons, more locations to move to and more enemies. If you were asked what you'd do, your answer would be something along the lines of 'it depends'. Everything this decision depends on can be placed into the `State` to be considered. Now the question becomes 'what do you value more?' and this is something that can be calculated. The programmer can hard code or even dynamically provide the `Cost` of all three endpoints. If the agent values staying alive, possibly because they have low health or for any other reason, running away is the winner. However, if the penalty of leaving the enemy alive outweighs one's survival rate, maybe going in close is the one. If the distances are extreme or maybe it's costly either way, maybe the agent's lowest `Cost` option is to try and shoot them but stay protected. 
 
 ### Step 7: Generating actions from states
 ```cpp
