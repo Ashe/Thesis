@@ -4,8 +4,13 @@
 #ifndef RESOURCES_H
 #define RESOURCES_H
 
+#include <filesystem>
+#include <string>
+#include <cctype>
 #include <memory>
 #include <map>
+
+#include <SFML/Graphics.hpp>
 
 // Forward declaration
 class Scene;
@@ -16,11 +21,11 @@ class Resources {
     // Load initial, necessary resources
     void load();
 
-    // Add a new Scene to be managed
-    void addScene(const std::string& id, std::unique_ptr<Scene> scene);
-
-    // Retrieve a Scene
+    // Attempt to retrieve a Scene
     Scene* const getScene(const std::string& id);
+
+    // Attempt to retrieve a texture
+    sf::Texture* const getTexture(const std::string& id);
     
     // Release resources via going out of scope
     void release();
@@ -30,6 +35,8 @@ class Resources {
     // Collection of all scenes
     std::map<std::string, std::unique_ptr<Scene>> scenes_;
 
+    // Collection of textures
+    std::map<std::string, std::unique_ptr<sf::Texture>> textures_;
 };
 
 #endif

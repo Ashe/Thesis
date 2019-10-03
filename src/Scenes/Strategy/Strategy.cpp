@@ -36,6 +36,10 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
 
   // Render the game's grid
   window.draw(grid_);
+
+  // @TODO: Remove this
+  // Render an object at (1, 1)
+  renderObject(sf::Vector2u(1, 1));
 }
 
 // Whenever the scene is re-shown, ensure graphics are correct
@@ -112,4 +116,11 @@ Strategy::Game::resizeGame() {
     grid_[count + 1]  = sf::Vector2f(left_ + i * tileLength_, bottom_);
     count += 2;
   }
+}
+
+// Render an object in on the field
+void 
+Strategy::Game::renderObject(const sf::Vector2u& coords) {
+
+  // @TODO: Render a wall at desired location for now
 }

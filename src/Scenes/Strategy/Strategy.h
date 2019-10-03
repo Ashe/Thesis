@@ -5,6 +5,7 @@
 #define STRATEGY_H
 
 #include "../../Scene.h"
+#include "../../Resources.h"
 
 #include "GameState.h"
 
@@ -76,6 +77,9 @@ namespace Strategy {
 
       // Adjust graphics for current game size
       void resizeGame();
+
+      // Render an object in on the field
+      void renderObject(const sf::Vector2u& coords);
   };
 }
 

@@ -11,22 +11,65 @@
 // Load initial, necessary resources
 void
 Resources::load() {
-  addScene("welcome", std::make_unique<WelcomeScene>());
-  addScene("ticTacToe", std::make_unique<TicTacToe::Game>());
-  addScene("strategy", std::make_unique<Strategy::Game>());
+
+  // Populate scene list with instances of Scenes
+  scenes_.emplace("welcome", std::make_unique<WelcomeScene>());
+  scenes_.emplace("ticTacToe", std::make_unique<TicTacToe::Game>());
+  scenes_.emplace("strategy", std::make_unique<Strategy::Game>());
+
+  // Declare that we're loading resources
+  const std::string dir = "Assets/";
+  Console::log("Loading resources recursively from directory: '%s'..", 
+    dir.c_str());
+
+  // For every file in the directory
+  for (const auto& entry : 
+      std::filesystem::recursive_directory_iterator(dir)) {
+    const auto fp = entry.path();
+    if (entry.is_regular_file()) {// && fp.extension().string() == ".lua") {
+
+      // Prepare to load resources
+      bool loaded = false;
+
+      // Get the extension to load the resource properly
+      auto ext = fp.extension().string();
+      std::transform(ext.begin(), ext.end(), ext.begin(),
+          [](unsigned char c) { return std::tolower(c); });
+
+      // Textures
+      if (ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
+        auto tex = std::make_unique<sf::Texture>();
+        if (tex->loadFromFile(fp)) {
+          textures_.emplace(fp.stem(), std::move(tex));
+          Console::log("Loaded texture: %s as %s", 
+              fp.c_str(), fp.stem().c_str());
+          loaded = true;
+        }
+      }
+
+      // If resource failed to load
+      if (!loaded) {
+        Console::log("[Error] Failed to load resource: %s", fp.c_str());
+      }
+    }
+  }
 }
 
-// Add a new Scene to be managed
-void 
-Resources::addScene(const std::string& id, std::unique_ptr<Scene> scene) {
-  scenes_.emplace(id, std::move(scene));
-}
-
-// Retrieve a Scene
+// Attempt to retrieve a Scene
 Scene* const 
 Resources::getScene(const std::string& id) {
   auto it = scenes_.find(id);
   if (it != scenes_.end()) {
+    return it->second.get();
+  }
+  return nullptr;
+}
+
+// Attempt to retrieve a Texture
+sf::Texture* const
+Resources::getTexture(const std::string& id) {
+  auto it = textures_.find(id);
+  if (it != textures_.end()) {
     return it->second.get();
   }
   return nullptr;
