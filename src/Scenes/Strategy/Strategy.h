@@ -6,7 +6,7 @@
 
 #include "../../Scene.h"
 
-#include "Battlefield.h"
+#include "GameState.h"
 
 // Encapsulate Strategy related classes
 namespace Strategy {
@@ -42,7 +42,7 @@ namespace Strategy {
 
       // @TODO: Update this
       // Temporary state for drawing
-      Battlefield currentState_;
+      GameState currentState_;
 
       // The grid of the playing field to draw
       sf::VertexArray grid_;

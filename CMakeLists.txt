@@ -55,7 +55,9 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
   src/Scenes/TicTacToe/Cost.h
   src/Scenes/Strategy/Strategy.h
   src/Scenes/Strategy/Strategy.cpp
-  src/Scenes/Strategy/Battlefield.h
+  src/Scenes/Strategy/Common.h
+  src/Scenes/Strategy/GameState.h
+  src/Scenes/Strategy/Objects.h
 
   # Development
   src/Console.h
