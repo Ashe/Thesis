@@ -6,12 +6,14 @@
 // Avoid cyclic dependencies by including in cpp file
 #include "Scenes/Welcome/Welcome.h"
 #include "Scenes/TicTacToe/TicTacToe.h"
+#include "Scenes/Strategy/Strategy.h"
 
 // Load initial, necessary resources
 void
 Resources::load() {
   addScene("welcome", std::make_unique<WelcomeScene>());
   addScene("ticTacToe", std::make_unique<TicTacToe::Game>());
+  addScene("strategy", std::make_unique<Strategy::Game>());
 }
 
 // Add a new Scene to be managed

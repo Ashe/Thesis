@@ -408,13 +408,16 @@ App::handleImgui() {
     if (ImGui::BeginMenu("Scenes")) {
       bool showWelcome = false;
       bool showTicTacToe = false;
+      bool showStrategy = false;
       ImGui::MenuItem("Welcome", NULL, &showWelcome);
       ImGui::MenuItem("Tic-Tac-Toe", NULL, &showTicTacToe);
+      ImGui::MenuItem("Strategy", NULL, &showStrategy);
       ImGui::EndMenu();
 
       // Change scenes if user clicks the buttons
       if (showWelcome) switchScene("welcome");
       else if (showTicTacToe) switchScene("ticTacToe");
+      else if (showStrategy) switchScene("strategy");
     }
 
     // Show different tools

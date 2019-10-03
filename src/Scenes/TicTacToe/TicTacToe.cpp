@@ -12,6 +12,13 @@ const TicTacToe::Player TicTacToe::GameState::firstPlayer =
 // - Mandatory functions for the scene
 ///////////////////////////////////////////
 
+// When the scene starts set up a game
+void 
+TicTacToe::Game::onBegin() {
+  states_.push_back(GameState());
+  continueGame();
+}
+
 // Update the currently hovered tile
 void 
 TicTacToe::Game::onUpdate(const sf::Time& dt) {
@@ -95,7 +102,7 @@ TicTacToe::Game::onEvent(const sf::Event& event) {
   }
 }
 
-// Render the render the game board and state
+// Render the game board and state
 void
 TicTacToe::Game::onRender(sf::RenderWindow& window) {
 

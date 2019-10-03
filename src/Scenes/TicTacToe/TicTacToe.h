@@ -29,11 +29,8 @@ namespace TicTacToe {
       // - Mandatory functions for the scene
       ///////////////////////////////////////////
 
-      // @TODO: Delete this
-      void onBegin() override {
-        states_.push_back(GameState());
-        continueGame();
-      }
+      // When the scene starts set up a game
+      void onBegin() override;
 
       // Update the currently hovered tile
       void onUpdate(const sf::Time& dt) override;
@@ -41,7 +38,7 @@ namespace TicTacToe {
       // Handle input and game size changes
       void onEvent(const sf::Event& event) override;
 
-      // Render the render the game board and state
+      // Render the game board and state
       void onRender(sf::RenderWindow& window) override;
 
       // Whenever the scene is re-shown, ensure graphics are correct
