@@ -57,6 +57,9 @@ namespace Strategy {
       float right_;
       float bottom_;
 
+      // Store game sprites for reuse
+
+
       ///////////////////////////////////////////
       // PURE FUNCTIONS:
       // - Functions without side effects
@@ -79,7 +82,10 @@ namespace Strategy {
       void resizeGame();
 
       // Render an object in on the field
-      void renderObject(const sf::Vector2u& coords);
+      void renderObject(
+          sf::RenderWindow& window, 
+          const Strategy::Object& object,
+          const sf::Vector2u& coords);
   };
 }
 

@@ -11,9 +11,9 @@ namespace Strategy {
   enum class Object {
     Nothing,
     Wall,
-    BazookaPawn,
-    MachinegunnerPawn,
-    ShotgunnerPawn
+    Bazooka,
+    Machinegunner,
+    Shotgunner
   };
 }
 

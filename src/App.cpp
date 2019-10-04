@@ -496,6 +496,12 @@ App::getStatus() {
   return status_;
 }
 
+// Get app resources
+const Resources& 
+App::resources() {
+  return resources_;
+}
+
 // Get up to date mouse position
 sf::Vector2f
 App::getMousePosition() {

@@ -39,7 +39,10 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
 
   // @TODO: Remove this
   // Render an object at (1, 1)
-  renderObject(sf::Vector2u(1, 1));
+  renderObject(window, Object::Bazooka, sf::Vector2u(0, 0));
+  renderObject(window, Object::Shotgunner, sf::Vector2u(1, 0));
+  renderObject(window, Object::Machinegunner, sf::Vector2u(0, 1));
+  renderObject(window, Object::Wall, sf::Vector2u(1, 1));
 }
 
 // Whenever the scene is re-shown, ensure graphics are correct
@@ -101,26 +104,85 @@ Strategy::Game::resizeGame() {
 
   // Create a grid out of lines
   const unsigned int lineCount = fieldSize.x + fieldSize.y + 2;
+  const auto col = sf::Color::White * sf::Color(255, 255, 255, 50);
   grid_ = sf::VertexArray(sf::Lines, lineCount * 2);
-  unsigned int count = 0;
 
   // Create horizontal lines
   for (unsigned int j = 0; j <= fieldSize.y; ++j) {
-    grid_[count]      = sf::Vector2f(left_, top_ + j * tileLength_);
-    grid_[count + 1]  = sf::Vector2f(right_, top_ + j * tileLength_);
-    count += 2;
+    grid_.append(sf::Vertex(
+          sf::Vector2f(left_, top_ + j * tileLength_), col));
+    grid_.append(sf::Vertex(
+          sf::Vector2f(right_, top_ + j * tileLength_), col));
   }
   // Create vertical lines
   for (unsigned int i = 0; i <= fieldSize.x; ++i) {
-    grid_[count]      = sf::Vector2f(left_ + i * tileLength_, top_);
-    grid_[count + 1]  = sf::Vector2f(left_ + i * tileLength_, bottom_);
-    count += 2;
+    grid_.append(sf::Vertex(
+          sf::Vector2f(left_ + i * tileLength_, top_), col));
+    grid_.append(sf::Vertex(
+          sf::Vector2f(left_ + i * tileLength_, bottom_), col));
   }
 }
 
 // Render an object in on the field
 void 
-Strategy::Game::renderObject(const sf::Vector2u& coords) {
+Strategy::Game::renderObject(
+    sf::RenderWindow& window, 
+    const Strategy::Object& object,
+    const sf::Vector2u& coords) {
 
-  // @TODO: Render a wall at desired location for now
+  // Declare static variables for rendering easily
+  static std::map<Object, sf::Sprite> sprites;
+
+  // Try to find the desired sprite
+  const auto it = sprites.find(object);
+  if (it != sprites.end()) {
+
+    // Get sprite out of it
+    auto& sprite = it->second;
+
+    // Get position from coords
+    const auto pos = sf::Vector2f(
+        left_ + coords.x * tileLength_,
+        top_ + coords.y * tileLength_);
+
+    // Manipulate sprite to draw
+    sprite.setPosition(pos);
+    const auto texSize = sprite.getTextureRect();
+    sprite.setScale(tileLength_ / texSize.width, tileLength_ / texSize.height);
+    window.draw(sprite);
+  }
+
+  // If sprite wasn't found, try to load it
+  else {
+
+    // Prepare to create the new sprite for the required texture
+    sf::Sprite sprite;
+    sf::Texture* tex = nullptr;
+
+    // Wall texture
+    if (object == Object::Wall) {
+      tex = App::resources().getTexture("wall");
+    }
+
+    // Bazooka user
+    else if (object == Object::Bazooka) {
+      tex = App::resources().getTexture("bazooka");
+    }
+
+    // Machinegunner
+    else if (object == Object::Machinegunner) {
+      tex = App::resources().getTexture("machinegunner");
+    }
+
+    // Shotgunner
+    else if (object == Object::Shotgunner) {
+      tex = App::resources().getTexture("shotgunner");
+    }
+
+    // If a texture was found for this object, store it in the map
+    if (tex != nullptr) {
+      sprite.setTexture(*tex);
+      sprites[object] = sprite;
+    }
+  }
 }

@@ -18,7 +18,7 @@ namespace Strategy {
   struct GameState {
 
     // Size of the current battlefield
-    sf::Vector2u size = sf::Vector2u(25, 25);
+    sf::Vector2u size = sf::Vector2u(8, 8);
 
     // Map of notable pieces of obstacles
     std::map<sf::Vector2u, std::pair<Team, Object>> field;

@@ -22,10 +22,10 @@ class Resources {
     void load();
 
     // Attempt to retrieve a Scene
-    Scene* const getScene(const std::string& id);
+    Scene* const getScene(const std::string& id) const;
 
     // Attempt to retrieve a texture
-    sf::Texture* const getTexture(const std::string& id);
+    sf::Texture* const getTexture(const std::string& id) const;
     
     // Release resources via going out of scope
     void release();

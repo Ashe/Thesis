@@ -57,21 +57,23 @@ Resources::load() {
 
 // Attempt to retrieve a Scene
 Scene* const 
-Resources::getScene(const std::string& id) {
+Resources::getScene(const std::string& id) const {
   auto it = scenes_.find(id);
   if (it != scenes_.end()) {
     return it->second.get();
   }
+  Console::log("[Error] Unable to retrieve scene: %s", id.c_str());
   return nullptr;
 }
 
 // Attempt to retrieve a Texture
 sf::Texture* const
-Resources::getTexture(const std::string& id) {
+Resources::getTexture(const std::string& id) const {
   auto it = textures_.find(id);
   if (it != textures_.end()) {
     return it->second.get();
   }
+  Console::log("[Error] Unable to retrieve texture: %s", id.c_str());
   return nullptr;
 }
 

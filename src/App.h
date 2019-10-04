@@ -51,6 +51,9 @@ class App {
     // Get the status of the app
     static Status getStatus();
 
+    // Get app resources
+    static const Resources& resources();
+
     // Open the dev console
     static void openDevConsole();
 
