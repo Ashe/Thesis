@@ -1,15 +1,12 @@
 // Strategy/GameState.h
-// A struct containing the state of the game's play field
+// A struct containing the state of the game
 
 #ifndef STRATEGY_GAMESTATE_H
 #define STRATEGY_GAMESTATE_H
 
-#include <SFML/Graphics.hpp>
-#include <map>
-#include <utility>
-
 #include "Objects.h"
 #include "Common.h"
+#include "Map.h"
 
 // Seperate Strategy related classes from other games
 namespace Strategy {
@@ -17,11 +14,8 @@ namespace Strategy {
   // Store positions of important pieces
   struct GameState {
 
-    // Size of the current battlefield
-    sf::Vector2u size = sf::Vector2u(8, 8);
-
-    // Map of notable pieces of obstacles
-    std::map<sf::Vector2u, std::pair<Team, Object>> field;
+    // The map of the game
+    Map map;
 
   };
 }

@@ -123,11 +123,11 @@ namespace Controller::AStar {
         while (!(pathNode == startingState)) {
 
           // Find how we got to the current state
-          const auto it = history.find(pathNode);
+          const auto& it = history.find(pathNode);
           if (it != history.end()) {
 
             // Get the data contained in the kvp
-            const auto previous = it->second;
+            const auto& previous = it->second;
 
             // Focus on the previous state for next iteration
             pathNode = previous.first;
@@ -163,7 +163,7 @@ namespace Controller::AStar {
               (const A& action) {
 
         // Try taking the action with the current state
-        const auto attempt = takeAction(state, action);
+        const auto& attempt = takeAction(state, action);
 
         // Consider any valid states that haven't been evaluated
         if (attempt.first 

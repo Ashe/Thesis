@@ -41,9 +41,11 @@ namespace Strategy {
 
     private:
 
-      // @TODO: Update this
-      // Temporary state for drawing
-      GameState currentState_;
+      // Track the currently viewed state
+      unsigned int currentState_;
+
+      // Store all states for the game
+      std::vector<GameState> states_;
 
       // The grid of the playing field to draw
       sf::VertexArray grid_;
@@ -57,21 +59,42 @@ namespace Strategy {
       float right_;
       float bottom_;
 
-      // Store game sprites for reuse
-
-
       ///////////////////////////////////////////
       // PURE FUNCTIONS:
       // - Functions without side effects
       // - Used to transform or read game states
       ///////////////////////////////////////////
-      
+
+      // Translate coords into map index
+      static unsigned int coordToIndex(const Map& m, const Coord& coord);
+
+      // Translate map index into a coord
+      static Coord indexToCoord(const Map& m, unsigned int index);
+
+      // Check if coordinates are valid
+      static bool validateCoords(
+          const Map& map, 
+          const Coord& coords);
+
+      // Get an object on the play field
+      static std::pair<Team, Object> readMap(
+          const Map& m, 
+          const Coord& pos);
+
+      // Update the map with new information
+      static std::pair<bool, Map> updateMap(
+          const Map& m, 
+          const Coord& pos, 
+          const Object& obj, 
+          const Team& team);
 
       ///////////////////////////////////////////
       // IMPURE FUNCTIONS:
       // - Mutate the state of the scene
       ///////////////////////////////////////////
-      
+    
+      // Get a gamestate safely
+      std::pair<bool, const GameState> getState(unsigned int n) const;
 
       ///////////////////////////////////////////
       // GRAPHICAL / LOGGING:

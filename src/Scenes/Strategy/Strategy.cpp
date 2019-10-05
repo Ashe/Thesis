@@ -11,7 +11,22 @@
 // When the scene starts set up a game
 void 
 Strategy::Game::onBegin() {
+  currentState_ = 0;
 
+  // Make a temporary state with a blank map
+  auto temp = GameState();
+  auto attempt = updateMap(
+      temp.map, 
+      Coord(0, temp.map.size.y - 1),
+      Object::Bazooka,
+      0);
+  attempt = updateMap(
+      attempt.second,
+      Coord(temp.map.size.x - 1, 0),
+      Object::Bazooka,
+      0);
+  temp.map = attempt.second;
+  states_.push_back(temp);
 }
 
 // Update the currently hovered tile
@@ -37,12 +52,25 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
   // Render the game's grid
   window.draw(grid_);
 
-  // @TODO: Remove this
-  // Render an object at (1, 1)
-  renderObject(window, Object::Bazooka, sf::Vector2u(0, 0));
-  renderObject(window, Object::Shotgunner, sf::Vector2u(1, 0));
-  renderObject(window, Object::Machinegunner, sf::Vector2u(0, 1));
-  renderObject(window, Object::Wall, sf::Vector2u(1, 1));
+  // Get the current state if possible
+  const auto& attempt = getState(currentState_);
+  if (!attempt.first) { return; }
+  const auto& state = attempt.second;
+
+  // Render the game's map
+  const auto& map = state.map;
+
+  // Render everything on the map
+  for (const auto& t : map.field) {
+
+    // Retrieve data from the current entry
+    const auto& pos = indexToCoord(map, t.first);
+    const auto& team = t.second.first;
+    const auto& object = t.second.second;
+
+    // Render object if coords are valid
+    renderObject(window, object, pos);
+  }
 }
 
 // Whenever the scene is re-shown, ensure graphics are correct
@@ -63,11 +91,88 @@ Strategy::Game::addDebugDetails() {
 // - Used to transform or read game states
 ///////////////////////////////////////////
 
+// Translate coords into map index
+unsigned int 
+Strategy::Game::coordToIndex(const Map& m, const Coord& coord) {
+  return coord.x + coord.y * m.size.x;
+}
+
+// Translate map index into a coord
+Strategy::Coord 
+Strategy::Game::indexToCoord(const Map& m, unsigned int index) {
+  const unsigned int rem = index % m.size.x;
+  return Coord( rem, (index - rem) / m.size.x);
+}
+
+// Check if coordinates are valid
+bool 
+Strategy::Game::validateCoords(const Map& map, const Coord& coords) {
+  return coords.x >= 0 && coords.x < map.size.x &&
+      coords.y >= 0 && coords.y < map.size.y;
+}
+
+// Get an object on the play field
+std::pair<Strategy::Team, Strategy::Object> 
+Strategy::Game::readMap(
+    const Map& m, 
+    const Coord& pos) {
+  const unsigned int index = coordToIndex(m, pos);
+  const auto it = m.field.find(index);
+  if (it != m.field.end()) {
+    return it->second;
+  }
+  return std::make_pair(0, Object::Nothing);
+}
+
+// Update the map in some way
+std::pair<bool, Strategy::Map> 
+Strategy::Game::updateMap(
+    const Map& m, 
+    const Coord& pos, 
+    const Object& obj, 
+    const Team& team) {
+
+  // Easy out if the coordinate isn't valid
+  Map map = m;
+  if (!validateCoords(m, pos)) { return std::make_pair(false, map); }
+
+  // Find the desired element
+  const unsigned int index = coordToIndex(m, pos);
+  const auto it = map.field.find(index);
+
+  // If the object is 'nothing', this is a call to delete
+  if (obj == Object::Nothing) {
+    if (it != map.field.end()) {
+      map.field.erase(it);
+    }
+  }
+
+  // Otherwise, insert new data into the map
+  else {
+    map.field[index] = std::make_pair(team, obj);
+  }
+
+  // Return new Map
+  return std::make_pair(true, map);
+}
 
 ///////////////////////////////////////////
 // IMPURE FUNCTIONS:
 // - Mutate the state of the scene
 ///////////////////////////////////////////
+
+// Get a gamestate safely
+std::pair<bool, const Strategy::GameState> 
+Strategy::Game::getState(unsigned int n) const {
+
+  // Fetch the correct state if possible
+  if (n >= 0 && n < states_.size()) {
+    return std::make_pair(true, states_[n]);
+  }
+
+  // If nothing found, return invalid pair
+  return std::make_pair(false, GameState());
+}
 
 
 ///////////////////////////////////////////
@@ -87,8 +192,13 @@ Strategy::Game::resizeGame() {
       (displaySize.x < displaySize.y ? 
       displaySize.x : displaySize.y) * 0.75f;
 
+  // Get the current state if possible
+  const auto& attempt = getState(currentState_);
+  if (!attempt.first) { return; }
+  const auto& state = attempt.second;
+
   // Get width and length of battlefield in tiles
-  const auto fieldSize = currentState_.size;
+  const auto fieldSize = state.map.size;
 
   // Use the smallest dimension of playfield to calculate tile size
   tileLength_ = 
