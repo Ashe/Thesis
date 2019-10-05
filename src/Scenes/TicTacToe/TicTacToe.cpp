@@ -15,8 +15,7 @@ const TicTacToe::Player TicTacToe::GameState::firstPlayer =
 // When the scene starts set up a game
 void 
 TicTacToe::Game::onBegin() {
-  states_.push_back(GameState());
-  continueGame();
+  resetGame();
 }
 
 // Update the currently hovered tile

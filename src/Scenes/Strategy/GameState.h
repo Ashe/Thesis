@@ -4,6 +4,8 @@
 #ifndef STRATEGY_GAMESTATE_H
 #define STRATEGY_GAMESTATE_H
 
+#include <map>
+
 #include "Objects.h"
 #include "Common.h"
 #include "Map.h"
@@ -17,6 +19,8 @@ namespace Strategy {
     // The map of the game
     Map map;
 
+    // Member count of participating teams
+    std::map<Team, unsigned int> teams;
   };
 }
 

@@ -11,9 +11,9 @@
 // When the scene starts set up a game
 void 
 Strategy::Game::onBegin() {
-  currentState_ = 0;
 
-  // Make a temporary state with a blank map
+  // Make a temporary initial map
+  // @TODO: Delete this
   auto temp = GameState();
   auto attempt = updateMap(
       temp.map, 
@@ -25,8 +25,12 @@ Strategy::Game::onBegin() {
       Coord(temp.map.size.x - 1, 0),
       Object::Bazooka,
       0);
-  temp.map = attempt.second;
-  states_.push_back(temp);
+  
+  // Load the first map to play with
+  currentMap_ = attempt.second;
+
+  // Reset the game properly
+  resetGame();
 }
 
 // Update the currently hovered tile
@@ -83,6 +87,41 @@ Strategy::Game::onShow() {
 void 
 Strategy::Game::addDebugDetails() {
 
+  // Retrieve the current state
+  const auto statePair = getState(currentState_);
+  if (!statePair.first) { return; }
+  const auto state = statePair.second;
+
+  ImGui::Begin("State Viewer");
+  ImGui::Text("State: %u", currentState_);
+  ImGui::PushButtonRepeat(true);
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
+    if (currentState_ > 0) {
+      --currentState_;
+      Console::log("Switched to prev state: %d", currentState_);
+    }
+  }
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
+    if (currentState_ < states_.size() - 1) {
+      ++currentState_;
+      Console::log("Switched to next state: %d", currentState_);
+    }
+  }
+  ImGui::Columns(2, "teamcolumns");
+  ImGui::Separator();
+  ImGui::Text("Team"); ImGui::NextColumn();
+  ImGui::Text("Members left"); ImGui::NextColumn();
+  ImGui::Separator();
+  for (const auto& kvp : state.teams) {
+    ImGui::Text("%u", kvp.first); ImGui::NextColumn();
+    ImGui::Text("%u", kvp.second); ImGui::NextColumn();
+    ImGui::Separator();
+  }
+  ImGui::Columns(1);
+  if (ImGui::Button("Reset")) { resetGame(); }
+  ImGui::End();
 }
 
 ///////////////////////////////////////////
@@ -109,6 +148,24 @@ bool
 Strategy::Game::validateCoords(const Map& map, const Coord& coords) {
   return coords.x >= 0 && coords.x < map.size.x &&
       coords.y >= 0 && coords.y < map.size.y;
+}
+
+// Collect the participating teams
+std::map<Strategy::Team, unsigned int> 
+Strategy::Game::countTeams(const Map& map) {
+
+  // Iterate through things on the map
+  std::map<Team, unsigned int> teams;
+  for (const auto& kvp : map.field) {
+
+    // Increment the count for the found team
+    const auto& team = kvp.second.first;
+    if (teams.find(team) != teams.end()) { teams[team] += 1; }
+    else { teams[team] = 1; }
+  }
+
+  // Return the map of team counts
+  return teams;
 }
 
 // Get an object on the play field
@@ -160,6 +217,26 @@ Strategy::Game::updateMap(
 // IMPURE FUNCTIONS:
 // - Mutate the state of the scene
 ///////////////////////////////////////////
+
+// Resets the state of tic-tac-toe back to the beginning
+void 
+Strategy::Game::resetGame() {
+
+  // Clear and re-initialise gamestate
+  states_.clear();
+  GameState state;
+  state.map = currentMap_;
+  state.teams = countTeams(state.map);
+  states_.push_back(state);
+  //isGameOver_ = false;
+
+  // Start the game
+  //continueGame();
+
+  // Set current state to the most up-to-date state
+  currentState_ = states_.size() - 1;
+  if (currentState_ < 0) { currentState_ = 0; }
+}
 
 // Get a gamestate safely
 std::pair<bool, const Strategy::GameState> 

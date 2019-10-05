@@ -47,6 +47,9 @@ namespace Strategy {
       // Store all states for the game
       std::vector<GameState> states_;
 
+      // Current map to start with
+      Map currentMap_;
+
       // The grid of the playing field to draw
       sf::VertexArray grid_;
 
@@ -76,6 +79,9 @@ namespace Strategy {
           const Map& map, 
           const Coord& coords);
 
+      // Collect the participating teams
+      static std::map<Team, unsigned int> countTeams(const Map& map);
+
       // Get an object on the play field
       static std::pair<Team, Object> readMap(
           const Map& m, 
@@ -93,6 +99,9 @@ namespace Strategy {
       // - Mutate the state of the scene
       ///////////////////////////////////////////
     
+      // Resets the state of tic-tac-toe back to the beginning
+      void resetGame();
+
       // Get a gamestate safely
       std::pair<bool, const GameState> getState(unsigned int n) const;
 

@@ -131,7 +131,7 @@ namespace TicTacToe {
       // Recursive function for checking and performing AI moves
       void continueGame();
 
-      // Reset's the state of tic-tac-toe back to the beginning
+      // Resets the state of tic-tac-toe back to the beginning
       void resetGame();
 
       // Get a gamestate safely
