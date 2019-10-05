@@ -92,36 +92,52 @@ Strategy::Game::addDebugDetails() {
   if (!statePair.first) { return; }
   const auto state = statePair.second;
 
-  ImGui::Begin("State Viewer");
-  ImGui::Text("State: %u", currentState_);
-  ImGui::PushButtonRepeat(true);
-  ImGui::SameLine();
-  if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
-    if (currentState_ > 0) {
-      --currentState_;
-      Console::log("Switched to prev state: %d", currentState_);
+  // State viewer
+  if (ImGui::Begin("State Viewer")) {
+    ImGui::Text("State: %u", currentState_);
+    ImGui::PushButtonRepeat(true);
+    ImGui::SameLine();
+    if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
+      if (currentState_ > 0) {
+        --currentState_;
+        Console::log("Switched to prev state: %d", currentState_);
+      }
     }
-  }
-  ImGui::SameLine();
-  if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
-    if (currentState_ < states_.size() - 1) {
-      ++currentState_;
-      Console::log("Switched to next state: %d", currentState_);
+    ImGui::SameLine();
+    if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
+      if (currentState_ < states_.size() - 1) {
+        ++currentState_;
+        Console::log("Switched to next state: %d", currentState_);
+      }
     }
-  }
-  ImGui::Columns(2, "teamcolumns");
-  ImGui::Separator();
-  ImGui::Text("Team"); ImGui::NextColumn();
-  ImGui::Text("Members left"); ImGui::NextColumn();
-  ImGui::Separator();
-  for (const auto& kvp : state.teams) {
-    ImGui::Text("%u", kvp.first); ImGui::NextColumn();
-    ImGui::Text("%u", kvp.second); ImGui::NextColumn();
+    ImGui::Spacing();
+    ImGui::Columns(2, "teamcolumns");
     ImGui::Separator();
+    ImGui::Text("Team"); ImGui::NextColumn();
+    ImGui::Text("Members left"); ImGui::NextColumn();
+    ImGui::Separator();
+    for (const auto& kvp : state.teams) {
+      ImGui::Text("%u", kvp.first); ImGui::NextColumn();
+      ImGui::Text("%u", kvp.second); ImGui::NextColumn();
+      ImGui::Separator();
+    }
+    ImGui::Columns(1);
+    ImGui::Spacing();
+    if (ImGui::Button("Reset Game")) { resetGame(); }
+    ImGui::Spacing();
+    if (ImGui::Button(enableEditor_ ? "Hide Editor" : "Show Editor")) {
+      enableEditor_ = !enableEditor_;
+    }
   }
-  ImGui::Columns(1);
-  if (ImGui::Button("Reset")) { resetGame(); }
   ImGui::End();
+
+  // Map editor
+  if (enableEditor_) {
+    if(ImGui::Begin("Map Editor", &enableEditor_)) {
+      ImGui::Text("Map editor here");
+    }
+    ImGui::End();
+  }
 }
 
 ///////////////////////////////////////////
@@ -221,6 +237,9 @@ Strategy::Game::updateMap(
 // Resets the state of tic-tac-toe back to the beginning
 void 
 Strategy::Game::resetGame() {
+
+  // Report that we're starting a new game
+  Console::log("Game reset.");
 
   // Clear and re-initialise gamestate
   states_.clear();

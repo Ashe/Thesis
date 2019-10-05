@@ -136,50 +136,52 @@ TicTacToe::Game::addDebugDetails() {
   if (!statePair.first) { return; }
   const auto state = statePair.second;
 
-  ImGui::Begin("State Viewer");
-  ImGui::Text("State: %u", currentState_);
-  ImGui::PushButtonRepeat(true);
-  ImGui::SameLine();
-  if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
-    if (currentState_ > 0) {
-      --currentState_;
-      Console::log("Switched to prev state: %d", currentState_);
+  // State viewer window
+  if (ImGui::Begin("State Viewer")) {
+    ImGui::Text("State: %u", currentState_);
+    ImGui::PushButtonRepeat(true);
+    ImGui::SameLine();
+    if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
+      if (currentState_ > 0) {
+        --currentState_;
+        Console::log("Switched to prev state: %d", currentState_);
+      }
     }
-  }
-  ImGui::SameLine();
-  if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
-    if (currentState_ < states_.size() - 1) {
-      ++currentState_;
-      Console::log("Switched to next state: %d", currentState_);
+    ImGui::SameLine();
+    if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
+      if (currentState_ < states_.size() - 1) {
+        ++currentState_;
+        Console::log("Switched to next state: %d", currentState_);
+      }
     }
-  }
 
-  ImGui::Text("X Controller: ");
-  ImGui::SameLine();
-  ImGui::Combo("", 
-      reinterpret_cast<int*>(&playerX_), 
-      Controller::typeList, IM_ARRAYSIZE(Controller::typeList));
-  ImGui::Text("O Controller: ");
-  ImGui::SameLine();
-  ImGui::Combo(" ", 
-      reinterpret_cast<int*>(&playerO_), 
-      Controller::typeList, IM_ARRAYSIZE(Controller::typeList));
+    ImGui::Text("X Controller: ");
+    ImGui::SameLine();
+    ImGui::Combo("", 
+        reinterpret_cast<int*>(&playerX_), 
+        Controller::typeList, IM_ARRAYSIZE(Controller::typeList));
+    ImGui::Text("O Controller: ");
+    ImGui::SameLine();
+    ImGui::Combo(" ", 
+        reinterpret_cast<int*>(&playerO_), 
+        Controller::typeList, IM_ARRAYSIZE(Controller::typeList));
 
-  ImGui::Text("Turn: %u (%s)", 
-      state.turnNumber,
-      state.currentTurn == Player::X ? "X" : "O");
-  ImGui::Text("Hovered tile: (%d, %d)",
-      mouseTile_.x, mouseTile_.y);
-  if(isGameOver_) {
-    if(winner_ != Player::N) {
-      ImGui::Text("Game over! Winner is player: %s.", 
-          TicTacToe::playerToString(winner_).c_str());
+    ImGui::Text("Turn: %u (%s)", 
+        state.turnNumber,
+        state.currentTurn == Player::X ? "X" : "O");
+    ImGui::Text("Hovered tile: (%d, %d)",
+        mouseTile_.x, mouseTile_.y);
+    if(isGameOver_) {
+      if(winner_ != Player::N) {
+        ImGui::Text("Game over! Winner is player: %s.", 
+            TicTacToe::playerToString(winner_).c_str());
+      }
+      else {
+        ImGui::Text("Game over! It's a tie.");
+      }
     }
-    else {
-      ImGui::Text("Game over! It's a tie.");
-    }
+    if (ImGui::Button("Reset Game")) { resetGame(); }
   }
-  if (ImGui::Button("Reset")) { resetGame(); }
   ImGui::End();
 }
 
@@ -536,6 +538,9 @@ TicTacToe::Game::continueGame() {
 // Reset the game back to initial state
 void
 TicTacToe::Game::resetGame() {
+
+  // Report that we're starting a new game
+  Console::log("Game reset.");
 
   // Clear and re-initialise gamestate
   states_.clear();

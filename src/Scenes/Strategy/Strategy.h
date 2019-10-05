@@ -62,6 +62,9 @@ namespace Strategy {
       float right_;
       float bottom_;
 
+      // Whether to show or hide the editor
+      bool enableEditor_ = false;
+
       ///////////////////////////////////////////
       // PURE FUNCTIONS:
       // - Functions without side effects

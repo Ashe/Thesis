@@ -19,11 +19,10 @@ namespace Strategy {
   // Team colours
   static std::map<Team, sf::Color> teamColours = {
     {0, sf::Color::Cyan},
-    {1, sf::Color::Green},
-    {2, sf::Color::Red},
+    {1, sf::Color::Red},
+    {2, sf::Color::Green},
     {3, sf::Color::Yellow}
   };
-
 };
 
 #endif
