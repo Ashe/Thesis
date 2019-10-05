@@ -4,6 +4,7 @@
 #ifndef STRATEGY_COMMON_H
 #define STRATEGY_COMMON_H
 
+#include <map>
 #include <SFML/Graphics.hpp>
 
 // Seperate strategy classes from other games
@@ -14,6 +15,14 @@ namespace Strategy {
 
   // Coordinate in the game
   typedef sf::Vector2u Coord;
+
+  // Team colours
+  static std::map<Team, sf::Color> teamColours = {
+    {0, sf::Color::Cyan},
+    {1, sf::Color::Green},
+    {2, sf::Color::Red},
+    {3, sf::Color::Yellow}
+  };
 
 };
 

@@ -24,7 +24,7 @@ Strategy::Game::onBegin() {
       attempt.second,
       Coord(temp.map.size.x - 1, 0),
       Object::Bazooka,
-      0);
+      1);
   
   // Load the first map to play with
   currentMap_ = attempt.second;
@@ -73,7 +73,7 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     const auto& object = t.second.second;
 
     // Render object if coords are valid
-    renderObject(window, object, pos);
+    renderObject(window, team, object, pos);
   }
 }
 
@@ -314,6 +314,7 @@ Strategy::Game::resizeGame() {
 void 
 Strategy::Game::renderObject(
     sf::RenderWindow& window, 
+    const Team& team,
     const Strategy::Object& object,
     const sf::Vector2u& coords) {
 
@@ -332,10 +333,20 @@ Strategy::Game::renderObject(
         left_ + coords.x * tileLength_,
         top_ + coords.y * tileLength_);
 
-    // Manipulate sprite to draw
+    // Manipulate sprite position and size
     sprite.setPosition(pos);
     const auto texSize = sprite.getTextureRect();
     sprite.setScale(tileLength_ / texSize.width, tileLength_ / texSize.height);
+
+    // Manipulate sprite colour
+    const auto it = teamColours.find(team);
+    auto col = sf::Color::White;
+    if (it != teamColours.end()) {
+      col = it->second;
+    }
+    sprite.setColor(col);
+
+    // Draw sprite
     window.draw(sprite);
   }
 

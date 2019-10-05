@@ -116,7 +116,8 @@ namespace Strategy {
       // Render an object in on the field
       void renderObject(
           sf::RenderWindow& window, 
-          const Strategy::Object& object,
+          const Team& team,
+          const Object& object,
           const sf::Vector2u& coords);
   };
 }
