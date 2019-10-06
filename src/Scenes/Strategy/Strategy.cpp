@@ -131,13 +131,21 @@ Strategy::Game::addDebugDetails() {
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Text("Participating Teams:"); ImGui::NextColumn();
-    ImGui::Columns(2, "teamcolumns");
+    ImGui::Columns(3, "teamcolumns");
     ImGui::Separator();
     for (const auto& kvp : state.teams) {
       const auto col = getTeamColour(state, kvp.first);
       ImGui::TextColored(col, "Team %u", kvp.first); 
       ImGui::NextColumn();
       ImGui::TextColored(col, "%u members left", kvp.second); 
+      ImGui::NextColumn();
+      auto& controller = getController(kvp.first);
+      std::string comboLabel;
+      for (unsigned int i = 0; i < kvp.first; ++i) { comboLabel += " "; }
+      ImGui::Combo(
+          comboLabel.c_str(),
+          reinterpret_cast<int*>(&controller), 
+          Controller::typeList, IM_ARRAYSIZE(Controller::typeList));
       ImGui::NextColumn();
       ImGui::Separator();
     }
@@ -306,6 +314,18 @@ Strategy::Game::getState(unsigned int n) const {
   return std::make_pair(false, GameState());
 }
 
+// Get the controller for a team (inserts HUMAN if not found)
+Controller::Type&
+Strategy::Game::getController(const Team& team) {
+  const auto& it = controllers_.find(team);
+  if (it != controllers_.end()) {
+    return it->second;
+  }
+  
+  // If nothing is found, insert Type::Human and return that
+  controllers_[team] = Controller::Type::Human;
+  return getController(team);
+}
 
 ///////////////////////////////////////////
 // GRAPHICAL / LOGGING:

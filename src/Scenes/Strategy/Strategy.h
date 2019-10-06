@@ -7,6 +7,7 @@
 #include <cmath>
 
 #include "../../Scene.h"
+#include "../../Controller/Common.h"
 #include "../../Resources.h"
 
 #include "GameState.h"
@@ -54,6 +55,10 @@ namespace Strategy {
 
       // Currently hovered tile by mouse
       Coord hoveredTile_;
+
+      // Controllers used to play the game
+      std::map<Team, Controller::Type> controllers_;
+      const Controller::Type defaultController_ = Controller::Type::Human;
 
       // The grid of the playing field to draw
       sf::VertexArray grid_;
@@ -112,6 +117,9 @@ namespace Strategy {
 
       // Get a gamestate safely
       std::pair<bool, const GameState> getState(unsigned int n) const;
+
+      // Get the controller for a team (inserts HUMAN if not found)
+      Controller::Type& getController(const Team& team);
 
       ///////////////////////////////////////////
       // GRAPHICAL / LOGGING:
