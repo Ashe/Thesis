@@ -4,6 +4,8 @@
 #ifndef STRATEGY_H
 #define STRATEGY_H
 
+#include <cmath>
+
 #include "../../Scene.h"
 #include "../../Resources.h"
 
@@ -49,6 +51,9 @@ namespace Strategy {
 
       // Current map to start with
       Map currentMap_;
+
+      // Currently hovered tile by mouse
+      Coord hoveredTile_;
 
       // The grid of the playing field to draw
       sf::VertexArray grid_;
@@ -121,7 +126,10 @@ namespace Strategy {
           sf::RenderWindow& window, 
           const Team& team,
           const Object& object,
-          const sf::Vector2u& coords);
+          const Coord& coords);
+
+      // Get the colour associated with a team
+      static sf::Color getTeamColour(const GameState& state, const Team& team);
   };
 }
 

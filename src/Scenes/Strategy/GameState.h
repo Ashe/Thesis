@@ -21,6 +21,7 @@ namespace Strategy {
 
     // Member count of participating teams
     std::map<Team, unsigned int> teams;
+    Team currentTeam;
   };
 }
 

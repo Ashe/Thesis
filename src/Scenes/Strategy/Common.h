@@ -14,7 +14,7 @@ namespace Strategy {
   typedef unsigned int Team;
 
   // Coordinate in the game
-  typedef sf::Vector2u Coord;
+  typedef sf::Vector2i Coord;
 
   // Team colours
   static std::map<Team, sf::Color> teamColours = {

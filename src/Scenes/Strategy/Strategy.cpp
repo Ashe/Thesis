@@ -37,6 +37,21 @@ Strategy::Game::onBegin() {
 void 
 Strategy::Game::onUpdate(const sf::Time& dt) {
 
+  // Easy out if the map's size is invalid
+  if (currentMap_.size.x <= 0 || currentMap_.size.y <= 0) { 
+    return; 
+  }
+
+  // Get the position of the mouse
+  const auto& mousePosition = App::getMousePosition();
+
+  // Get the mouse position in game tiles
+  const auto hover = Coord(
+      static_cast<int>(std::floor((mousePosition.x - left_) / tileLength_)),
+      static_cast<int>(std::floor((mousePosition.y - top_) / tileLength_)));
+
+  // Check if hovered tile is valid
+  hoveredTile_ = validateCoords(currentMap_, hover) ?  hover : Coord(-1, -1);
 }
 
 // Handle input and game size changes
@@ -110,19 +125,34 @@ Strategy::Game::addDebugDetails() {
         Console::log("Switched to next state: %d", currentState_);
       }
     }
+    ImGui::Text("Hovered tile: (%d, %d)",
+        hoveredTile_.x, 
+        hoveredTile_.y);
     ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Text("Participating Teams:"); ImGui::NextColumn();
     ImGui::Columns(2, "teamcolumns");
     ImGui::Separator();
-    ImGui::Text("Team"); ImGui::NextColumn();
-    ImGui::Text("Members left"); ImGui::NextColumn();
-    ImGui::Separator();
     for (const auto& kvp : state.teams) {
-      ImGui::Text("%u", kvp.first); ImGui::NextColumn();
-      ImGui::Text("%u", kvp.second); ImGui::NextColumn();
+      const auto col = getTeamColour(state, kvp.first);
+      ImGui::TextColored(col, "Team %u", kvp.first); 
+      ImGui::NextColumn();
+      ImGui::TextColored(col, "%u members left", kvp.second); 
+      ImGui::NextColumn();
       ImGui::Separator();
     }
     ImGui::Columns(1);
     ImGui::Spacing();
+    ImGui::Text("Current turn: "); ImGui::SameLine();
+    const auto teamIt = state.teams.find(state.currentTeam);
+    if (teamIt != state.teams.end()) {
+      const auto col = getTeamColour(state, state.currentTeam);
+      ImGui::TextColored(col, "Team %u (%u members left)", 
+          state.currentTeam, teamIt->second);
+    }
+    else {
+      ImGui::Text("No participating teams to play.");
+    }
     if (ImGui::Button("Reset Game")) { resetGame(); }
     ImGui::Spacing();
     if (ImGui::Button(enableEditor_ ? "Hide Editor" : "Show Editor")) {
@@ -174,10 +204,14 @@ Strategy::Game::countTeams(const Map& map) {
   std::map<Team, unsigned int> teams;
   for (const auto& kvp : map.field) {
 
-    // Increment the count for the found team
-    const auto& team = kvp.second.first;
-    if (teams.find(team) != teams.end()) { teams[team] += 1; }
-    else { teams[team] = 1; }
+    // If the thing found is a character
+    if (kvp.second.second >= Object::Bazooka) {
+
+      // Increment the count for the found team
+      const auto& team = kvp.second.first;
+      if (teams.find(team) != teams.end()) { teams[team] += 1; }
+      else { teams[team] = 1; }
+    }
   }
 
   // Return the map of team counts
@@ -246,6 +280,8 @@ Strategy::Game::resetGame() {
   GameState state;
   state.map = currentMap_;
   state.teams = countTeams(state.map);
+  const auto it = state.teams.begin();
+  state.currentTeam = it != state.teams.end() ? it->first : -1;
   states_.push_back(state);
   //isGameOver_ = false;
 
@@ -335,7 +371,7 @@ Strategy::Game::renderObject(
     sf::RenderWindow& window, 
     const Team& team,
     const Strategy::Object& object,
-    const sf::Vector2u& coords) {
+    const Coord& coords) {
 
   // Declare static variables for rendering easily
   static std::map<Object, sf::Sprite> sprites;
@@ -402,4 +438,15 @@ Strategy::Game::renderObject(
       sprites[object] = sprite;
     }
   }
+}
+
+// Get the colour associated with a team
+sf::Color
+Strategy::Game::getTeamColour(const GameState& state, const Team& team) {
+  const auto& coloursIt = teamColours.find(team);
+  auto col = sf::Color::White;
+  if (coloursIt != teamColours.end()) { 
+    col = coloursIt->second; 
+  }
+  return col;
 }

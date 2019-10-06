@@ -11,7 +11,6 @@ namespace Strategy {
   enum class Object {
     Nothing,
     Wall,
-    CHARACTERS,
     Bazooka,
     Machinegunner,
     Shotgunner
