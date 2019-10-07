@@ -22,6 +22,9 @@ namespace Strategy {
     // Member count of participating teams
     std::map<Team, unsigned int> teams;
     Team currentTeam;
+
+    // Track the currently selected piece
+    Coord selection = Coord(-1, -1);
   };
 }
 

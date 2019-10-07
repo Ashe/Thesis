@@ -10,7 +10,10 @@
 #include "../../Controller/Common.h"
 #include "../../Resources.h"
 
+#include "Common.h"
 #include "GameState.h"
+#include "Map.h"
+#include "Action.h"
 
 // Encapsulate Strategy related classes
 namespace Strategy {
@@ -81,6 +84,11 @@ namespace Strategy {
       // - Used to transform or read game states
       ///////////////////////////////////////////
 
+      // Attempt to take action on a gamestate
+      static std::pair<bool, GameState> takeAction(
+          const GameState& state,
+          const Action& action);
+
       // Translate coords into map index
       static unsigned int coordToIndex(const Map& m, const Coord& coord);
 
@@ -118,8 +126,11 @@ namespace Strategy {
       // Get a gamestate safely
       std::pair<bool, const GameState> getState(unsigned int n) const;
 
-      // Get the controller for a team (inserts HUMAN if not found)
-      Controller::Type& getController(const Team& team);
+      // Get the controller for a team
+      Controller::Type getController(const Team& team) const;
+
+      // Get the reference to the controller for a team
+      Controller::Type& getControllerRef(const Team& team);
 
       ///////////////////////////////////////////
       // GRAPHICAL / LOGGING:
@@ -134,7 +145,8 @@ namespace Strategy {
           sf::RenderWindow& window, 
           const Team& team,
           const Object& object,
-          const Coord& coords);
+          const Coord& coords,
+          const RenderStyle& style);
 
       // Get the colour associated with a team
       static sf::Color getTeamColour(const GameState& state, const Team& team);

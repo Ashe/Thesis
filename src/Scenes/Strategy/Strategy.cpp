@@ -58,8 +58,84 @@ Strategy::Game::onUpdate(const sf::Time& dt) {
 void 
 Strategy::Game::onEvent(const sf::Event& event) {
 
+  // Respond to mouse clicks
+  if (event.type == sf::Event::MouseButtonPressed) {
+
+    // Get the current state if possible
+    const auto& attempt = getState(currentState_);
+    if (!attempt.first) { return; }
+    const auto& state = attempt.second;
+
+    // Attempt variable to override
+    auto newState = std::make_pair(false, state);
+
+    // Select, move or attack with left click
+    if (event.mouseButton.button == sf::Mouse::Left) {
+
+      // Check if the current team is HUMAN and for valid coords
+      if (getControllerRef(state.currentTeam) == Controller::Type::Human
+          && validateCoords(state.map, hoveredTile_)) {
+
+        // Prepare to take action
+        Action action;
+        action.location = hoveredTile_;
+
+        // Check to see if we've clicked on a unit
+        const auto& entity = readMap(state.map, hoveredTile_);
+        if (entity.second >= Object::Bazooka) {
+
+          // If it's allied select it
+          if (entity.first == state.currentTeam) {
+            action.tag = Action::Tag::SelectUnit;
+          }
+
+          // If it's an enemy, attack it (if one is selected)
+          else {
+            action.tag = Action::Tag::SelectUnit;
+          }
+        }
+        
+        // Otherwise, if it's an empty space, move there if possible
+        else if (entity.second == Object::Nothing) {
+          action.tag = Action::MoveUnit;
+        }
+
+        // Take the action to get a new state
+        newState = takeAction(state, action);
+      }
+    }
+
+    // Cancel selection on right click
+    else if (event.mouseButton.button == sf::Mouse::Right) {
+      Action action;
+      action.tag = Action::Tag::CancelSelection;
+      newState = takeAction(state, action);     
+    }
+
+    // If we've found a valid action to take
+    if (newState.first) {
+
+      // Log the action
+      // @TODO: Log action
+      
+      // Erase future states and start from here
+      states_.erase(states_.begin() + currentState_ + 1, states_.end());
+  
+      // Add new state and move currentState_ to the last state
+      states_.push_back(newState.second);
+
+      // Check for AI interactions on the latest state
+      // @TODO: Implement 'continue game' function
+      //continueGame();
+
+      // Observe the latest state after AI moves
+      currentState_ = states_.size() - 1;
+      if (currentState_ < 0) { currentState_ = 0; }
+    }
+  }
+
   // Resize game if window changes size
-  if (event.type == sf::Event::Resized) {
+  else if (event.type == sf::Event::Resized) {
     resizeGame();
   }
 }
@@ -87,8 +163,33 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     const auto& team = t.second.first;
     const auto& object = t.second.second;
 
+    // Check if this object is selected
+    RenderStyle style = team == state.currentTeam ? 
+        RenderStyle::Playing : RenderStyle::NotPlaying;
+
+    // Elevate the style if further things apply
+    if (team == state.currentTeam 
+        && getController(team) == Controller::Type::Human) {
+      if (pos == state.selection) { style = RenderStyle::Selected; }
+      else if (pos == hoveredTile_) { style = RenderStyle::Hovered; }
+    }
+
     // Render object if coords are valid
-    renderObject(window, team, object, pos);
+    renderObject(window, team, object, pos, style);
+  }
+
+  // If the current team is Human and there's something selected
+  const auto& currentController = getController(state.currentTeam);
+  if (currentController == Controller::Type::Human 
+      && validateCoords(map, state.selection)
+      && validateCoords(map, hoveredTile_)) {
+
+    // Check to see if the hovered tile is empty
+    const auto object = readMap(map, hoveredTile_);
+    if (object.second == Object::Nothing) {
+      renderObject(window, state.currentTeam, 
+          Object::Bazooka, hoveredTile_, RenderStyle::Ghost);
+    }
   }
 }
 
@@ -139,7 +240,7 @@ Strategy::Game::addDebugDetails() {
       ImGui::NextColumn();
       ImGui::TextColored(col, "%u members left", kvp.second); 
       ImGui::NextColumn();
-      auto& controller = getController(kvp.first);
+      auto& controller = getControllerRef(kvp.first);
       std::string comboLabel;
       for (unsigned int i = 0; i < kvp.first; ++i) { comboLabel += " "; }
       ImGui::Combo(
@@ -183,6 +284,35 @@ Strategy::Game::addDebugDetails() {
 // - Functions without side effects
 // - Used to transform or read game states
 ///////////////////////////////////////////
+
+// Attempt to take action on a gamestate
+std::pair<bool, Strategy::GameState>
+Strategy::Game::takeAction(const GameState& state, const Action& action) {
+
+  // If the user wishes to undo selection, invalidate selection Coords
+  if (action.tag == Action::Tag::CancelSelection) {
+    auto newState = state;
+    newState.selection = Coord(-1, -1);
+    return std::make_pair(true, newState);
+  }
+
+  // If the action is to select a unit, attempt to select it
+  else if (action.tag == Action::Tag::SelectUnit) {
+
+    // Validate that there is an ALLIED unit to select
+    const auto& unit = readMap(state.map, action.location);
+    if (unit.first == state.currentTeam && unit.second >= Object::Bazooka) {
+
+      // Update the selected unit in the current state
+      auto newState = state;
+      newState.selection = action.location;
+      return std::make_pair(true, newState);
+    }
+  }
+
+  // If everything fails, return the failure flag
+  return std::make_pair(false, state);
+}
 
 // Translate coords into map index
 unsigned int 
@@ -315,8 +445,20 @@ Strategy::Game::getState(unsigned int n) const {
 }
 
 // Get the controller for a team (inserts HUMAN if not found)
+Controller::Type
+Strategy::Game::getController(const Team& team) const {
+  const auto& it = controllers_.find(team);
+  if (it != controllers_.end()) {
+    return it->second;
+  }
+  
+  // If nothing is found, return Type::Human
+  return Controller::Type::Human;
+}
+
+// Get the reference to a controller for a team (inserts HUMAN if not found)
 Controller::Type&
-Strategy::Game::getController(const Team& team) {
+Strategy::Game::getControllerRef(const Team& team) {
   const auto& it = controllers_.find(team);
   if (it != controllers_.end()) {
     return it->second;
@@ -324,7 +466,7 @@ Strategy::Game::getController(const Team& team) {
   
   // If nothing is found, insert Type::Human and return that
   controllers_[team] = Controller::Type::Human;
-  return getController(team);
+  return getControllerRef(team);
 }
 
 ///////////////////////////////////////////
@@ -391,7 +533,8 @@ Strategy::Game::renderObject(
     sf::RenderWindow& window, 
     const Team& team,
     const Strategy::Object& object,
-    const Coord& coords) {
+    const Coord& coords,
+    const RenderStyle& style) {
 
   // Declare static variables for rendering easily
   static std::map<Object, sf::Sprite> sprites;
@@ -413,12 +556,26 @@ Strategy::Game::renderObject(
     const auto texSize = sprite.getTextureRect();
     sprite.setScale(tileLength_ / texSize.width, tileLength_ / texSize.height);
 
-    // Manipulate sprite colour
+    // Get initial sprite colour
     const auto it = teamColours.find(team);
     auto col = sf::Color::White;
     if (it != teamColours.end()) {
       col = it->second;
     }
+
+    // Manipulate sprite colour - dim if not highlighted
+    switch (style) {
+      case RenderStyle::NotPlaying:
+        col *= sf::Color(255, 255, 255, 150); break;
+      case RenderStyle::Playing:
+        col *= sf::Color(255, 255, 255, 200); break;
+      case RenderStyle::Hovered:
+        col *= sf::Color(255, 255, 255, 255); break;
+      case RenderStyle::Selected:
+        col = sf::Color(255, 204, 0, 255); break;
+      case RenderStyle::Ghost:
+      default: col *= sf::Color(255, 255, 255, 175); break;
+    };
     sprite.setColor(col);
 
     // Draw sprite

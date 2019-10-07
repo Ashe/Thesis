@@ -23,6 +23,15 @@ namespace Strategy {
     {2, sf::Color::Green},
     {3, sf::Color::Yellow}
   };
+
+  // Different methods of drawing an object
+  enum class RenderStyle {
+    NotPlaying,
+    Playing,
+    Hovered,
+    Selected,
+    Ghost
+  };
 };
 
 #endif
