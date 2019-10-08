@@ -22,6 +22,11 @@ namespace Strategy {
     // Map of notable pieces of obstacles
     std::map<unsigned int, std::pair<Team, Object>> field;
 
+    // Starting movement point amount for this map
+    Points startingMP = 2;
+
+    // Starting action point amount for this map
+    Points startingAP = 1;
   };
 }
 #endif

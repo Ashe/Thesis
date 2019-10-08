@@ -27,6 +27,12 @@ namespace Strategy {
 
     // Track the currently selected piece
     Coord selection = Coord(-1, -1);
+
+    // Movement points remaining for this turn
+    Points remainingMP = 0;
+
+    // Action points remaining for this turn
+    Points remainingAP = 0;
   };
 
   // Allow comparison of GameStates

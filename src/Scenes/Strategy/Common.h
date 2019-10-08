@@ -16,6 +16,9 @@ namespace Strategy {
   // Coordinate in the game
   typedef sf::Vector2i Coord;
 
+  // Movement / Action points
+  typedef int Points;
+
   // Team colours
   static std::map<Team, sf::Color> teamColours = {
     {0, sf::Color::Cyan},

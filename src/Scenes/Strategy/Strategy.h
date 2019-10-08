@@ -66,7 +66,7 @@ namespace Strategy {
       const Controller::Type defaultController_ = Controller::Type::Human;
 
       // Player pathfinding route
-      std::vector<Coord> path_;
+      std::vector<Action> path_;
 
       // The grid of the playing field to draw
       sf::VertexArray grid_;
@@ -130,6 +130,9 @@ namespace Strategy {
     
       // Resets the state of tic-tac-toe back to the beginning
       void resetGame();
+
+      // Pushes a new state into the state list
+      void pushState(const GameState& state);
 
       // Get a gamestate safely
       std::pair<bool, const GameState> getState(unsigned int n) const;

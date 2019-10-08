@@ -81,9 +81,6 @@ Strategy::Game::onEvent(const sf::Event& event) {
     if (!attempt.first) { return; }
     const auto& state = attempt.second;
 
-    // Attempt variable to override
-    auto newState = std::make_pair(false, state);
-
     // Select, move or attack with left click
     if (event.mouseButton.button == sf::Mouse::Left) {
 
@@ -91,12 +88,12 @@ Strategy::Game::onEvent(const sf::Event& event) {
       if (getControllerRef(state.currentTeam) == Controller::Type::Human
           && validateCoords(state.map, hoveredTile_)) {
 
-        // Prepare to take action
-        Action action;
-
         // Check to see if we've clicked on a unit
         const auto& entity = readMap(state.map, hoveredTile_);
         if (entity.second >= Object::Bazooka) {
+
+          // Prepare to take action
+          Action action;
 
           // If it's allied select it
           if (entity.first == state.currentTeam) {
@@ -109,17 +106,40 @@ Strategy::Game::onEvent(const sf::Event& event) {
             action.tag = Action::Tag::AttackUnit;
             action.location = hoveredTile_;
           }
+
+          // If we selected or attacked, attempt to act
+          const auto& newState = takeAction(state, action);
+          if (newState.first) {
+            pushState(newState.second);
+          }
         }
         
         // Otherwise, if it's an empty space, move there if possible
-        // @TODO: Disable teleporation by following a path
         else if (entity.second == Object::Nothing) {
-          action.tag = Action::MoveUnit;
-          action.location = hoveredTile_;
-        }
 
-        // Take the action to get a new state
-        newState = takeAction(state, action);
+          // Sample the path as it will get recalculated with pushState()
+          std::vector<Action> path;
+          for (int i = 0; i < state.remainingMP && i < path_.size(); ++i) {
+            Console::log("%d: (%d, %d)", 
+                i, path_[i].location.x, path_[i].location.y);
+            path.push_back(path_[i]);
+          }
+
+          // Follow set path, pushing and updating state as progress is made
+          auto currentState = state;
+          for (int i = 0; i < path.size(); ++i) {
+
+            // Get the action from the path
+            const auto& action = path[i];
+            if (action.tag == Action::Tag::MoveUnit) {
+              const auto& newState = takeAction(currentState, action);
+              if (newState.first) {
+                pushState(newState.second);
+                currentState = newState.second;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -127,31 +147,10 @@ Strategy::Game::onEvent(const sf::Event& event) {
     else if (event.mouseButton.button == sf::Mouse::Right) {
       Action action;
       action.tag = Action::Tag::CancelSelection;
-      newState = takeAction(state, action);     
-    }
-
-    // If we've found a valid action to take
-    if (newState.first) {
-
-      // Log the action
-      // @TODO: Log action
-      
-      // Erase future states and start from here
-      states_.erase(states_.begin() + currentState_ + 1, states_.end());
-  
-      // Add new state and move currentState_ to the last state
-      states_.push_back(newState.second);
-
-      // Check for AI interactions on the latest state
-      // @TODO: Implement 'continue game' function
-      //continueGame();
-
-      // Observe the latest state after AI moves
-      currentState_ = states_.size() - 1;
-      if (currentState_ < 0) { currentState_ = 0; }
-
-      // Recalculate the path after things have changed
-      recalculatePath();
+      const auto& newState = takeAction(state, action);     
+      if (newState.first) {
+        pushState(newState.second);
+      }
     }
   }
 
@@ -256,6 +255,10 @@ Strategy::Game::addDebugDetails() {
     ImGui::Text("Selected tile: (%d, %d)",
         state.selection.x, 
         state.selection.y);
+    ImGui::Text("Movement points: %d / %d", 
+        state.remainingMP, state.map.startingMP);
+    ImGui::Text("Action points: %d / %d", 
+        state.remainingAP, state.map.startingAP);
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Text("Participating Teams:"); ImGui::NextColumn();
@@ -344,8 +347,13 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
     const auto& unit = readMap(state.map, state.selection);
     const auto& dest = readMap(state.map, action.location);
 
-    // If there's a friendly unit and an open space, move
-    if (unit.second >= Object::Bazooka
+    // If 
+    // - There's enough MP
+    // - Unit selected
+    // - Selected unit is friendly
+    // - Destination is empty
+    if (state.remainingMP > 0
+        && unit.second >= Object::Bazooka
         && unit.first == state.currentTeam
         && dest.second == Object::Nothing) {
 
@@ -371,6 +379,7 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
 
           newState.map = updateAttempt.second;
           newState.selection = action.location;
+          newState.remainingMP -= 1;
           return std::make_pair(true, newState);
         }
       }
@@ -520,6 +529,8 @@ Strategy::Game::resetGame() {
   state.teams = countTeams(state.map);
   const auto it = state.teams.begin();
   state.currentTeam = it != state.teams.end() ? it->first : -1;
+  state.remainingMP = state.map.startingMP;
+  state.remainingAP = state.map.startingAP;
   states_.push_back(state);
   //isGameOver_ = false;
 
@@ -529,6 +540,31 @@ Strategy::Game::resetGame() {
   // Set current state to the most up-to-date state
   currentState_ = states_.size() - 1;
   if (currentState_ < 0) { currentState_ = 0; }
+}
+
+// Pushes a new state into the state list
+void 
+Strategy::Game::pushState(const GameState& state) {
+
+  // Log the action
+  // @TODO: Log action
+  
+  // Erase future states and start from here
+  states_.erase(states_.begin() + currentState_ + 1, states_.end());
+
+  // Add new state and move currentState_ to the last state
+  states_.push_back(state);
+
+  // Check for AI interactions on the latest state
+  // @TODO: Implement 'continue game' function
+  //continueGame();
+
+  // Observe the latest state after AI moves
+  currentState_ = states_.size() - 1;
+  if (currentState_ < 0) { currentState_ = 0; }
+
+  // Recalculate the path after things have changed
+  recalculatePath();
 }
 
 // Get a gamestate safely
@@ -587,10 +623,15 @@ Strategy::Game::recalculatePath() {
     return;
   }
 
+
+  // Make a state with near-infinite movement points for pathfinding
+  auto infinState = state;
+  infinState.remainingMP = INT_MAX;
+
   // Employ the use of AStar to find a path
   auto attempt = Controller::AStar::decide
     <GameState, Action, unsigned int>(
-      state,
+      infinState,
       0,
       UINT_MAX,
       getPossibleMoves,
@@ -622,7 +663,7 @@ Strategy::Game::recalculatePath() {
     // Unwind stack
     while (!attempt.second.empty()) {
       const auto& action = attempt.second.top();
-      path_.push_back(action.location);
+      path_.push_back(action);
       attempt.second.pop();
     }
   }
@@ -786,22 +827,33 @@ Strategy::Game::renderPath(sf::RenderWindow& window, const GameState& state) {
   // Manipulate sprite position, size and colour
   const auto texSize = pointSprite.getTextureRect();
   pointSprite.setScale(tileLength_ / texSize.width, tileLength_ / texSize.height);
-  pointSprite.setColor(getTeamColour(state.currentTeam));
 
   // Render each point in the path
-  for (const auto& p : path_) {
+  for (int i = 0; i < path_.size(); ++i) {
 
-    // Ensure that this location is valid, empty and not the hovered tile
-    if (validateCoords(state.map, p) && p != hoveredTile_
-        && readMap(state.map, p).second == Object::Nothing) {
+    // Get the current path node if this is definitely a move action
+    if (path_[i].tag == Action::Tag::MoveUnit) {
+      const auto& p = path_[i].location;
 
-      // Get position from coords
-      pointSprite.setPosition(sf::Vector2f(
-          left_ + p.x * tileLength_,
-          top_ + p.y * tileLength_));
+      // Calculate if the player has enough MP to reach this node
+      auto col = getTeamColour(state.currentTeam);
+      if (i >= state.remainingMP) {
+        col *= sf::Color(255, 255, 255, 50);
+      }
+      pointSprite.setColor(col);
 
-      // Draw the point
-      window.draw(pointSprite);
+      // Ensure that this location is valid, empty and not the hovered tile
+      if (validateCoords(state.map, p) && p != hoveredTile_
+          && readMap(state.map, p).second == Object::Nothing) {
+
+        // Get position from coords
+        pointSprite.setPosition(sf::Vector2f(
+            left_ + p.x * tileLength_,
+            top_ + p.y * tileLength_));
+
+        // Draw the point
+        window.draw(pointSprite);
+      }
     }
   }
 }
