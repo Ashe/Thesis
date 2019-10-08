@@ -53,7 +53,7 @@ namespace TicTacToe {
         }
       }
     }
-    return true;;
+    return true;
   }
 }
 
@@ -70,7 +70,7 @@ namespace std {
               (seed << 6) + (seed >> 2);
         }
       }
-      return seed;
+      return std::size_t();
     }
   };
 }

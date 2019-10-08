@@ -5,10 +5,12 @@
 #define STRATEGY_H
 
 #include <cmath>
+#include <climits>
 
 #include "../../Scene.h"
-#include "../../Controller/Common.h"
 #include "../../Resources.h"
+#include "../../Controller/Common.h"
+#include "../../Controller/AStar/AStar.h"
 
 #include "Common.h"
 #include "GameState.h"
@@ -63,6 +65,9 @@ namespace Strategy {
       std::map<Team, Controller::Type> controllers_;
       const Controller::Type defaultController_ = Controller::Type::Human;
 
+      // Player pathfinding route
+      std::vector<Coord> path_;
+
       // The grid of the playing field to draw
       sf::VertexArray grid_;
 
@@ -115,6 +120,9 @@ namespace Strategy {
           const Object& obj, 
           const Team& team);
 
+      // Get possible moves from the current Coord in a state
+      static std::vector<Action> getPossibleMoves(const GameState& state);
+
       ///////////////////////////////////////////
       // IMPURE FUNCTIONS:
       // - Mutate the state of the scene
@@ -132,6 +140,9 @@ namespace Strategy {
       // Get the reference to the controller for a team
       Controller::Type& getControllerRef(const Team& team);
 
+      // Calculate the path_ variable from selected to hoveredTile_
+      void recalculatePath();
+
       ///////////////////////////////////////////
       // GRAPHICAL / LOGGING:
       // - Non-logic pure or impure functions
@@ -148,8 +159,11 @@ namespace Strategy {
           const Coord& coords,
           const RenderStyle& style);
 
+      // Render pathfinding on the current state
+      void renderPath(sf::RenderWindow& window, const GameState& state);
+
       // Get the colour associated with a team
-      static sf::Color getTeamColour(const GameState& state, const Team& team);
+      static sf::Color getTeamColour(const Team& team);
   };
 }
 

@@ -74,7 +74,7 @@ namespace Controller::AStar {
       std::function<C(const S&)> heuristic,
       std::function<C(const S&, const S&, const A&)> weighAction,
       std::function<std::pair<bool, const S>(const S&, const A&)> takeAction,
-      std::function<bool(const C&, const C&)> compareCost) {// = std::min) {
+      std::function<bool(const C&, const C&)> compareCost) {// = std::less) {
 
     // All available states to explore
     std::vector<S> remaining = {startingState};

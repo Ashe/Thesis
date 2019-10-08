@@ -50,8 +50,23 @@ Strategy::Game::onUpdate(const sf::Time& dt) {
       static_cast<int>(std::floor((mousePosition.x - left_) / tileLength_)),
       static_cast<int>(std::floor((mousePosition.y - top_) / tileLength_)));
 
-  // Check if hovered tile is valid
-  hoveredTile_ = validateCoords(currentMap_, hover) ?  hover : Coord(-1, -1);
+  // Check if hovered tile is valid and set variable accordingly
+  const bool valid = validateCoords(currentMap_, hover);
+  if (valid) {
+
+    // Check if this is a change in the hovered tile
+    const bool changed = hoveredTile_ != hover;
+    hoveredTile_ = hover;
+
+    // If this is a new tile, recalculate pathfinding route
+    if (changed) {
+      recalculatePath();
+    }
+  }
+  else {
+    path_.clear();
+    hoveredTile_ = Coord(-1, -1);
+  }
 }
 
 // Handle input and game size changes
@@ -78,7 +93,6 @@ Strategy::Game::onEvent(const sf::Event& event) {
 
         // Prepare to take action
         Action action;
-        action.location = hoveredTile_;
 
         // Check to see if we've clicked on a unit
         const auto& entity = readMap(state.map, hoveredTile_);
@@ -87,17 +101,21 @@ Strategy::Game::onEvent(const sf::Event& event) {
           // If it's allied select it
           if (entity.first == state.currentTeam) {
             action.tag = Action::Tag::SelectUnit;
+            action.location = hoveredTile_;
           }
 
           // If it's an enemy, attack it (if one is selected)
           else {
-            action.tag = Action::Tag::SelectUnit;
+            action.tag = Action::Tag::AttackUnit;
+            action.location = hoveredTile_;
           }
         }
         
         // Otherwise, if it's an empty space, move there if possible
+        // @TODO: Disable teleporation by following a path
         else if (entity.second == Object::Nothing) {
           action.tag = Action::MoveUnit;
+          action.location = hoveredTile_;
         }
 
         // Take the action to get a new state
@@ -131,6 +149,9 @@ Strategy::Game::onEvent(const sf::Event& event) {
       // Observe the latest state after AI moves
       currentState_ = states_.size() - 1;
       if (currentState_ < 0) { currentState_ = 0; }
+
+      // Recalculate the path after things have changed
+      recalculatePath();
     }
   }
 
@@ -177,6 +198,9 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     // Render object if coords are valid
     renderObject(window, team, object, pos, style);
   }
+
+  // Render path points
+  renderPath(window, state);
 
   // If the current team is Human and there's something selected
   const auto& currentController = getController(state.currentTeam);
@@ -229,13 +253,16 @@ Strategy::Game::addDebugDetails() {
     ImGui::Text("Hovered tile: (%d, %d)",
         hoveredTile_.x, 
         hoveredTile_.y);
+    ImGui::Text("Selected tile: (%d, %d)",
+        state.selection.x, 
+        state.selection.y);
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Text("Participating Teams:"); ImGui::NextColumn();
     ImGui::Columns(3, "teamcolumns");
     ImGui::Separator();
     for (const auto& kvp : state.teams) {
-      const auto col = getTeamColour(state, kvp.first);
+      const auto col = getTeamColour(kvp.first);
       ImGui::TextColored(col, "Team %u", kvp.first); 
       ImGui::NextColumn();
       ImGui::TextColored(col, "%u members left", kvp.second); 
@@ -255,7 +282,7 @@ Strategy::Game::addDebugDetails() {
     ImGui::Text("Current turn: "); ImGui::SameLine();
     const auto teamIt = state.teams.find(state.currentTeam);
     if (teamIt != state.teams.end()) {
-      const auto col = getTeamColour(state, state.currentTeam);
+      const auto col = getTeamColour(state.currentTeam);
       ImGui::TextColored(col, "Team %u (%u members left)", 
           state.currentTeam, teamIt->second);
     }
@@ -307,6 +334,46 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
       auto newState = state;
       newState.selection = action.location;
       return std::make_pair(true, newState);
+    }
+  }
+
+  // If the action is to move a unit to a location, attempt it
+  else if (action.tag == Action::Tag::MoveUnit) {
+
+    // Validate the move
+    const auto& unit = readMap(state.map, state.selection);
+    const auto& dest = readMap(state.map, action.location);
+
+    // If there's a friendly unit and an open space, move
+    if (unit.second >= Object::Bazooka
+        && unit.first == state.currentTeam
+        && dest.second == Object::Nothing) {
+
+      // Create a new state with the move performed
+      auto newState = state;
+      auto updateAttempt = updateMap(
+          newState.map,
+          action.location,
+          unit.second,
+          unit.first);
+
+      // If the unit is in the new place successfully
+      // remove the old unit after duplication
+      if (updateAttempt.first) {
+        updateAttempt = updateMap(
+            updateAttempt.second,
+            state.selection,
+            Object::Nothing,
+            state.currentTeam);
+
+        // If this was also successful, update newState and return
+        if (updateAttempt.first) {
+
+          newState.map = updateAttempt.second;
+          newState.selection = action.location;
+          return std::make_pair(true, newState);
+        }
+      }
     }
   }
 
@@ -401,6 +468,39 @@ Strategy::Game::updateMap(
   return std::make_pair(true, map);
 }
 
+// Get possible moves from the current Coord in a state
+std::vector<Strategy::Action> 
+Strategy::Game::getPossibleMoves(const GameState& state) {
+
+  // Prepare to collect movement actions
+  std::vector<Action> actions;
+
+  // The 'selected' Coord is the current position
+  if (validateCoords(state.map, state.selection)) {
+    
+    // You can move up, down, left and right
+    const auto possible = std::vector<Coord>
+        { Coord(1, 0), Coord(0, -1), Coord(-1, 0), Coord(0, 1) };
+
+    // Check if the moves are valid AND if they're unoccupied
+    for (const auto& m : possible) {
+      const auto pos = state.selection + m;
+      if (validateCoords(state.map, pos)) {
+        const auto& entity = readMap(state.map, pos);
+        if (entity.second == Object::Nothing) {
+          Action action;
+          action.tag = Action::Tag::MoveUnit;
+          action.location = pos;
+          actions.push_back(action);
+        }
+      }
+    }
+  }
+
+  // Return possible moves
+  return actions;
+}
+
 ///////////////////////////////////////////
 // IMPURE FUNCTIONS:
 // - Mutate the state of the scene
@@ -467,6 +567,65 @@ Strategy::Game::getControllerRef(const Team& team) {
   // If nothing is found, insert Type::Human and return that
   controllers_[team] = Controller::Type::Human;
   return getControllerRef(team);
+}
+
+// Calculate the path_ variable from selected to hoveredTile_
+void 
+Strategy::Game::recalculatePath() {
+
+  // Retrieve the current state
+  const auto statePair = getState(currentState_);
+  if (!statePair.first) { return; }
+  const auto state = statePair.second;
+
+  // Prepare to calculate a new route
+  path_.clear();
+
+  // Easy out if the hovered coords or selection coords are invalid
+  if (!validateCoords(state.map, hoveredTile_)
+      || !validateCoords(state.map, state.selection)) {
+    return;
+  }
+
+  // Employ the use of AStar to find a path
+  auto attempt = Controller::AStar::decide
+    <GameState, Action, unsigned int>(
+      state,
+      0,
+      UINT_MAX,
+      getPossibleMoves,
+
+      // IsStateEndpoint (is the tile = to the hovered tile)
+      [this](const GameState& a, const GameState& b) {
+        return b.selection == hoveredTile_;
+      },
+
+      // Heuristic (just do pythagoras to get distance)
+      [this](const GameState& s) {
+        const auto l = s.selection.x - hoveredTile_.x;
+        const auto h = s.selection.y - hoveredTile_.y;
+        const auto hyp = std::sqrt(l * l + h * h);
+        return static_cast<unsigned int>(std::ceil(hyp));
+      },
+
+      // Weigh action (every move is 1 MP)
+      [](const GameState& a, const GameState& b, const Action& action) {
+        return 1;
+      },
+      takeAction,
+      std::less<unsigned int>()
+  );
+
+  // If the path worked
+  if (attempt.first) {
+
+    // Unwind stack
+    while (!attempt.second.empty()) {
+      const auto& action = attempt.second.top();
+      path_.push_back(action.location);
+      attempt.second.pop();
+    }
+  }
 }
 
 ///////////////////////////////////////////
@@ -557,11 +716,7 @@ Strategy::Game::renderObject(
     sprite.setScale(tileLength_ / texSize.width, tileLength_ / texSize.height);
 
     // Get initial sprite colour
-    const auto it = teamColours.find(team);
-    auto col = sf::Color::White;
-    if (it != teamColours.end()) {
-      col = it->second;
-    }
+    auto col = getTeamColour(team);
 
     // Manipulate sprite colour - dim if not highlighted
     switch (style) {
@@ -617,9 +772,43 @@ Strategy::Game::renderObject(
   }
 }
 
+// Render pathfinding on the current state
+void 
+Strategy::Game::renderPath(sf::RenderWindow& window, const GameState& state) {
+
+  // Make a sprite and initialise it if necessary
+  static sf::Sprite pointSprite;
+  if (pointSprite.getTexture() == nullptr) {
+    auto* tex = App::resources().getTexture("path_point");
+    pointSprite.setTexture(*tex);
+  }
+
+  // Manipulate sprite position, size and colour
+  const auto texSize = pointSprite.getTextureRect();
+  pointSprite.setScale(tileLength_ / texSize.width, tileLength_ / texSize.height);
+  pointSprite.setColor(getTeamColour(state.currentTeam));
+
+  // Render each point in the path
+  for (const auto& p : path_) {
+
+    // Ensure that this location is valid, empty and not the hovered tile
+    if (validateCoords(state.map, p) && p != hoveredTile_
+        && readMap(state.map, p).second == Object::Nothing) {
+
+      // Get position from coords
+      pointSprite.setPosition(sf::Vector2f(
+          left_ + p.x * tileLength_,
+          top_ + p.y * tileLength_));
+
+      // Draw the point
+      window.draw(pointSprite);
+    }
+  }
+}
+
 // Get the colour associated with a team
 sf::Color
-Strategy::Game::getTeamColour(const GameState& state, const Team& team) {
+Strategy::Game::getTeamColour(const Team& team) {
   const auto& coloursIt = teamColours.find(team);
   auto col = sf::Color::White;
   if (coloursIt != teamColours.end()) { 
