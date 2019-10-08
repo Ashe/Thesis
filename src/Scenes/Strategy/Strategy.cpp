@@ -120,8 +120,6 @@ Strategy::Game::onEvent(const sf::Event& event) {
           // Sample the path as it will get recalculated with pushState()
           std::vector<Action> path;
           for (int i = 0; i < state.remainingMP && i < path_.size(); ++i) {
-            Console::log("%d: (%d, %d)", 
-                i, path_[i].location.x, path_[i].location.y);
             path.push_back(path_[i]);
           }
 
