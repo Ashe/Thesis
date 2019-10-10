@@ -4,6 +4,7 @@
 #ifndef STRATEGY_H
 #define STRATEGY_H
 
+#include <algorithm>
 #include <cmath>
 #include <climits>
 
@@ -71,6 +72,10 @@ namespace Strategy {
       // The grid of the playing field to draw
       sf::VertexArray grid_;
 
+      // Line of sights
+      std::vector<Coord> lineOfSight_;
+      std::vector<Coord> unitsInSight_;
+
       // Sizes and positions of game graphics
       float maxGameLength_;
       float tileLength_;
@@ -120,6 +125,14 @@ namespace Strategy {
           const Object& obj, 
           const Team& team);
 
+      // Check to see whether there is anything obstructing a and b
+      // Uses Bresenhams line drawing algorithm
+      static std::vector<Coord> getLineOfSight(
+          const Map& map, 
+          const Coord& a,
+          const Coord& b,
+          int range = -1);
+
       // Get possible moves from the current Coord in a state
       static std::vector<Action> getPossibleMoves(const GameState& state);
 
@@ -145,6 +158,9 @@ namespace Strategy {
 
       // Calculate the path_ variable from selected to hoveredTile_
       void recalculatePath();
+
+      // Recalculate the line of sight set
+      void recalculateLineOfSight();
 
       ///////////////////////////////////////////
       // GRAPHICAL / LOGGING:

@@ -37,10 +37,10 @@ Strategy::Game::onBegin() {
 void 
 Strategy::Game::onUpdate(const sf::Time& dt) {
 
-  // Easy out if the map's size is invalid
-  if (currentMap_.size.x <= 0 || currentMap_.size.y <= 0) { 
-    return; 
-  }
+  // Get the current state if possible
+  const auto& attempt = getState(currentState_);
+  if (!attempt.first) { return; }
+  const auto& state = attempt.second;
 
   // Get the position of the mouse
   const auto& mousePosition = App::getMousePosition();
@@ -58,9 +58,14 @@ Strategy::Game::onUpdate(const sf::Time& dt) {
     const bool changed = hoveredTile_ != hover;
     hoveredTile_ = hover;
 
-    // If this is a new tile, recalculate pathfinding route
+    // If this is a new tile
     if (changed) {
+
+      // Recalculate pathfinding route
       recalculatePath();
+
+      // Recalculate line of sight
+      recalculateLineOfSight();
     }
   }
   else {
@@ -173,6 +178,25 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
   // Render the game's map
   const auto& map = state.map;
 
+  // Render line of sight with green tiles
+  auto rect = sf::RectangleShape(sf::Vector2f(tileLength_, tileLength_));
+  rect.setFillColor(sf::Color(255, 0, 0, 50));
+  for (const auto& c : lineOfSight_) {
+
+    // Don't re-draw the tile on hover
+    if (c != hoveredTile_) {
+    
+      // Get position from coords
+      const auto pos = sf::Vector2f(
+          left_ + c.x * tileLength_,
+          top_ + c.y * tileLength_);
+
+      // Manipulate rectangle position and draw
+      rect.setPosition(pos);
+      window.draw(rect);
+    }
+  }
+
   // Render everything on the map
   for (const auto& t : map.field) {
 
@@ -180,6 +204,16 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     const auto& pos = indexToCoord(map, t.first);
     const auto& team = t.second.first;
     const auto& object = t.second.second;
+
+    // Render a tile if they're in sight
+    const auto& it = std::find(
+        unitsInSight_.begin(), unitsInSight_.end(), pos);
+    if (it != unitsInSight_.end()) {
+      rect.setPosition(sf::Vector2f(
+          left_ + pos.x * tileLength_,
+          top_ + pos.y * tileLength_));
+      window.draw(rect);
+    }
 
     // Check if this object is selected
     RenderStyle style = team == state.currentTeam ? 
@@ -475,6 +509,105 @@ Strategy::Game::updateMap(
   return std::make_pair(true, map);
 }
 
+
+// Check to see whether there is anything obstructing a and b
+// Uses Bresenhams line drawing algorithm
+// From https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+std::vector<Strategy::Coord>
+Strategy::Game::getLineOfSight(
+    const Map& map, 
+    const Coord& from,
+    const Coord& to,
+    int range) {
+
+  // Should low-line or high-line be used
+  bool useHigh;
+  Coord start = from;
+  Coord end = to;
+
+  // Determine which version of Bresenham's algorithm to use
+  if (std::abs(to.y - from.y) < std::abs(to.x - from.x)) {
+    useHigh = false;
+    if (from.x > to.x) {
+      start = to;
+      end = from;
+    }
+  }
+  else {
+    useHigh = true;
+    if (from.y > to.y) {
+      start = to;
+      end = from;
+    }
+  }
+
+  // Calculate dx and dy
+  int dx = end.x - start.x;
+  int dy = end.y - start.y;
+
+  // Pool line of sight in case of success
+  std::vector<Coord> line;
+
+  // Calculate low lines
+  if (!useHigh) {
+    int yi = 1;
+    if (dy < 0) {
+      yi = -1;
+      dy = -dy;
+    }
+    int d = 2 * dy - dx;
+    int y = start.y;
+    for (int x = start.x; x <= end.x; ++x) {
+
+      // Check that coord is not destination or empty to return fail
+      const auto current = Coord(x, y);
+      line.push_back(current);
+      if (current != from && current != to) {
+        const auto read = readMap(map, current);
+        if (read.second != Object::Nothing) {
+          return std::vector<Coord>();
+        }
+      }
+      if (d > 0) {
+        y += yi;
+        d -= 2 * dx;
+      }
+      d += 2 * dy;
+    }
+  }
+
+  // Calculate high lines
+  else {
+    int xi = 1;
+    if (dx < 0) {
+      xi = -1;
+      dx = -dx;
+    }
+    int d = 2 * dx - dy;
+    int x = start.x;
+    for (int y = start.y; y <= end.y; ++y) {
+
+      // Check that coord is not destination or empty to return fail
+      const auto current = Coord(x, y);
+      line.push_back(current);
+      if (current != from && current != to) {
+        const auto read = readMap(map, current);
+        if (read.second != Object::Nothing) {
+          return std::vector<Coord>();
+        }
+      }
+      if (d > 0) {
+        x += xi;
+        d -= 2 * dy;
+      }
+      d += 2 * dx;
+    }
+  }
+
+  // Return true if nothing has ruined the line
+  return line;
+}
+
 // Get possible moves from the current Coord in a state
 std::vector<Strategy::Action> 
 Strategy::Game::getPossibleMoves(const GameState& state) {
@@ -563,6 +696,9 @@ Strategy::Game::pushState(const GameState& state) {
 
   // Recalculate the path after things have changed
   recalculatePath();
+
+  // Recalculate line of sights
+  recalculateLineOfSight();
 }
 
 // Get a gamestate safely
@@ -607,13 +743,13 @@ Strategy::Game::getControllerRef(const Team& team) {
 void 
 Strategy::Game::recalculatePath() {
 
+  // Prepare to calculate a new route
+  path_.clear();
+
   // Retrieve the current state
   const auto statePair = getState(currentState_);
   if (!statePair.first) { return; }
   const auto state = statePair.second;
-
-  // Prepare to calculate a new route
-  path_.clear();
 
   // Easy out if the hovered coords or selection coords are invalid
   if (!validateCoords(state.map, hoveredTile_)
@@ -663,6 +799,60 @@ Strategy::Game::recalculatePath() {
       const auto& action = attempt.second.top();
       path_.push_back(action);
       attempt.second.pop();
+    }
+  }
+}
+
+// Recalculate the line of sight set
+void
+Strategy::Game::recalculateLineOfSight() {
+
+  // Prepare to calculate sights
+  lineOfSight_.clear();
+  unitsInSight_.clear();
+
+  // Retrieve the current state
+  const auto statePair = getState(currentState_);
+  if (!statePair.first) { return; }
+  const auto state = statePair.second;
+
+  // Check if selection is valid
+  const auto& selection = readMap(state.map, state.selection);
+  if (validateCoords(state.map, state.selection) 
+      && selection.first == state.currentTeam
+      && selection.second >= Object::Bazooka) {
+
+    // Iterate through every enemy and determine if they're in line of sight
+    for (const auto& kvp : state.map.field) {
+      const auto& pos = indexToCoord(state.map, kvp.first);
+      const auto& team = kvp.second.first;
+      const auto& object = kvp.second.second;
+
+      // If this is an enemy unit, record if it's in sight or not
+      if (team != state.currentTeam && object >= Object::Bazooka) {
+        const auto& line = getLineOfSight(
+            state.map, state.selection, pos);
+        if (!line.empty()) {
+          unitsInSight_.push_back(pos);
+        }
+      }
+    }
+
+    // Get line of sight to hovered object IF:
+    // - Hovered coords are valid
+    // - Hovered object exists
+    // - Hovered object isn't allied (unless its a wall)
+    const auto hoveredObject = readMap(state.map, hoveredTile_);
+    if (validateCoords(state.map, hoveredTile_)
+        && hoveredObject.second != Object::Nothing
+        && (hoveredObject.first != state.currentTeam || 
+            hoveredObject.second == Object::Wall)) {
+
+      // Populate the set with the line of sight
+      lineOfSight_ = getLineOfSight(
+          state.map,
+          state.selection,
+          hoveredTile_);
     }
   }
 }

@@ -97,7 +97,6 @@ if(UNIX)
     sfml-system
     sfml-graphics
     sfml-audio
-    crossguid
     ${X11_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
   )
