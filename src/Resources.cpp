@@ -47,6 +47,17 @@ Resources::load() {
         }
       }
 
+      // Fonts
+      else if (ext == ".ttf") {
+        auto font = std::make_unique<sf::Font>();
+        if (font->loadFromFile(fp)) {
+          fonts_.emplace(fp.stem(), std::move(font));
+          Console::log("Loaded font: %s as %s",
+              fp.c_str(), fp.stem().c_str());
+          loaded = true;
+        }
+      }
+
       // If resource failed to load
       if (!loaded) {
         Console::log("[Error] Failed to load resource: %s", fp.c_str());
@@ -75,6 +86,18 @@ Resources::getTexture(const std::string& id) const {
   }
   Console::log("[Error] Unable to retrieve texture: %s", id.c_str());
   return nullptr;
+}
+
+// Attempt to retrieve a texture
+sf::Font* const 
+Resources::getFont(const std::string& id) const {
+  auto it = fonts_.find(id);
+  if (it != fonts_.end()) {
+    return it->second.get();
+  }
+  Console::log("[Error] Unable to retrieve font: %s", id.c_str());
+  return nullptr;
+
 }
 
 // Release resources

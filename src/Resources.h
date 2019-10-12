@@ -26,6 +26,9 @@ class Resources {
 
     // Attempt to retrieve a texture
     sf::Texture* const getTexture(const std::string& id) const;
+
+    // Attempt to retrieve a texture
+    sf::Font* const getFont(const std::string& id) const;
     
     // Release resources via going out of scope
     void release();
@@ -37,6 +40,9 @@ class Resources {
 
     // Collection of textures
     std::map<std::string, std::unique_ptr<sf::Texture>> textures_;
+
+    // Collection of fonts
+    std::map<std::string, std::unique_ptr<sf::Font>> fonts_;
 };
 
 #endif

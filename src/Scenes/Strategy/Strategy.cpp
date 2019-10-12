@@ -58,6 +58,19 @@ Strategy::Game::onUpdate(const sf::Time& dt) {
   // Get the position of the mouse
   const auto& mousePosition = App::getMousePosition();
 
+  // Change colour of buttons
+  endTurnButton_.setFillColor(
+      endTurnButton_.getGlobalBounds().contains(mousePosition) ?
+        sf::Color(255, 150, 150, 100) :
+        sf::Color(255, 100, 100, 100));
+  modeButton_.setFillColor(isInAttackMode_ ?
+      (modeButton_.getGlobalBounds().contains(mousePosition) ?
+        sf::Color(255, 50, 50, 100) :
+        sf::Color(255, 0, 0, 100)) :
+      (modeButton_.getGlobalBounds().contains(mousePosition) ?
+        sf::Color(150, 150, 255, 100) :
+        sf::Color(100, 100, 255, 100)));
+
   // Get the mouse position in game tiles
   const auto hover = Coord(
       static_cast<int>(std::floor((mousePosition.x - left_) / tileLength_)),
@@ -192,8 +205,12 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
   if (!attempt.first) { return; }
   const auto& state = attempt.second;
 
-  // Render the game's map
-  const auto& map = state.map;
+  // Render game buttons when it's a human's turn
+  if (getController(state.currentTeam) == Controller::Type::Human) {
+    window.draw(modeButton_);
+    window.draw(endTurnButton_);
+    renderText(window);
+  }
 
   // Render line of sight with red tiles
   auto rect = sf::RectangleShape(sf::Vector2f(tileLength_, tileLength_));
@@ -215,6 +232,7 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
   rect.setFillColor(sf::Color(255, 0, 0, 35));
 
   // Render everything on the map
+  const auto& map = state.map;
   for (const auto& t : map.field) {
 
     // Retrieve data from the current entry
@@ -732,6 +750,7 @@ Strategy::Game::resetGame() {
 
   // Report that we're starting a new game
   Console::log("Game reset.");
+  isInAttackMode_ = false;
 
   // Clear and re-initialise gamestate
   states_.clear();
@@ -1018,6 +1037,17 @@ Strategy::Game::resizeGame() {
     grid_.append(sf::Vertex(
           sf::Vector2f(left_ + i * tileLength_, bottom_), col));
   }
+
+  // Create buttons for the game
+  const float height = 50.f;
+  modeButton_ = sf::RectangleShape(
+      sf::Vector2f((center_.x - left_), height));
+  endTurnButton_ = sf::RectangleShape(
+      sf::Vector2f((center_.x - left_), height));
+
+  // Position buttons
+  modeButton_.setPosition(left_, top_ - height);
+  endTurnButton_.setPosition(center_.x, top_ - height);
 }
 
 // Render an object in on the field
@@ -1163,6 +1193,54 @@ Strategy::Game::renderPath(
       }
     }
   }
+}
+
+// Render text for the game
+void 
+Strategy::Game::renderText(sf::RenderWindow& window) {
+
+  // Prepare to render text
+  static auto modeText = sf::Text();
+  static auto endTurnText = sf::Text();
+
+  // Initialise text if there's no font yet
+  const unsigned int textSize = 32;
+  if (modeText.getFont() == nullptr) {
+    const auto* font = App::resources().getFont("cabin_font");
+    modeText.setFont(*font);
+    modeText.setCharacterSize(textSize);
+    modeText.setFillColor(sf::Color::White);
+  }
+  if (endTurnText.getFont() == nullptr) {
+    const auto* font = App::resources().getFont("cabin_font");
+    endTurnText.setFont(*font);
+    endTurnText.setCharacterSize(textSize);
+    endTurnText.setFillColor(sf::Color::White);
+    endTurnText.setString("End Turn");
+  }
+
+  // Change the mode button depending on the bool 'isInAttackMode_'
+  modeText.setString(isInAttackMode_ ? "Attack" : "Move");
+  auto bounds = modeText.getLocalBounds();
+  modeText.setOrigin(bounds.width * 0.5f, bounds.height);
+  bounds = endTurnText.getLocalBounds();
+  endTurnText.setOrigin(bounds.width * 0.5f, bounds.height);
+
+  // Move text to the center of their boxes
+  auto pos = modeButton_.getPosition();
+  bounds = modeButton_.getLocalBounds();
+  modeText.setPosition(
+      pos.x + bounds.width * 0.5f,
+      pos.y + bounds.height * 0.5f);
+  pos = endTurnButton_.getPosition();
+  bounds = endTurnButton_.getLocalBounds();
+  endTurnText.setPosition(
+      pos.x + bounds.width * 0.5f,
+      pos.y + bounds.height * 0.5f);
+
+  // Render text
+  window.draw(modeText);
+  window.draw(endTurnText);
 }
 
 // Get the colour associated with a team

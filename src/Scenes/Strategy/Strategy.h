@@ -76,6 +76,13 @@ namespace Strategy {
       std::vector<Coord> lineOfSight_;
       std::vector<std::pair<Coord, Range>> unitsInSight_;
 
+      // Should a unit move or attack
+      bool isInAttackMode_;
+
+      // Costs for actions to show player on HUD
+      Points mpCost_;
+      Points apCost_;
+
       // Sizes and positions of game graphics
       float maxGameLength_;
       float tileLength_;
@@ -85,9 +92,9 @@ namespace Strategy {
       float right_;
       float bottom_;
 
-      // Costs for actions to show player on HUD
-      Points mpCost_;
-      Points apCost_;
+      // Buttons for the game
+      sf::RectangleShape modeButton_;
+      sf::RectangleShape endTurnButton_;
 
       // Whether to show or hide the editor
       bool enableEditor_ = false;
@@ -186,6 +193,9 @@ namespace Strategy {
           sf::RenderWindow& window, 
           const GameState& state,
           const Object& object);
+
+      // Render text for the game
+      void renderText(sf::RenderWindow& window);
 
       // Get the colour associated with a team
       static sf::Color getTeamColour(const Team& team);
