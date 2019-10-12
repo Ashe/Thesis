@@ -269,10 +269,11 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
 
   // Render game buttons when it's a human's turn
   if (getController(state.currentTeam) == Controller::Type::Human) {
-    window.draw(modeButton_);
-    window.draw(endTurnButton_);
-    renderText(window);
+    renderButtons(window);
   }
+
+  // Render MP and AP counters
+  renderResources(window, state);
 
   // Render line of sight with red tiles if in attack mode
   auto rect = sf::RectangleShape(sf::Vector2f(tileLength_, tileLength_));
@@ -544,7 +545,6 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
 
     // Ensure there is a selected and enemy unit
     const auto& unit = readMap(state.map, state.selection);
-    const auto& location = readMap(state.map, action.location);
 
     // If:
     // - There is a unit selected
@@ -554,23 +554,29 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
         && state.remainingAP >= getUnitAPCost(unit.second)
         && unit.first == state.currentTeam
         && state.remainingAP ) {
-      
-      // Delete whatever is at the location
-      // @NOTE: This is vague to remain future-proof. There are checks
-      // performed before this to force you to only attack enemies anyway.
-      auto attempt = updateMap(
-          state.map, 
-          action.location, 
-          Object::Nothing, 
-          state.currentTeam);
 
-      // If update was successful, make a new state and return it
-      if (attempt.first) {
-        auto newState = state;
-        newState.map = attempt.second;
-        newState.teams = countTeams(newState.map);
-        newState.remainingAP -= getUnitAPCost(unit.second);
-        return std::make_pair(true, newState);
+      // Check if the location is in range of the unit
+      const auto& line = getLineOfSight(
+          state.map, state.selection, action.location);
+      if (!line.empty() && line.size() <= getUnitRange(unit.second) + 1) {
+        
+        // Delete whatever is at the location
+        // @NOTE: This is vague to remain future-proof. There are checks
+        // performed before this to force you to only attack enemies anyway.
+        auto attempt = updateMap(
+            state.map, 
+            action.location, 
+            Object::Nothing, 
+            state.currentTeam);
+
+        // If update was successful, make a new state and return it
+        if (attempt.first) {
+          auto newState = state;
+          newState.map = attempt.second;
+          newState.teams = countTeams(newState.map);
+          newState.remainingAP -= getUnitAPCost(unit.second);
+          return std::make_pair(true, newState);
+        }
       }
     }
   }
@@ -852,7 +858,6 @@ Strategy::Game::resetGame() {
 
   // Report that we're starting a new game
   Console::log("Game reset.");
-  isInAttackMode_ = false;
 
   // Clear and re-initialise gamestate
   states_.clear();
@@ -872,6 +877,13 @@ Strategy::Game::resetGame() {
   // Set current state to the most up-to-date state
   currentState_ = states_.size() - 1;
   if (currentState_ < 0) { currentState_ = 0; }
+
+  isInAttackMode_ = false;
+  recalculatePath();
+  recalculateLineOfSight();
+  unitsInSight_.clear();
+  mpCost_ = Points(0);
+  apCost_ = Points(0);
 }
 
 // Pushes a new state into the state list
@@ -1042,7 +1054,7 @@ Strategy::Game::recalculateLineOfSight() {
     // - Selected unit has enough AP
     // - Hovered coords are valid
     const auto hoveredObject = readMap(state.map, hoveredTile_);
-    if (state.remainingAP >= getUnitAPCost(selection.second)
+    if (getUnitAPCost(selection.second)
         && validateCoords(state.map, hoveredTile_)) {
 
       // Retrieve line of sight
@@ -1059,7 +1071,7 @@ Strategy::Game::recalculateLineOfSight() {
       }
 
       // If the unit is in line of sight AND in range, calculate AP cost
-      if (line.size() == lineOfSight_.size()) {
+      if (!line.empty() && line.size() == lineOfSight_.size()) {
         apCost_ = getUnitAPCost(selection.second);
       }
     }
@@ -1282,50 +1294,77 @@ Strategy::Game::renderPath(
 
 // Render text for the game
 void 
-Strategy::Game::renderText(sf::RenderWindow& window) {
-
-  // Prepare to render text
-  static auto modeText = sf::Text();
-  static auto endTurnText = sf::Text();
-
-  // Initialise text if there's no font yet
-  const unsigned int textSize = 32;
-  if (modeText.getFont() == nullptr) {
-    const auto* font = App::resources().getFont("cabin_font");
-    modeText.setFont(*font);
-    modeText.setCharacterSize(textSize);
-    modeText.setFillColor(sf::Color::White);
+Strategy::Game::renderText(
+    sf::RenderWindow& window,
+    unsigned int size,
+    const std::string& str,
+    const sf::Vector2f& pos,
+    const sf::Color& colour) {
+  const auto* font = App::resources().getFont("cabin_font");
+  if (font != nullptr) {
+    auto text = sf::Text(str, *font, size);
+    text.setFillColor(colour);
+    const auto bounds = text.getLocalBounds();
+    text.setOrigin(bounds.width * 0.5f, bounds.height);
+    text.setPosition(pos);
+    window.draw(text);
   }
-  if (endTurnText.getFont() == nullptr) {
-    const auto* font = App::resources().getFont("cabin_font");
-    endTurnText.setFont(*font);
-    endTurnText.setCharacterSize(textSize);
-    endTurnText.setFillColor(sf::Color::White);
-    endTurnText.setString("End Turn");
-  }
+}
 
-  // Change the mode button depending on the bool 'isInAttackMode_'
-  modeText.setString(isInAttackMode_ ? "Attack" : "Move");
-  auto bounds = modeText.getLocalBounds();
-  modeText.setOrigin(bounds.width * 0.5f, bounds.height);
-  bounds = endTurnText.getLocalBounds();
-  endTurnText.setOrigin(bounds.width * 0.5f, bounds.height);
+// Render text for the game
+void 
+Strategy::Game::renderButtons(sf::RenderWindow& window) {
 
-  // Move text to the center of their boxes
+  // Draw buttons
+  window.draw(modeButton_);
+  window.draw(endTurnButton_);
+
+  // Draw button text
   auto pos = modeButton_.getPosition();
-  bounds = modeButton_.getLocalBounds();
-  modeText.setPosition(
-      pos.x + bounds.width * 0.5f,
-      pos.y + bounds.height * 0.5f);
+  auto bounds = modeButton_.getGlobalBounds();
+  renderText(window, 32, 
+      isInAttackMode_ ? "Attack" : "Move",
+      sf::Vector2f(
+          pos.x + bounds.width * 0.5f,
+          pos.y + bounds.height * 0.5f));
   pos = endTurnButton_.getPosition();
-  bounds = endTurnButton_.getLocalBounds();
-  endTurnText.setPosition(
-      pos.x + bounds.width * 0.5f,
-      pos.y + bounds.height * 0.5f);
+  bounds = endTurnButton_.getGlobalBounds();
+  renderText(window, 32, 
+      "End Turn",
+      sf::Vector2f(
+          pos.x + bounds.width * 0.5f,
+          pos.y + bounds.height * 0.5f));
+}
 
-  // Render text
-  window.draw(modeText);
-  window.draw(endTurnText);
+// Render resources
+void 
+Strategy::Game::renderResources(
+    sf::RenderWindow& window, 
+    const GameState& state) {
+
+  // Render MP and AP counters
+  std::string str = "MP: " + std::to_string(state.remainingMP);
+  if (!isInAttackMode_ && mpCost_ > 0) {
+    str += " (- " + std::to_string(mpCost_) + ")";
+  }
+  renderText(window, 32, str,
+      sf::Vector2f(
+          (center_.x - left_) * 0.5f + left_,
+          bottom_ + 50),
+          !isInAttackMode_ && state.remainingMP - mpCost_ < 0 ?
+              sf::Color(255, 0, 0, 255) :
+              sf::Color(100, 100, 255, 150));
+  str = "AP: " + std::to_string(state.remainingAP);
+  if (isInAttackMode_ && apCost_ > 0) {
+    str += " (- " + std::to_string(apCost_) + ")";
+  }
+  renderText(window, 32, str,
+      sf::Vector2f(
+          (right_ - center_.x) * 0.5f + center_.x,
+          bottom_ + 50),
+          isInAttackMode_ && state.remainingAP - apCost_ < 0 ?
+              sf::Color(255, 0, 0, 255) :
+              sf::Color(255, 0, 0, 150));
 }
 
 // Get the colour associated with a team

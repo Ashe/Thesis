@@ -200,7 +200,18 @@ namespace Strategy {
           const Object& object);
 
       // Render text for the game
-      void renderText(sf::RenderWindow& window);
+      void renderText(
+          sf::RenderWindow& window,
+          unsigned int size,
+          const std::string& text,
+          const sf::Vector2f& pos,
+          const sf::Color& colour = sf::Color::White);
+
+      // Render the game buttons
+      void renderButtons(sf::RenderWindow& window);
+
+      // Render resources
+      void renderResources(sf::RenderWindow& window, const GameState& state);
 
       // Get the colour associated with a team
       static sf::Color getTeamColour(const Team& team);
