@@ -319,10 +319,14 @@ Strategy::Game::addDebugDetails() {
     ImGui::Text("Selected tile: (%d, %d)",
         state.selection.x, 
         state.selection.y);
-    ImGui::Text("Movement points: %d / %d", 
-        state.remainingMP, state.map.startingMP);
-    ImGui::Text("Action points: %d / %d", 
-        state.remainingAP, state.map.startingAP);
+    ImGui::Text((mpCost_ > 0 ? 
+        "Movement points: %d / %d (- %d)"
+        : "Movement points: %d / %d"),
+        state.remainingMP, state.map.startingMP, mpCost_);
+    ImGui::Text((apCost_ > 0 ?
+        "Action points: %d / %d (- %d)"
+        : "Action points: %d / %d"),
+        state.remainingAP, state.map.startingAP, apCost_);
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Text("Participating Teams:"); ImGui::NextColumn();
@@ -821,6 +825,7 @@ Strategy::Game::recalculatePath() {
 
   // Prepare to calculate a new route
   path_.clear();
+  mpCost_ = Points(0);
 
   // Retrieve the current state
   const auto statePair = getState(currentState_);
@@ -830,6 +835,12 @@ Strategy::Game::recalculatePath() {
   // Easy out if the hovered coords or selection coords are invalid
   if (!validateCoords(state.map, hoveredTile_)
       || !validateCoords(state.map, state.selection)) {
+    return;
+  }
+
+  // Get the selected unit and exit if its nonexistant or not allied
+  const auto& unit = readMap(state.map, state.selection);
+  if (!isUnit(unit.second) || unit.first != state.currentTeam) {
     return;
   }
 
@@ -869,10 +880,13 @@ Strategy::Game::recalculatePath() {
   // If the path worked
   if (attempt.first) {
 
-    // Unwind stack
+    // Unwind stack and accumilate the path's cost
+    const auto unitMPCost = getUnitMPCost(unit.second);
     while (!attempt.second.empty()) {
       const auto& action = attempt.second.top();
       path_.push_back(action);
+      // @TODO: Take environment into account here
+      mpCost_ += unitMPCost;
       attempt.second.pop();
     }
   }
@@ -883,6 +897,7 @@ void
 Strategy::Game::recalculateLineOfSight() {
 
   // Prepare to calculate sights
+  apCost_ = Points(0);
   lineOfSight_.clear();
   unitsInSight_.clear();
 
@@ -915,11 +930,13 @@ Strategy::Game::recalculateLineOfSight() {
     }
 
     // Get line of sight to hovered object IF:
+    // - Selected unit has enough AP
     // - Hovered coords are valid
     // - Hovered object exists
     // - Hovered object isn't allied (unless its a wall)
     const auto hoveredObject = readMap(state.map, hoveredTile_);
-    if (validateCoords(state.map, hoveredTile_)
+    if (state.remainingAP >= getUnitAPCost(selection.second)
+        && validateCoords(state.map, hoveredTile_)
         && hoveredObject.second != Object::Nothing
         && (hoveredObject.first != state.currentTeam || 
             hoveredObject.second == Object::Wall)) {
@@ -935,6 +952,11 @@ Strategy::Game::recalculateLineOfSight() {
       const auto& range = getUnitRange(selection.second);
       for (int i = 0; i < range + 1 && i < line.size(); ++i) {
         lineOfSight_.push_back(line[i]);
+      }
+
+      // If the unit is in line of sight AND in range, calculate AP cost
+      if (line.size() == lineOfSight_.size()) {
+        apCost_ = getUnitAPCost(selection.second);
       }
     }
   }

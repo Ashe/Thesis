@@ -85,6 +85,10 @@ namespace Strategy {
       float right_;
       float bottom_;
 
+      // Costs for actions to show player on HUD
+      Points mpCost_;
+      Points apCost_;
+
       // Whether to show or hide the editor
       bool enableEditor_ = false;
 
