@@ -24,7 +24,7 @@ namespace Strategy {
       CancelSelection,
       SelectUnit,
       MoveUnit,
-      AttackUnit
+      Attack
     };
     Tag tag = Tag::EndTurn;
 

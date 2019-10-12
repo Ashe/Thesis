@@ -35,6 +35,17 @@ namespace Strategy {
     }
   }
 
+  // Get AP cost per attack
+  inline Points getUnitAPCost(const Object& o) {
+    switch (o) {
+      case Object::MeleeUnit: return Points(1); break;
+      case Object::BlasterUnit: return Points(1); break;
+      case Object::SniperUnit: return Points(2); break;
+      case Object::LaserUnit: return Points(3); break;
+      default: return Points(0); break;
+    }
+  }
+
   // Get the range of a unit
   inline Range getUnitRange(const Object& o) {
     switch (o) {

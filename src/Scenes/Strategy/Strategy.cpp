@@ -15,16 +15,29 @@ Strategy::Game::onBegin() {
   // Make a temporary initial map
   // @TODO: Delete this
   auto temp = GameState();
-  auto attempt = updateMap(
-      temp.map, 
-      Coord(0, temp.map.size.y - 1),
-      Object::MeleeUnit,
-      0);
-  attempt = updateMap(
-      attempt.second,
-      Coord(temp.map.size.x - 1, 0),
-      Object::MeleeUnit,
-      1);
+  auto attempt = updateMap(temp.map, 
+      Coord(0, 4),
+      Object::SniperUnit, 0);
+
+  attempt = updateMap(attempt.second,
+      Coord(1, 4),
+      Object::BlasterUnit, 0);
+
+  attempt = updateMap(attempt.second,
+      Coord(0, 3),
+      Object::MeleeUnit, 0);
+
+  attempt = updateMap(attempt.second,
+      Coord(4, 0),
+      Object::SniperUnit, 1);
+
+  attempt = updateMap(attempt.second,
+      Coord(3, 0),
+      Object::BlasterUnit, 1);
+
+  attempt = updateMap(attempt.second,
+      Coord(4, 1),
+      Object::MeleeUnit, 1);
   
   // Load the first map to play with
   currentMap_ = attempt.second;
@@ -108,7 +121,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
 
           // If it's an enemy, attack it (if one is selected)
           else {
-            action.tag = Action::Tag::AttackUnit;
+            action.tag = Action::Tag::Attack;
             action.location = hoveredTile_;
           }
 
@@ -130,7 +143,8 @@ Strategy::Game::onEvent(const sf::Event& event) {
 
           // Follow set path, pushing and updating state as progress is made
           auto currentState = state;
-          for (int i = 0; i < path.size(); ++i) {
+          bool success = true;
+          for (int i = 0; success && i < path.size(); ++i) {
 
             // Get the action from the path
             const auto& action = path[i];
@@ -139,6 +153,9 @@ Strategy::Game::onEvent(const sf::Event& event) {
               if (newState.first) {
                 pushState(newState.second);
                 currentState = newState.second;
+              }
+              else {
+                success = false;
               }
             }
           }
@@ -214,8 +231,7 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
         });
 
     // Render a tile if they're in sight
-    // @NOTE: The LoS line renders their tile, so don't draw if they're hovered
-    if (pos != hoveredTile_ && it != unitsInSight_.end()) {
+    if (it != unitsInSight_.end()) {
       rect.setPosition(sf::Vector2f(
           left_ + pos.x * tileLength_,
           top_ + pos.y * tileLength_));
@@ -237,9 +253,6 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     renderObject(window, team, object, pos, style);
   }
 
-  // Render path points
-  renderPath(window, state);
-
   // If the current team is Human and there's something selected
   const auto& currentController = getController(state.currentTeam);
   if (currentController == Controller::Type::Human 
@@ -257,6 +270,10 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     if (hoveredObject.second == Object::Nothing
         && isUnit(selectedUnit.second)
         && selectedUnit.first == state.currentTeam) {
+
+      // Render path points
+      renderPath(window, state, selectedUnit.second);
+
       renderObject(window, state.currentTeam, 
           selectedUnit.second, hoveredTile_, RenderStyle::Ghost);
     }
@@ -395,12 +412,12 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
     const auto& dest = readMap(state.map, action.location);
 
     // If 
-    // - There's enough MP
     // - Unit selected
+    // - There's enough MP
     // - Selected unit is friendly
     // - Destination is empty
-    if (state.remainingMP > 0
-        && isUnit(unit.second)
+    if (isUnit(unit.second)
+        && state.remainingMP >= getUnitMPCost(unit.second)
         && unit.first == state.currentTeam
         && dest.second == Object::Nothing) {
 
@@ -423,12 +440,47 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
 
         // If this was also successful, update newState and return
         if (updateAttempt.first) {
-
           newState.map = updateAttempt.second;
           newState.selection = action.location;
-          newState.remainingMP -= 1;
+          newState.remainingMP -= getUnitMPCost(unit.second);
           return std::make_pair(true, newState);
         }
+      }
+    }
+  }
+
+  // If the action is to attack a location
+  else if (action.tag == Action::Tag::Attack) {
+
+    // Ensure there is a selected and enemy unit
+    const auto& unit = readMap(state.map, state.selection);
+    const auto& location = readMap(state.map, action.location);
+
+    // If:
+    // - There is a unit selected
+    // - Selected unit is friendly
+    // - There's enough AP for the unit to commence an attack
+    if (isUnit(unit.second) 
+        && state.remainingAP >= getUnitAPCost(unit.second)
+        && unit.first == state.currentTeam
+        && state.remainingAP ) {
+      
+      // Delete whatever is at the location
+      // @NOTE: This is vague to remain future-proof. There are checks
+      // performed before this to force you to only attack enemies anyway.
+      auto attempt = updateMap(
+          state.map, 
+          action.location, 
+          Object::Nothing, 
+          state.currentTeam);
+
+      // If update was successful, make a new state and return it
+      if (attempt.first) {
+        auto newState = state;
+        newState.map = attempt.second;
+        newState.teams = countTeams(newState.map);
+        newState.remainingAP -= getUnitAPCost(unit.second);
+        return std::make_pair(true, newState);
       }
     }
   }
@@ -781,7 +833,6 @@ Strategy::Game::recalculatePath() {
     return;
   }
 
-
   // Make a state with near-infinite movement points for pathfinding
   auto infinState = state;
   infinState.remainingMP = INT_MAX;
@@ -1040,7 +1091,10 @@ Strategy::Game::renderObject(
 
 // Render pathfinding on the current state
 void 
-Strategy::Game::renderPath(sf::RenderWindow& window, const GameState& state) {
+Strategy::Game::renderPath(
+    sf::RenderWindow& window, 
+    const GameState& state,
+    const Object& object) {
 
   // Make a sprite and initialise it if necessary
   static sf::Sprite pointSprite;
@@ -1054,15 +1108,21 @@ Strategy::Game::renderPath(sf::RenderWindow& window, const GameState& state) {
   pointSprite.setScale(tileLength_ / texSize.width, tileLength_ / texSize.height);
 
   // Render each point in the path
+  const auto unitCost = getUnitMPCost(object);
+  auto cost = Points(0);
   for (int i = 0; i < path_.size(); ++i) {
 
     // Get the current path node if this is definitely a move action
     if (path_[i].tag == Action::Tag::MoveUnit) {
       const auto& p = path_[i].location;
 
-      // Calculate if the player has enough MP to reach this node
+      // Accumilate the MP cost of moving
+      // @TODO: Factor in environment here
+      cost += unitCost;
+
+      // Set colour depending on whether they have enough MP
       auto col = getTeamColour(state.currentTeam);
-      if (i >= state.remainingMP) {
+      if (cost > state.remainingMP) {
         col *= sf::Color(255, 255, 255, 50);
       }
       pointSprite.setColor(col);

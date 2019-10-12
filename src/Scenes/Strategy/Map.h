@@ -23,10 +23,10 @@ namespace Strategy {
     std::map<unsigned int, std::pair<Team, Object>> field;
 
     // Starting movement point amount for this map
-    Points startingMP = 2;
+    Points startingMP = 5;
 
     // Starting action point amount for this map
-    Points startingAP = 1;
+    Points startingAP = 3;
   };
 }
 #endif

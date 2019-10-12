@@ -178,7 +178,10 @@ namespace Strategy {
           const RenderStyle& style);
 
       // Render pathfinding on the current state
-      void renderPath(sf::RenderWindow& window, const GameState& state);
+      void renderPath(
+          sf::RenderWindow& window, 
+          const GameState& state,
+          const Object& object);
 
       // Get the colour associated with a team
       static sf::Color getTeamColour(const Team& team);
