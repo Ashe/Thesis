@@ -17,7 +17,7 @@ Strategy::Game::onBegin() {
   auto temp = GameState();
   auto attempt = updateMap(temp.map, 
       Coord(0, 4),
-      Object::SniperUnit, 0);
+      Object::LaserUnit, 0);
 
   attempt = updateMap(attempt.second,
       Coord(1, 4),
@@ -25,11 +25,15 @@ Strategy::Game::onBegin() {
 
   attempt = updateMap(attempt.second,
       Coord(0, 3),
+      Object::SniperUnit, 0);
+
+  attempt = updateMap(attempt.second,
+      Coord(1, 3),
       Object::MeleeUnit, 0);
 
   attempt = updateMap(attempt.second,
       Coord(4, 0),
-      Object::SniperUnit, 1);
+      Object::LaserUnit, 1);
 
   attempt = updateMap(attempt.second,
       Coord(3, 0),
@@ -37,6 +41,10 @@ Strategy::Game::onBegin() {
 
   attempt = updateMap(attempt.second,
       Coord(4, 1),
+      Object::SniperUnit, 1);
+
+  attempt = updateMap(attempt.second,
+      Coord(3, 1),
       Object::MeleeUnit, 1);
   
   // Load the first map to play with
@@ -112,78 +120,132 @@ Strategy::Game::onEvent(const sf::Event& event) {
     if (!attempt.first) { return; }
     const auto& state = attempt.second;
 
-    // Select, move or attack with left click
-    if (event.mouseButton.button == sf::Mouse::Left) {
+    // Check if the current team is HUMAN
+    if (getControllerRef(state.currentTeam) == Controller::Type::Human) {
 
-      // Check if the current team is HUMAN and for valid coords
-      if (getControllerRef(state.currentTeam) == Controller::Type::Human
-          && validateCoords(state.map, hoveredTile_)) {
+      // If the click was in the game
+      if (validateCoords(state.map, hoveredTile_)) {
 
         // Check to see if we've clicked on a unit
         const auto& entity = readMap(state.map, hoveredTile_);
-        if (isUnit(entity.second)) {
 
-          // Prepare to take action
+        // Select / deselect on left click
+        if (event.mouseButton.button == sf::Mouse::Left) {
+
+          // Prepare to select or deselect
           Action action;
+          action.location = hoveredTile_;
 
-          // If it's allied select it
-          if (entity.first == state.currentTeam) {
+          // Select if we clicked a different allied unit
+          if (entity.first == state.currentTeam 
+              && hoveredTile_ != state.selection
+              && isUnit(entity.second)) {
             action.tag = Action::Tag::SelectUnit;
-            action.location = hoveredTile_;
           }
 
-          // If it's an enemy, attack it (if one is selected)
-          else {
-            action.tag = Action::Tag::Attack;
-            action.location = hoveredTile_;
+          // Deselect otherwise
+          else { 
+            action.tag = Action::Tag::CancelSelection; 
           }
 
-          // If we selected or attacked, attempt to act
-          const auto& newState = takeAction(state, action);
+          // Perform selection / deselection
+          const auto& newState = takeAction(state, action);     
           if (newState.first) {
             pushState(newState.second);
           }
         }
-        
-        // Otherwise, if it's an empty space, move there if possible
-        else if (entity.second == Object::Nothing) {
 
-          // Sample the path as it will get recalculated with pushState()
-          std::vector<Action> path;
-          for (int i = 0; i < state.remainingMP && i < path_.size(); ++i) {
-            path.push_back(path_[i]);
+        // Select, move or attack with right click
+        else if (event.mouseButton.button == sf::Mouse::Right) {
+
+          // Attack anything if we're in attack mode
+          if (isInAttackMode_) {
+
+            // If we're in attack mode, attack wherever was clicked
+            Action action;
+            action.tag = Action::Tag::Attack;
+            action.location = hoveredTile_;
+            const auto& newState = takeAction(state, action);
+            if (newState.first) {
+              pushState(newState.second);
+            }
           }
 
-          // Follow set path, pushing and updating state as progress is made
-          auto currentState = state;
-          bool success = true;
-          for (int i = 0; success && i < path.size(); ++i) {
+          else {
 
-            // Get the action from the path
-            const auto& action = path[i];
-            if (action.tag == Action::Tag::MoveUnit) {
-              const auto& newState = takeAction(currentState, action);
-              if (newState.first) {
-                pushState(newState.second);
-                currentState = newState.second;
+            // Otherwise, if we're not attacking and we clicked nothing, move
+            if (entity.second == Object::Nothing) {
+
+              // Sample the path as it will get recalculated with pushState()
+              std::vector<Action> path;
+              for (int i = 0; i < state.remainingMP && i < path_.size(); ++i) {
+                path.push_back(path_[i]);
               }
-              else {
-                success = false;
+
+              // Follow set path, pushing and updating state as progress is made
+              auto currentState = state;
+              bool success = true;
+              for (int i = 0; success && i < path.size(); ++i) {
+
+                // Get the action from the path
+                const auto& action = path[i];
+                if (action.tag == Action::Tag::MoveUnit) {
+                  const auto& newState = takeAction(currentState, action);
+                  if (newState.first) {
+                    pushState(newState.second);
+                    currentState = newState.second;
+                  }
+                  else {
+                    success = false;
+                  }
+                }
               }
             }
           }
         }
       }
+
+      // Check if the click is on the mode button
+      else if (modeButton_.getGlobalBounds().contains(
+          App::getMousePosition())) {
+        isInAttackMode_ = !isInAttackMode_;
+      }
+
+      // Check if the click is on the end turn button
+      else if (endTurnButton_.getGlobalBounds().contains(
+          App::getMousePosition())) {
+        // @TODO: Implement turn ending
+      }
+
+      // Otherwise deselect unit
+      else {
+        Action action;
+        action.tag = Action::Tag::CancelSelection;
+        action.location = hoveredTile_;
+        const auto& newState = takeAction(state, action);
+        if (newState.first) {
+          pushState(newState.second);
+        }
+      }
+    }
+  }
+
+  // Check for key presses
+  else if (event.type == sf::Event::KeyPressed) {
+
+    // Set attack mode on shift key press
+    if (event.key.code == sf::Keyboard::LShift) {
+      isInAttackMode_ = true;
     }
 
-    // Cancel selection on right click
-    else if (event.mouseButton.button == sf::Mouse::Right) {
-      Action action;
-      action.tag = Action::Tag::CancelSelection;
-      const auto& newState = takeAction(state, action);     
-      if (newState.first) {
-        pushState(newState.second);
-      }
+  }
+
+  // Check for key releases
+  else if (event.type == sf::Event::KeyReleased) {
+
+    // Undo attack mode on shift key release
+    if (event.key.code == sf::Keyboard::LShift) {
+      isInAttackMode_ = false;
     }
   }
 
@@ -212,19 +274,21 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     renderText(window);
   }
 
-  // Render line of sight with red tiles
+  // Render line of sight with red tiles if in attack mode
   auto rect = sf::RectangleShape(sf::Vector2f(tileLength_, tileLength_));
-  rect.setFillColor(sf::Color(255, 0, 0, 75));
-  for (const auto& c : lineOfSight_) {
+  if (isInAttackMode_) {
+    rect.setFillColor(sf::Color(255, 0, 0, 75));
+    for (const auto& c : lineOfSight_) {
 
-    // Get position from coords
-    const auto pos = sf::Vector2f(
-        left_ + c.x * tileLength_,
-        top_ + c.y * tileLength_);
+      // Get position from coords
+      const auto pos = sf::Vector2f(
+          left_ + c.x * tileLength_,
+          top_ + c.y * tileLength_);
 
-    // Manipulate rectangle position and draw
-    rect.setPosition(pos);
-    window.draw(rect);
+      // Manipulate rectangle position and draw
+      rect.setPosition(pos);
+      window.draw(rect);
+    }
   }
 
   // Dim the colour for enemies that have you in sight
@@ -282,16 +346,19 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     const auto& hoveredObject = readMap(map, hoveredTile_);
     
     // IF:
+    // - We're in move move
     // - Hovered tile is empty
     // - Selection is a unit
     // - Selection unit is an ally
-    if (hoveredObject.second == Object::Nothing
+    if (!isInAttackMode_
+        && hoveredObject.second == Object::Nothing
         && isUnit(selectedUnit.second)
         && selectedUnit.first == state.currentTeam) {
 
       // Render path points
       renderPath(window, state, selectedUnit.second);
 
+      // Render a ghost of the object to move
       renderObject(window, state.currentTeam, 
           selectedUnit.second, hoveredTile_, RenderStyle::Ghost);
     }
@@ -345,6 +412,7 @@ Strategy::Game::addDebugDetails() {
         "Action points: %d / %d (- %d)"
         : "Action points: %d / %d"),
         state.remainingAP, state.map.startingAP, apCost_);
+    ImGui::Text("Attacking: %s", isInAttackMode_ ? "true" : "false");
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Text("Participating Teams:"); ImGui::NextColumn();
@@ -706,6 +774,40 @@ Strategy::Game::getLineOfSight(
   return line;
 }
 
+// Get units in line of sight
+std::vector<std::pair<Strategy::Coord, Strategy::Range>> 
+Strategy::Game::getUnitsInSight(const Map& map, const Coord& u) {
+
+  // Prepare to collect units in range
+  std::vector<std::pair<Coord, Range>> units;
+
+  // Check if there's a unit at the given position
+  const auto& location = readMap(map, u);
+  if (validateCoords(map, u) 
+      && isUnit(location.second)) {
+
+    // Iterate through every enemy and determine if they're in line of sight
+    for (const auto& kvp : map.field) {
+      const auto& pos = indexToCoord(map, kvp.first);
+      const auto& team = kvp.second.first;
+      const auto& object = kvp.second.second;
+
+      // If this is an enemy unit, record if it's in sight or not
+      if (team != location.first && isUnit(object)) {
+        const auto& line = getLineOfSight(
+            map, u, pos);
+        if (!line.empty()) {
+          const Range r = std::max(0, (int)line.size() - 1);
+          units.push_back(std::make_pair(pos, r));
+        }
+      }
+    }
+  }
+
+  // Return what was discovered
+  return units;
+}
+
 // Get possible moves from the current Coord in a state
 std::vector<Strategy::Action> 
 Strategy::Game::getPossibleMoves(const GameState& state) {
@@ -796,8 +898,14 @@ Strategy::Game::pushState(const GameState& state) {
   // Recalculate the path after things have changed
   recalculatePath();
 
-  // Recalculate line of sights
+  // Recalculate line of sight as selected unit could have changed
   recalculateLineOfSight();
+
+  // Find units in sight if selection is valid
+  unitsInSight_.clear();
+  if (validateCoords(state.map, state.selection)) {
+    unitsInSight_ = getUnitsInSight(state.map, state.selection);
+  }
 }
 
 // Get a gamestate safely
@@ -918,7 +1026,6 @@ Strategy::Game::recalculateLineOfSight() {
   // Prepare to calculate sights
   apCost_ = Points(0);
   lineOfSight_.clear();
-  unitsInSight_.clear();
 
   // Retrieve the current state
   const auto statePair = getState(currentState_);
@@ -931,34 +1038,12 @@ Strategy::Game::recalculateLineOfSight() {
       && selection.first == state.currentTeam
       && isUnit(selection.second)) {
 
-    // Iterate through every enemy and determine if they're in line of sight
-    for (const auto& kvp : state.map.field) {
-      const auto& pos = indexToCoord(state.map, kvp.first);
-      const auto& team = kvp.second.first;
-      const auto& object = kvp.second.second;
-
-      // If this is an enemy unit, record if it's in sight or not
-      if (team != state.currentTeam && isUnit(object)) {
-        const auto& line = getLineOfSight(
-            state.map, state.selection, pos);
-        if (!line.empty()) {
-          const Range r = std::max(0, (int)line.size() - 1);
-          unitsInSight_.push_back(std::make_pair(pos, r));
-        }
-      }
-    }
-
-    // Get line of sight to hovered object IF:
+    // Get line of sight to hovered location IF:
     // - Selected unit has enough AP
     // - Hovered coords are valid
-    // - Hovered object exists
-    // - Hovered object isn't allied (unless its a wall)
     const auto hoveredObject = readMap(state.map, hoveredTile_);
     if (state.remainingAP >= getUnitAPCost(selection.second)
-        && validateCoords(state.map, hoveredTile_)
-        && hoveredObject.second != Object::Nothing
-        && (hoveredObject.first != state.currentTeam || 
-            hoveredObject.second == Object::Wall)) {
+        && validateCoords(state.map, hoveredTile_)) {
 
       // Retrieve line of sight
       const auto& line = getLineOfSight(

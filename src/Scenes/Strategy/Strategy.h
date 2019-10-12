@@ -143,6 +143,11 @@ namespace Strategy {
           const Coord& a,
           const Coord& b);
 
+      // Get units in line of sight
+      static std::vector<std::pair<Coord, Range>> getUnitsInSight(
+          const Map& map,
+          const Coord& location);
+
       // Get possible moves from the current Coord in a state
       static std::vector<Action> getPossibleMoves(const GameState& state);
 
