@@ -19,6 +19,9 @@ namespace Strategy {
   // Movement / Action points
   typedef int Points;
 
+  // Attack Range
+  typedef int Range;
+
   // Team colours
   static std::map<Team, sf::Color> teamColours = {
     {0, sf::Color::Cyan},

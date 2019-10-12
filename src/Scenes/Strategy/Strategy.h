@@ -74,7 +74,7 @@ namespace Strategy {
 
       // Line of sights
       std::vector<Coord> lineOfSight_;
-      std::vector<Coord> unitsInSight_;
+      std::vector<std::pair<Coord, Range>> unitsInSight_;
 
       // Sizes and positions of game graphics
       float maxGameLength_;
@@ -130,8 +130,7 @@ namespace Strategy {
       static std::vector<Coord> getLineOfSight(
           const Map& map, 
           const Coord& a,
-          const Coord& b,
-          int range = -1);
+          const Coord& b);
 
       // Get possible moves from the current Coord in a state
       static std::vector<Action> getPossibleMoves(const GameState& state);

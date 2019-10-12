@@ -18,12 +18,12 @@ Strategy::Game::onBegin() {
   auto attempt = updateMap(
       temp.map, 
       Coord(0, temp.map.size.y - 1),
-      Object::Bazooka,
+      Object::MeleeUnit,
       0);
   attempt = updateMap(
       attempt.second,
       Coord(temp.map.size.x - 1, 0),
-      Object::Bazooka,
+      Object::MeleeUnit,
       1);
   
   // Load the first map to play with
@@ -95,7 +95,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
 
         // Check to see if we've clicked on a unit
         const auto& entity = readMap(state.map, hoveredTile_);
-        if (entity.second >= Object::Bazooka) {
+        if (isUnit(entity.second)) {
 
           // Prepare to take action
           Action action;
@@ -178,24 +178,24 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
   // Render the game's map
   const auto& map = state.map;
 
-  // Render line of sight with green tiles
+  // Render line of sight with red tiles
   auto rect = sf::RectangleShape(sf::Vector2f(tileLength_, tileLength_));
-  rect.setFillColor(sf::Color(255, 0, 0, 50));
+  rect.setFillColor(sf::Color(255, 0, 0, 75));
   for (const auto& c : lineOfSight_) {
 
-    // Don't re-draw the tile on hover
-    if (c != hoveredTile_) {
-    
-      // Get position from coords
-      const auto pos = sf::Vector2f(
-          left_ + c.x * tileLength_,
-          top_ + c.y * tileLength_);
+    // Get position from coords
+    const auto pos = sf::Vector2f(
+        left_ + c.x * tileLength_,
+        top_ + c.y * tileLength_);
 
-      // Manipulate rectangle position and draw
-      rect.setPosition(pos);
-      window.draw(rect);
-    }
+    // Manipulate rectangle position and draw
+    rect.setPosition(pos);
+    window.draw(rect);
   }
+
+  // Dim the colour for enemies that have you in sight
+  // When combined with the above, it'll glow more if you can see them
+  rect.setFillColor(sf::Color(255, 0, 0, 35));
 
   // Render everything on the map
   for (const auto& t : map.field) {
@@ -205,10 +205,17 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     const auto& team = t.second.first;
     const auto& object = t.second.second;
 
+    // Check to see if the current object is in sight
+    const auto& it = std::find_if(
+        unitsInSight_.begin(), 
+        unitsInSight_.end(), 
+        [pos](const auto& u) {
+          return u.first == pos;
+        });
+
     // Render a tile if they're in sight
-    const auto& it = std::find(
-        unitsInSight_.begin(), unitsInSight_.end(), pos);
-    if (it != unitsInSight_.end()) {
+    // @NOTE: The LoS line renders their tile, so don't draw if they're hovered
+    if (pos != hoveredTile_ && it != unitsInSight_.end()) {
       rect.setPosition(sf::Vector2f(
           left_ + pos.x * tileLength_,
           top_ + pos.y * tileLength_));
@@ -239,11 +246,19 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
       && validateCoords(map, state.selection)
       && validateCoords(map, hoveredTile_)) {
 
-    // Check to see if the hovered tile is empty
-    const auto object = readMap(map, hoveredTile_);
-    if (object.second == Object::Nothing) {
+    // Read map for data on selection and hover
+    const auto& selectedUnit = readMap(state.map, state.selection);
+    const auto& hoveredObject = readMap(map, hoveredTile_);
+    
+    // IF:
+    // - Hovered tile is empty
+    // - Selection is a unit
+    // - Selection unit is an ally
+    if (hoveredObject.second == Object::Nothing
+        && isUnit(selectedUnit.second)
+        && selectedUnit.first == state.currentTeam) {
       renderObject(window, state.currentTeam, 
-          Object::Bazooka, hoveredTile_, RenderStyle::Ghost);
+          selectedUnit.second, hoveredTile_, RenderStyle::Ghost);
     }
   }
 }
@@ -363,7 +378,7 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
 
     // Validate that there is an ALLIED unit to select
     const auto& unit = readMap(state.map, action.location);
-    if (unit.first == state.currentTeam && unit.second >= Object::Bazooka) {
+    if (unit.first == state.currentTeam && isUnit(unit.second)) {
 
       // Update the selected unit in the current state
       auto newState = state;
@@ -385,7 +400,7 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
     // - Selected unit is friendly
     // - Destination is empty
     if (state.remainingMP > 0
-        && unit.second >= Object::Bazooka
+        && isUnit(unit.second)
         && unit.first == state.currentTeam
         && dest.second == Object::Nothing) {
 
@@ -451,7 +466,7 @@ Strategy::Game::countTeams(const Map& map) {
   for (const auto& kvp : map.field) {
 
     // If the thing found is a character
-    if (kvp.second.second >= Object::Bazooka) {
+    if (isUnit(kvp.second.second)) {
 
       // Increment the count for the found team
       const auto& team = kvp.second.first;
@@ -517,11 +532,11 @@ std::vector<Strategy::Coord>
 Strategy::Game::getLineOfSight(
     const Map& map, 
     const Coord& from,
-    const Coord& to,
-    int range) {
+    const Coord& to) {
 
   // Should low-line or high-line be used
   bool useHigh;
+  bool swapped = false;
   Coord start = from;
   Coord end = to;
 
@@ -529,6 +544,7 @@ Strategy::Game::getLineOfSight(
   if (std::abs(to.y - from.y) < std::abs(to.x - from.x)) {
     useHigh = false;
     if (from.x > to.x) {
+      swapped = true;
       start = to;
       end = from;
     }
@@ -536,6 +552,7 @@ Strategy::Game::getLineOfSight(
   else {
     useHigh = true;
     if (from.y > to.y) {
+      swapped = true;
       start = to;
       end = from;
     }
@@ -559,9 +576,11 @@ Strategy::Game::getLineOfSight(
     int y = start.y;
     for (int x = start.x; x <= end.x; ++x) {
 
-      // Check that coord is not destination or empty to return fail
+      // Add to line of sight if it's not the starting location
       const auto current = Coord(x, y);
       line.push_back(current);
+
+      // Check that coord is not destination or empty to return fail
       if (current != from && current != to) {
         const auto read = readMap(map, current);
         if (read.second != Object::Nothing) {
@@ -590,6 +609,8 @@ Strategy::Game::getLineOfSight(
       // Check that coord is not destination or empty to return fail
       const auto current = Coord(x, y);
       line.push_back(current);
+
+      // Check that coord is not destination or empty to return fail
       if (current != from && current != to) {
         const auto read = readMap(map, current);
         if (read.second != Object::Nothing) {
@@ -605,6 +626,9 @@ Strategy::Game::getLineOfSight(
   }
 
   // Return true if nothing has ruined the line
+  if (swapped) {
+    std::reverse(line.begin(), line.end());
+  }
   return line;
 }
 
@@ -820,7 +844,7 @@ Strategy::Game::recalculateLineOfSight() {
   const auto& selection = readMap(state.map, state.selection);
   if (validateCoords(state.map, state.selection) 
       && selection.first == state.currentTeam
-      && selection.second >= Object::Bazooka) {
+      && isUnit(selection.second)) {
 
     // Iterate through every enemy and determine if they're in line of sight
     for (const auto& kvp : state.map.field) {
@@ -829,11 +853,12 @@ Strategy::Game::recalculateLineOfSight() {
       const auto& object = kvp.second.second;
 
       // If this is an enemy unit, record if it's in sight or not
-      if (team != state.currentTeam && object >= Object::Bazooka) {
+      if (team != state.currentTeam && isUnit(object)) {
         const auto& line = getLineOfSight(
             state.map, state.selection, pos);
         if (!line.empty()) {
-          unitsInSight_.push_back(pos);
+          const Range r = std::max(0, (int)line.size() - 1);
+          unitsInSight_.push_back(std::make_pair(pos, r));
         }
       }
     }
@@ -848,11 +873,18 @@ Strategy::Game::recalculateLineOfSight() {
         && (hoveredObject.first != state.currentTeam || 
             hoveredObject.second == Object::Wall)) {
 
-      // Populate the set with the line of sight
-      lineOfSight_ = getLineOfSight(
+      // Retrieve line of sight
+      const auto& line = getLineOfSight(
           state.map,
           state.selection,
           hoveredTile_);
+
+      // Limit LoS to the range of selected unit
+      // @NOTE: 1 of the tiles in LoS is the current unit, so +1 to range
+      const auto& range = getUnitRange(selection.second);
+      for (int i = 0; i < range + 1 && i < line.size(); ++i) {
+        lineOfSight_.push_back(line[i]);
+      }
     }
   }
 }
@@ -978,19 +1010,24 @@ Strategy::Game::renderObject(
       tex = App::resources().getTexture("wall");
     }
 
-    // Bazooka user
-    else if (object == Object::Bazooka) {
-      tex = App::resources().getTexture("bazooka");
+    // Melee unit
+    else if (object == Object::MeleeUnit) {
+      tex = App::resources().getTexture("melee_unit");
     }
 
-    // Machinegunner
-    else if (object == Object::Machinegunner) {
-      tex = App::resources().getTexture("machinegunner");
+    // Blaster unit
+    else if (object == Object::BlasterUnit) {
+      tex = App::resources().getTexture("blaster_unit");
     }
 
-    // Shotgunner
-    else if (object == Object::Shotgunner) {
-      tex = App::resources().getTexture("shotgunner");
+    // Sniper unit
+    else if (object == Object::SniperUnit) {
+      tex = App::resources().getTexture("sniper_unit");
+    }
+
+    // Laser unit
+    else if (object == Object::LaserUnit) {
+      tex = App::resources().getTexture("laser_unit");
     }
 
     // If a texture was found for this object, store it in the map
