@@ -163,6 +163,9 @@ namespace Strategy {
       // Check if there's a winning team and retrieve it if so
       static std::pair<GameStatus, Team> getGameStatus(const GameState& state);
 
+      // Get a default map layout of units
+      static Map getDefaultUnitPlacement(const Map& map);
+
       ///////////////////////////////////////////
       // IMPURE FUNCTIONS:
       // - Mutate the state of the scene
@@ -200,6 +203,9 @@ namespace Strategy {
 
       // Recalculate the line of sight set
       void recalculateLineOfSight();
+
+      // Retrieve units that are in sight
+      void recalculateUnitsInSight();
 
       ///////////////////////////////////////////
       // GRAPHICAL / LOGGING:

@@ -12,43 +12,8 @@
 void 
 Strategy::Game::onBegin() {
 
-  // Make a temporary initial map
-  // @TODO: Delete this
-  auto temp = GameState();
-  auto attempt = updateMap(temp.map, 
-      Coord(0, 4),
-      Object::LaserUnit, 0);
-
-  attempt = updateMap(attempt.second,
-      Coord(1, 4),
-      Object::BlasterUnit, 0);
-
-  attempt = updateMap(attempt.second,
-      Coord(0, 3),
-      Object::SniperUnit, 0);
-
-  attempt = updateMap(attempt.second,
-      Coord(1, 3),
-      Object::MeleeUnit, 0);
-
-  attempt = updateMap(attempt.second,
-      Coord(4, 0),
-      Object::LaserUnit, 1);
-
-  attempt = updateMap(attempt.second,
-      Coord(3, 0),
-      Object::BlasterUnit, 1);
-
-  attempt = updateMap(attempt.second,
-      Coord(4, 1),
-      Object::SniperUnit, 1);
-
-  attempt = updateMap(attempt.second,
-      Coord(3, 1),
-      Object::MeleeUnit, 1);
-  
   // Load the first map to play with
-  currentMap_ = attempt.second;
+  currentMap_ = getDefaultUnitPlacement(Map());
 
   // Reset the game properly
   resetGame();
@@ -90,11 +55,18 @@ Strategy::Game::onUpdate(const sf::Time& dt) {
     // If this is a new tile
     if (changed) {
 
-      // Recalculate pathfinding route
-      recalculatePath();
+      // Only perform these if the current player is human
+      const auto& attempt = getState(currentState_);
+      if (!attempt.first) { return; }
+      const auto& state = attempt.second;
+      if (getController(state.currentTeam) == Controller::Type::Human) {
 
-      // Recalculate line of sight
-      recalculateLineOfSight();
+        // Recalculate pathfinding route
+        recalculatePath();
+
+        // Recalculate line of sight
+        recalculateLineOfSight();
+      }
     }
   }
   else {
@@ -198,6 +170,9 @@ Strategy::Game::onEvent(const sf::Event& event) {
                 logAction(state, lastAction.second);
                 continueGame();
                 viewLatestState();
+                recalculatePath();
+                recalculateLineOfSight();
+                recalculateUnitsInSight();
               }
             }
           }
@@ -234,8 +209,9 @@ Strategy::Game::onEvent(const sf::Event& event) {
       // Prepare to modify map
       auto map = std::make_pair(false, state.map);
 
-      // Insert objects on left click
-      if (event.mouseButton.button == sf::Mouse::Left) {
+      // Insert objects on left click (if Object is not Nothing)
+      if (event.mouseButton.button == sf::Mouse::Left 
+          && editorObject_ != Object::Nothing) {
         map = updateMap(state.map, hoveredTile_, editorObject_, editorTeam_);
       }
 
@@ -252,8 +228,9 @@ Strategy::Game::onEvent(const sf::Event& event) {
         newState.map = map.second;
         pushState(newState);
 
-        // View the change
+        // View the changes
         viewLatestState();
+        recalculateUnitsInSight();
       }
     }
   }
@@ -521,7 +498,7 @@ Strategy::Game::addDebugDetails() {
     }
     if (ImGui::Button("Reset Game")) { resetGame(); }
     ImGui::Spacing();
-    if (ImGui::Button(enableEditor_ ? "Hide Editor" : "Show Editor")) {
+    if (ImGui::Button(enableEditor_ ? "Hide Map Loader" : "Show Map Loader")) {
       enableEditor_ = !enableEditor_;
     }
   }
@@ -529,14 +506,61 @@ Strategy::Game::addDebugDetails() {
 
   // Map editor
   if (enableEditor_) {
-    if(ImGui::Begin("Map Editor", &enableEditor_)) {
-      ImGui::Text("Position: (%d, %d)",
-          hoveredTile_.x, 
-          hoveredTile_.y);
-      ImGui::InputInt("Team", reinterpret_cast<int*>(&editorTeam_));
-      ImGui::Combo( "Object",
-          reinterpret_cast<int*>(&editorObject_), 
-          objectList, IM_ARRAYSIZE(objectList));
+    if(ImGui::Begin("Map Management", &enableEditor_)) {
+      float w = 100.f;
+      ImGui::PushItemWidth(w);
+      ImGui::SetNextTreeNodeOpen(true);
+      if (ImGui::TreeNode("Editor:")) {
+        ImGui::Text("Object Position: (%d, %d)",
+            hoveredTile_.x, 
+            hoveredTile_.y);
+        ImGui::InputInt("Team", reinterpret_cast<int*>(&editorTeam_));
+        ImGui::Combo("Object",
+            reinterpret_cast<int*>(&editorObject_), 
+            objectList, IM_ARRAYSIZE(objectList));
+        ImGui::TreePop();
+      }
+      ImGui::SetNextTreeNodeOpen(true);
+      if (ImGui::TreeNode("Generator:")) {
+        static int width = state.map.size.x;
+        static int height = state.map.size.y;
+        static int mp = state.remainingMP;
+        static int ap = state.remainingAP;
+        ImGui::SetNextTreeNodeOpen(true);
+        if (ImGui::TreeNode("Size:")) {
+          ImGui::InputInt("Width", reinterpret_cast<int*>(&width));
+          ImGui::InputInt("Height", reinterpret_cast<int*>(&height));
+          if (width < 4) { width = 4; }
+          if (height < 4) { height = 4; }
+          ImGui::TreePop();
+        }
+        ImGui::SetNextTreeNodeOpen(true);
+        if (ImGui::TreeNode("Resources:")) {
+          ImGui::InputInt("Movement Points", reinterpret_cast<int*>(&mp));
+          ImGui::InputInt("Action Points", reinterpret_cast<int*>(&ap));
+          if (mp < 1) { mp = 1; }
+          if (ap < 1) { ap = 1; }
+          ImGui::TreePop();
+        }
+        if (ImGui::Button("Generate Blank Map")) {
+          Map map;
+          map.size = Coord(width, height);
+          map.startingMP = mp;
+          map.startingAP = ap;
+          currentMap_ = map;
+          resetGame();
+        }
+        if (ImGui::Button("Generate Default Map")) {
+          Map map;
+          map.size = Coord(width, height);
+          map.startingMP = mp;
+          map.startingAP = ap;
+          currentMap_ = getDefaultUnitPlacement(map);
+          resetGame();
+        }
+        ImGui::TreePop();
+      }
+      ImGui::PopItemWidth();
     }
     ImGui::End();
   }
@@ -994,6 +1018,45 @@ Strategy::Game::getGameStatus(const GameState& state) {
   return std::make_pair(GameStatus::InProgress, Team(0));
 }
 
+// Get a default map layout of units
+Strategy::Map 
+Strategy::Game::getDefaultUnitPlacement(const Map& map) {
+
+  // Check size is big enough
+  if (map.size.x < 4 || map.size.y < 4) {
+    Console::log("[Error] Cannot place default unit layout - map too small.");
+    return map;
+  }
+
+  // Positions
+  const auto right = map.size.x - 1;
+  const auto bottom = map.size.y - 1;
+
+  // Clear all units
+  auto blank = map;
+  blank.field.clear();
+
+  // Add units in default way
+  auto attempt = 
+    updateMap(map, Coord(0, bottom), Object::LaserUnit, 0);
+  attempt = 
+    updateMap(attempt.second, Coord(1, bottom), Object::BlasterUnit, 0);
+  attempt = 
+    updateMap(attempt.second, Coord(0, bottom - 1), Object::SniperUnit, 0); 
+  attempt = 
+    updateMap(attempt.second, Coord(1, bottom - 1), Object::MeleeUnit, 0);
+  attempt = 
+    updateMap(attempt.second, Coord(right, 0), Object::LaserUnit, 1);
+  attempt = 
+    updateMap(attempt.second, Coord(right - 1, 0), Object::BlasterUnit, 1);
+  attempt = 
+    updateMap(attempt.second, Coord(right, 1), Object::SniperUnit, 1);
+  attempt = 
+    updateMap(attempt.second, Coord(right - 1, 1), Object::MeleeUnit, 1);
+
+  return attempt.second;
+}
+
 ///////////////////////////////////////////
 // IMPURE FUNCTIONS:
 // - Mutate the state of the scene
@@ -1074,6 +1137,9 @@ Strategy::Game::resetGame() {
   // Set current state to the most up-to-date state
   viewLatestState();
 
+  // Resize the game in case map has changed
+  resizeGame();
+
   // Reset variables 
   isInAttackMode_ = false;
   unitsInSight_.clear();
@@ -1110,6 +1176,19 @@ Strategy::Game::tryPushAction(const GameState& prev, const Action& action) {
     // Observe the latest state after AI moves
     viewLatestState();
 
+    // Only human players need path and line of sight calculation
+    if (getController(state.currentTeam) == Controller::Type::Human) {
+
+      // Recalculate the path after things have changed
+      recalculatePath();
+
+      // Recalculate line of sight as selected unit could have changed
+      recalculateLineOfSight();
+    }
+
+    // Ensure that the units in sight is up to date
+    recalculateUnitsInSight();
+
     // Return success
     return true;
   }
@@ -1127,18 +1206,6 @@ Strategy::Game::pushState(const GameState& state) {
 
   // Add new state and move currentState_ to the last state
   states_.push_back(state);
-
-  // Recalculate the path after things have changed
-  recalculatePath();
-
-  // Recalculate line of sight as selected unit could have changed
-  recalculateLineOfSight();
-
-  // Ensure that the units in sight is up to date
-  unitsInSight_.clear();
-  if (validateCoords(state.map, state.selection)) {
-    unitsInSight_ = getUnitsInSight(state.map, state.selection);
-  }
 }
 
 // Get a gamestate safely
@@ -1296,6 +1363,24 @@ Strategy::Game::recalculateLineOfSight() {
         apCost_ = getUnitAPCost(selection.second);
       }
     }
+  }
+}
+
+// Retrieve units that are in sight
+void 
+Strategy::Game::recalculateUnitsInSight() {
+
+  // Prepare to find units
+  unitsInSight_.clear();
+
+  // Retrieve the current state
+  const auto statePair = getState(currentState_);
+  if (!statePair.first) { return; }
+  const auto state = statePair.second;
+
+  // Find every unit that see's the tile selected
+  if (validateCoords(state.map, state.selection)) {
+    unitsInSight_ = getUnitsInSight(state.map, state.selection);
   }
 }
 
