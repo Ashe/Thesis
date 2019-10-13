@@ -58,11 +58,6 @@ Strategy::Game::onBegin() {
 void 
 Strategy::Game::onUpdate(const sf::Time& dt) {
 
-  // Get the current state if possible
-  const auto& attempt = getState(currentState_);
-  if (!attempt.first) { return; }
-  const auto& state = attempt.second;
-
   // Get the position of the mouse
   const auto& mousePosition = App::getMousePosition();
 
@@ -120,8 +115,9 @@ Strategy::Game::onEvent(const sf::Event& event) {
     if (!attempt.first) { return; }
     const auto& state = attempt.second;
 
-    // Check if the current team is HUMAN
-    if (getControllerRef(state.currentTeam) == Controller::Type::Human) {
+    // Check if we're playing and if the current team is HUMAN
+    if (!enableEditor_ && 
+        getControllerRef(state.currentTeam) == Controller::Type::Human) {
 
       // If the click was in the game
       if (validateCoords(state.map, hoveredTile_)) {
@@ -201,6 +197,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
               if (lastAction.first) {
                 logAction(state, lastAction.second);
                 continueGame();
+                viewLatestState();
               }
             }
           }
@@ -228,6 +225,35 @@ Strategy::Game::onEvent(const sf::Event& event) {
         action.tag = Action::Tag::CancelSelection;
         action.location = Coord(-1, -1);
         tryPushAction(state, action);
+      }
+    }
+
+    // Editor clicks
+    else if (enableEditor_ && validateCoords(state.map, hoveredTile_)) {
+
+      // Prepare to modify map
+      auto map = std::make_pair(false, state.map);
+
+      // Insert objects on left click
+      if (event.mouseButton.button == sf::Mouse::Left) {
+        map = updateMap(state.map, hoveredTile_, editorObject_, editorTeam_);
+      }
+
+      // Delete objects on right click
+      else if (event.mouseButton.button == sf::Mouse::Right) {
+        map = updateMap(state.map, hoveredTile_, Object::Nothing, Team(0));
+      }
+
+      // If a new map was succesfully created
+      if (map.first) {
+
+        // Make a state with the new map and push it
+        auto newState = state;
+        newState.map = map.second;
+        pushState(newState);
+
+        // View the change
+        viewLatestState();
       }
     }
   }
@@ -293,7 +319,7 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
 
   // Render line of sight with red tiles if in attack mode
   auto rect = sf::RectangleShape(sf::Vector2f(tileLength_, tileLength_));
-  if (isInAttackMode_) {
+  if (!enableEditor_ && isInAttackMode_) {
     rect.setFillColor(sf::Color(255, 0, 0, 75));
     for (const auto& c : lineOfSight_) {
 
@@ -363,11 +389,13 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
     const auto& hoveredObject = readMap(map, hoveredTile_);
     
     // IF:
+    // - Not in editor mode
     // - We're in move move
     // - Hovered tile is empty
     // - Selection is a unit
     // - Selection unit is an ally
-    if (!isInAttackMode_
+    if (!enableEditor_
+        && !isInAttackMode_
         && hoveredObject.second == Object::Nothing
         && isUnit(selectedUnit.second)
         && selectedUnit.first == state.currentTeam) {
@@ -379,6 +407,12 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
       renderObject(window, state.currentTeam, 
           selectedUnit.second, hoveredTile_, RenderStyle::Ghost);
     }
+  }
+
+  // Editor rendering
+  if (enableEditor_ && validateCoords(state.map, hoveredTile_)) {
+    renderObject(window, editorTeam_, editorObject_, 
+        hoveredTile_, RenderStyle::Ghost);
   }
 
   // Render win text if there's only one team left
@@ -496,7 +530,13 @@ Strategy::Game::addDebugDetails() {
   // Map editor
   if (enableEditor_) {
     if(ImGui::Begin("Map Editor", &enableEditor_)) {
-      ImGui::Text("Map editor here");
+      ImGui::Text("Position: (%d, %d)",
+          hoveredTile_.x, 
+          hoveredTile_.y);
+      ImGui::InputInt("Team", reinterpret_cast<int*>(&editorTeam_));
+      ImGui::Combo( "Object",
+          reinterpret_cast<int*>(&editorObject_), 
+          objectList, IM_ARRAYSIZE(objectList));
     }
     ImGui::End();
   }
@@ -963,8 +1003,8 @@ Strategy::Game::getGameStatus(const GameState& state) {
 void
 Strategy::Game::continueGame() {
 
-  // Retrieve the current state
-  const auto statePair = getState(currentState_);
+  // Retrieve the latest game state
+  const auto statePair = getState(states_.size() - 1);
   if (!statePair.first) { return; }
   const auto state = statePair.second;
 
@@ -993,9 +1033,21 @@ Strategy::Game::continueGame() {
 
   // If AI successfully made moves, update and continue
   if (attempt.first && attempt.second.size() > 0) {
-
-
+    // @TODO: use tryPushAction to push state
   }
+}
+
+// Clear future states when things happen
+void
+Strategy::Game::clearFutureStates() {
+  states_.erase(states_.begin() + currentState_ + 1, states_.end());
+}
+
+// View the latest state stored
+void
+Strategy::Game::viewLatestState() {
+  currentState_ = states_.size() - 1;
+  if (currentState_ < 0) { currentState_ = 0; }
 }
 
 // Resets the state of tic-tac-toe back to the beginning
@@ -1003,7 +1055,7 @@ void
 Strategy::Game::resetGame() {
 
   // Report that we're starting a new game
-  Console::log("Game reset.");
+  Console::log("Game has been reset.");
 
   // Clear and re-initialise gamestate
   states_.clear();
@@ -1020,27 +1072,49 @@ Strategy::Game::resetGame() {
   continueGame();
 
   // Set current state to the most up-to-date state
-  currentState_ = states_.size() - 1;
-  if (currentState_ < 0) { currentState_ = 0; }
+  viewLatestState();
 
+  // Reset variables 
   isInAttackMode_ = false;
-  recalculatePath();
-  recalculateLineOfSight();
   unitsInSight_.clear();
   mpCost_ = Points(0);
   apCost_ = Points(0);
+
+  // Recalculate paths and line of sight
+  recalculatePath();
+  recalculateLineOfSight();
 }
 
 // Try to perform an action and push the state if possible
 bool 
-Strategy::Game::tryPushAction(const GameState& state, const Action& action) {
-  const auto& newState = takeAction(state, action);
+Strategy::Game::tryPushAction(const GameState& prev, const Action& action) {
+
+  // Attempt to perform action
+  const auto& newState = takeAction(prev, action);
+
+  // If action was successful
   if (newState.first) {
-    logAction(state, action);
-    pushState(newState.second);
+
+    // Get the new state
+    const auto& state = newState.second;
+
+    // Log move
+    logAction(prev, action);
+
+    // Destructively push the new state, clearing any future data
+    pushState(state);
+
+    // Resume any AI
     continueGame();
+
+    // Observe the latest state after AI moves
+    viewLatestState();
+
+    // Return success
     return true;
   }
+
+  // Signify failure in performing the action
   return false;
 }
 
@@ -1049,17 +1123,10 @@ void
 Strategy::Game::pushState(const GameState& state) {
   
   // Erase future states and start from here
-  states_.erase(states_.begin() + currentState_ + 1, states_.end());
+  clearFutureStates();
 
   // Add new state and move currentState_ to the last state
   states_.push_back(state);
-
-  // Check for AI interactions on the latest state
-  continueGame();
-
-  // Observe the latest state after AI moves
-  currentState_ = states_.size() - 1;
-  if (currentState_ < 0) { currentState_ = 0; }
 
   // Recalculate the path after things have changed
   recalculatePath();
@@ -1067,7 +1134,7 @@ Strategy::Game::pushState(const GameState& state) {
   // Recalculate line of sight as selected unit could have changed
   recalculateLineOfSight();
 
-  // Find units in sight if selection is valid
+  // Ensure that the units in sight is up to date
   unitsInSight_.clear();
   if (validateCoords(state.map, state.selection)) {
     unitsInSight_ = getUnitsInSight(state.map, state.selection);

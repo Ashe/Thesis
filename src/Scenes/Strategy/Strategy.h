@@ -103,8 +103,10 @@ namespace Strategy {
       sf::RectangleShape modeButton_;
       sf::RectangleShape endTurnButton_;
 
-      // Whether to show or hide the editor
+      // Map editor variables
       bool enableEditor_ = false;
+      Team editorTeam_ = Team(0);
+      Object editorObject_ = Object::Nothing;
 
       ///////////////////////////////////////////
       // PURE FUNCTIONS:
@@ -168,6 +170,12 @@ namespace Strategy {
 
       // Recursively push states by querying AI controllers
       void continueGame();
+
+      // Clear future states when things happen
+      void clearFutureStates();
+
+      // View the latest state stored
+      void viewLatestState();
     
       // Resets the state of tic-tac-toe back to the beginning
       void resetGame();

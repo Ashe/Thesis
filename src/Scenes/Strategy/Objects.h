@@ -10,7 +10,9 @@
 // Seperate Strategy related classes from other games
 namespace Strategy {
 
-  // Represent pawns as an enum
+  // Represent objects as an enum
+  static const char* objectList[] = {
+    "Nothing", "Wall", "MeleeUnit", "BlasterUnit", "SniperUnit", "LaserUnit"};
   enum class Object {
     Nothing,
     Wall,
