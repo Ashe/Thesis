@@ -21,6 +21,13 @@
 // Encapsulate Strategy related classes
 namespace Strategy {
 
+  // Enum to measure if the game is over
+  enum GameStatus {
+    InProgress,
+    Won,
+    Tied
+  };
+
   // Game scene for strategy game
   class Game : public Scene {
     public:
@@ -151,13 +158,22 @@ namespace Strategy {
       // Get possible moves from the current Coord in a state
       static std::vector<Action> getPossibleMoves(const GameState& state);
 
+      // Check if there's a winning team and retrieve it if so
+      static std::pair<GameStatus, Team> getGameStatus(const GameState& state);
+
       ///////////////////////////////////////////
       // IMPURE FUNCTIONS:
       // - Mutate the state of the scene
       ///////////////////////////////////////////
+
+      // Recursively push states by querying AI controllers
+      void continueGame();
     
       // Resets the state of tic-tac-toe back to the beginning
       void resetGame();
+
+      // Try to perform an action and push the state if possible
+      bool tryPushAction(const GameState& state, const Action& action);
 
       // Pushes a new state into the state list
       void pushState(const GameState& state);
@@ -181,6 +197,9 @@ namespace Strategy {
       // GRAPHICAL / LOGGING:
       // - Non-logic pure or impure functions
       ///////////////////////////////////////////
+
+      // Log actions to terminal
+      void logAction(const GameState& state, const Action& action);
 
       // Adjust graphics for current game size
       void resizeGame();

@@ -149,10 +149,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
           }
 
           // Perform selection / deselection
-          const auto& newState = takeAction(state, action);     
-          if (newState.first) {
-            pushState(newState.second);
-          }
+          tryPushAction(state, action);
         }
 
         // Select, move or attack with right click
@@ -165,10 +162,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
             Action action;
             action.tag = Action::Tag::Attack;
             action.location = hoveredTile_;
-            const auto& newState = takeAction(state, action);
-            if (newState.first) {
-              pushState(newState.second);
-            }
+            tryPushAction(state, action);
           }
 
           else {
@@ -185,6 +179,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
               // Follow set path, pushing and updating state as progress is made
               auto currentState = state;
               bool success = true;
+              auto lastAction = std::make_pair(false, Action());
               for (int i = 0; success && i < path.size(); ++i) {
 
                 // Get the action from the path
@@ -192,6 +187,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
                 if (action.tag == Action::Tag::MoveUnit) {
                   const auto& newState = takeAction(currentState, action);
                   if (newState.first) {
+                    lastAction = std::make_pair(true, action);
                     pushState(newState.second);
                     currentState = newState.second;
                   }
@@ -199,6 +195,12 @@ Strategy::Game::onEvent(const sf::Event& event) {
                     success = false;
                   }
                 }
+              }
+
+              // Log the entire move if successful and continue game
+              if (lastAction.first) {
+                logAction(state, lastAction.second);
+                continueGame();
               }
             }
           }
@@ -217,10 +219,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
         Action action;
         action.tag = Action::Tag::EndTurn;
         action.location = Coord(-1, -1);
-        const auto& newState = takeAction(state, action);
-        if (newState.first) {
-          pushState(newState.second);
-        }
+        tryPushAction(state, action);
       }
 
       // Otherwise deselect unit
@@ -228,10 +227,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
         Action action;
         action.tag = Action::Tag::CancelSelection;
         action.location = Coord(-1, -1);
-        const auto& newState = takeAction(state, action);
-        if (newState.first) {
-          pushState(newState.second);
-        }
+        tryPushAction(state, action);
       }
     }
   }
@@ -256,10 +252,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
       Action action;
       action.tag = Action::Tag::EndTurn;
       action.location = Coord(-1, -1);
-      const auto& newState = takeAction(state, action);
-      if (newState.first) {
-        pushState(newState.second);
-      }
+      tryPushAction(state, action);
     }
   }
 
@@ -389,17 +382,17 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
   }
 
   // Render win text if there's only one team left
-  if (state.teams.size() <= 1) {
+  const auto& status = getGameStatus(state);
+  if (status.first != GameStatus::InProgress) {
 
     // Prepare to render text
     std::string str = "";
     auto col = sf::Color::White;
 
     // Change message and colour depending on team
-    if (state.teams.size() == 1) {
-      const auto team = state.teams.begin()->first;
-      col = getTeamColour(team);
-      str = "Team " + std::to_string(team) + " Wins!";
+    if (status.first == GameStatus::Won) {
+      col = getTeamColour(status.second);
+      str = "Team " + std::to_string(status.second) + " Wins!";
     }
     else {
       str = "Tie!";
@@ -519,6 +512,10 @@ Strategy::Game::addDebugDetails() {
 std::pair<bool, Strategy::GameState>
 Strategy::Game::takeAction(const GameState& state, const Action& action) {
 
+  // If the game is over, don't accept any moves
+  const auto& status = getGameStatus(state);
+  if (status.first != InProgress) { return std::make_pair(false, state); }
+
   // If the action is to move a unit to a location, attempt it
   if (action.tag == Action::Tag::MoveUnit) {
 
@@ -595,10 +592,20 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
 
         // If update was successful, make a new state and return it
         if (attempt.first) {
+
+          // Make a new state with updated map
           auto newState = state;
           newState.map = attempt.second;
           newState.teams = countTeams(newState.map);
           newState.remainingAP -= getUnitAPCost(unit.second);
+
+          // If the game is over, deselect unit
+          const auto& status = getGameStatus(newState);
+          if (status.first != GameStatus::InProgress) {
+            newState.selection = Coord(-1, -1);
+          }
+
+          // Return the new state
           return std::make_pair(true, newState);
         }
       }
@@ -928,10 +935,68 @@ Strategy::Game::getPossibleMoves(const GameState& state) {
   return actions;
 }
 
+// Check if there's a winning team and retrieve it if so
+std::pair<Strategy::GameStatus, Strategy::Team> 
+Strategy::Game::getGameStatus(const GameState& state) {
+
+  // Render win text if there's only one team left
+  if (state.teams.size() <= 1) {
+    if (state.teams.size() == 1) {
+      const auto team = state.teams.begin()->first;
+      return std::make_pair(GameStatus::Won, team);
+    }
+    else {
+      return std::make_pair(GameStatus::Tied, Team(0));
+    }
+  }
+
+  // The game hasn't finished so return InProgress
+  return std::make_pair(GameStatus::InProgress, Team(0));
+}
+
 ///////////////////////////////////////////
 // IMPURE FUNCTIONS:
 // - Mutate the state of the scene
 ///////////////////////////////////////////
+
+// Recursively push states by querying AI controllers
+void
+Strategy::Game::continueGame() {
+
+  // Retrieve the current state
+  const auto statePair = getState(currentState_);
+  if (!statePair.first) { return; }
+  const auto state = statePair.second;
+
+  // Check for game overs
+  const auto& status = getGameStatus(state);
+  if (status.first != GameStatus::InProgress) {
+    if (status.first == GameStatus::Won) {
+      Console::log("Game Over, Team %u Wins!", status.second);
+    }
+    else { Console::log("Game Over, Tied."); }
+    return;
+  }
+
+  // Check what controller is currently playing
+  const auto& it = controllers_.find(state.currentTeam);
+  if (it == controllers_.end()) { return; }
+  const auto& controller = it->second;
+
+  // Prepare to query controller for what actions to perform
+  auto attempt = std::make_pair(false, std::stack<Action>());
+
+  // If the controller is HUMAN, do nothing
+  if (controller == Controller::Type::Human) {
+    return;
+  }
+
+  // If AI successfully made moves, update and continue
+  if (attempt.first && attempt.second.size() > 0) {
+
+
+  }
+}
 
 // Resets the state of tic-tac-toe back to the beginning
 void 
@@ -950,10 +1015,9 @@ Strategy::Game::resetGame() {
   state.remainingMP = state.map.startingMP;
   state.remainingAP = state.map.startingAP;
   states_.push_back(state);
-  //isGameOver_ = false;
 
   // Start the game
-  //continueGame();
+  continueGame();
 
   // Set current state to the most up-to-date state
   currentState_ = states_.size() - 1;
@@ -967,12 +1031,22 @@ Strategy::Game::resetGame() {
   apCost_ = Points(0);
 }
 
+// Try to perform an action and push the state if possible
+bool 
+Strategy::Game::tryPushAction(const GameState& state, const Action& action) {
+  const auto& newState = takeAction(state, action);
+  if (newState.first) {
+    logAction(state, action);
+    pushState(newState.second);
+    continueGame();
+    return true;
+  }
+  return false;
+}
+
 // Pushes a new state into the state list
 void 
 Strategy::Game::pushState(const GameState& state) {
-
-  // Log the action
-  // @TODO: Log action
   
   // Erase future states and start from here
   states_.erase(states_.begin() + currentState_ + 1, states_.end());
@@ -981,8 +1055,7 @@ Strategy::Game::pushState(const GameState& state) {
   states_.push_back(state);
 
   // Check for AI interactions on the latest state
-  // @TODO: Implement 'continue game' function
-  //continueGame();
+  continueGame();
 
   // Observe the latest state after AI moves
   currentState_ = states_.size() - 1;
@@ -1163,6 +1236,41 @@ Strategy::Game::recalculateLineOfSight() {
 // GRAPHICAL / LOGGING:
 // - Non-logic pure or impure functions
 ///////////////////////////////////////////
+
+// Log actions to terminal
+void
+Strategy::Game::logAction(const GameState& state, const Action& action) {
+  const auto& team = state.currentTeam;
+  std::string controller = "Human";
+  const auto it = controllers_.find(team);
+  if (it != controllers_.end()) {
+    controller = Controller::typeToString(it->second);
+  }
+  const auto& selection = readMap(state.map, state.selection);
+  const auto& location = readMap(state.map, action.location);
+  const auto& s = (std::string("Team ") + std::to_string(team)
+      + std::string(" (") + controller + std::string("):")).c_str();
+
+  // Log different messages depending on action
+  switch (action.tag) {
+    case Action::Tag::EndTurn:
+      Console::log("%s End of turn %u.", s, state.turnNumber); break;
+    case Action::Tag::SelectUnit:
+      Console::log("%s Selected unit: %s.", s, toString(location.second));
+      break;
+    case Action::Tag::MoveUnit:
+      Console::log("%s Moved %s unit from (%d, %d) to (%d, %d).",
+          s, toString(selection.second),
+          state.selection.x, state.selection.y,
+          action.location.x, action.location.y);
+      break;
+    case Action::Tag::Attack:
+      Console::log("%s Attacked (%d, %d) using %s unit.",
+          s, action.location.x, action.location.y,
+          toString(selection.second));
+    default: break;
+  }
+}
 
 // Adjust graphics for current game size
 void

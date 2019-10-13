@@ -4,6 +4,7 @@
 #ifndef STRATEGY_OBJECTS_H
 #define STRATEGY_OBJECTS_H
 
+#include <string>
 #include "Common.h"
 
 // Seperate Strategy related classes from other games
@@ -54,6 +55,18 @@ namespace Strategy {
       case Object::SniperUnit: return Range(10); break;
       case Object::LaserUnit: return Range(25); break;
       default: return Range(0); break;
+    }
+  }
+
+  // Get the range of a unit
+  inline const char* toString(const Object& o) {
+    switch (o) {
+      case Object::MeleeUnit: return "Melee"; break;
+      case Object::BlasterUnit: return "Blaster"; break;
+      case Object::SniperUnit: return "Sniper"; break;
+      case Object::LaserUnit: return "Laser"; break;
+      case Object::Wall: return "Wall"; break;
+      default: return "Nothing"; break;
     }
   }
 }
