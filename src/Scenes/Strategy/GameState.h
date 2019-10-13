@@ -18,6 +18,9 @@ namespace Strategy {
   // Store positions of important pieces
   struct GameState {
 
+    // Current turn number
+    unsigned int turnNumber = 0;
+
     // The map of the game
     Map map;
 

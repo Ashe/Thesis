@@ -214,14 +214,20 @@ Strategy::Game::onEvent(const sf::Event& event) {
       // Check if the click is on the end turn button
       else if (endTurnButton_.getGlobalBounds().contains(
           App::getMousePosition())) {
-        // @TODO: Implement turn ending
+        Action action;
+        action.tag = Action::Tag::EndTurn;
+        action.location = Coord(-1, -1);
+        const auto& newState = takeAction(state, action);
+        if (newState.first) {
+          pushState(newState.second);
+        }
       }
 
       // Otherwise deselect unit
       else {
         Action action;
         action.tag = Action::Tag::CancelSelection;
-        action.location = hoveredTile_;
+        action.location = Coord(-1, -1);
         const auto& newState = takeAction(state, action);
         if (newState.first) {
           pushState(newState.second);
@@ -238,6 +244,23 @@ Strategy::Game::onEvent(const sf::Event& event) {
       isInAttackMode_ = true;
     }
 
+    // End turn on space key press
+    else if (event.key.code == sf::Keyboard::Space) {
+
+      // Get the current state if possible
+      const auto& attempt = getState(currentState_);
+      if (!attempt.first) { return; }
+      const auto& state = attempt.second;
+
+      // End the turn
+      Action action;
+      action.tag = Action::Tag::EndTurn;
+      action.location = Coord(-1, -1);
+      const auto& newState = takeAction(state, action);
+      if (newState.first) {
+        pushState(newState.second);
+      }
+    }
   }
 
   // Check for key releases
@@ -364,6 +387,27 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
           selectedUnit.second, hoveredTile_, RenderStyle::Ghost);
     }
   }
+
+  // Render win text if there's only one team left
+  if (state.teams.size() <= 1) {
+
+    // Prepare to render text
+    std::string str = "";
+    auto col = sf::Color::White;
+
+    // Change message and colour depending on team
+    if (state.teams.size() == 1) {
+      const auto team = state.teams.begin()->first;
+      col = getTeamColour(team);
+      str = "Team " + std::to_string(team) + " Wins!";
+    }
+    else {
+      str = "Tie!";
+    }
+
+    // Render the text
+    renderText(window, 48, str, center_, col);
+  }
 }
 
 // Whenever the scene is re-shown, ensure graphics are correct
@@ -399,6 +443,7 @@ Strategy::Game::addDebugDetails() {
         Console::log("Switched to next state: %d", currentState_);
       }
     }
+    ImGui::Text("Current turn: %u", state.turnNumber);
     ImGui::Text("Hovered tile: (%d, %d)",
         hoveredTile_.x, 
         hoveredTile_.y);
@@ -474,29 +519,8 @@ Strategy::Game::addDebugDetails() {
 std::pair<bool, Strategy::GameState>
 Strategy::Game::takeAction(const GameState& state, const Action& action) {
 
-  // If the user wishes to undo selection, invalidate selection Coords
-  if (action.tag == Action::Tag::CancelSelection) {
-    auto newState = state;
-    newState.selection = Coord(-1, -1);
-    return std::make_pair(true, newState);
-  }
-
-  // If the action is to select a unit, attempt to select it
-  else if (action.tag == Action::Tag::SelectUnit) {
-
-    // Validate that there is an ALLIED unit to select
-    const auto& unit = readMap(state.map, action.location);
-    if (unit.first == state.currentTeam && isUnit(unit.second)) {
-
-      // Update the selected unit in the current state
-      auto newState = state;
-      newState.selection = action.location;
-      return std::make_pair(true, newState);
-    }
-  }
-
   // If the action is to move a unit to a location, attempt it
-  else if (action.tag == Action::Tag::MoveUnit) {
+  if (action.tag == Action::Tag::MoveUnit) {
 
     // Validate the move
     const auto& unit = readMap(state.map, state.selection);
@@ -579,6 +603,63 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
         }
       }
     }
+  }
+
+  // If the action is to select a unit, attempt to select it
+  else if (action.tag == Action::Tag::SelectUnit) {
+
+    // Validate that there is an ALLIED unit to select
+    const auto& unit = readMap(state.map, action.location);
+    if (unit.first == state.currentTeam && isUnit(unit.second)) {
+
+      // Update the selected unit in the current state
+      auto newState = state;
+      newState.selection = action.location;
+      return std::make_pair(true, newState);
+    }
+  }
+
+  // If the user wishes to undo selection, invalidate selection Coords
+  else if (action.tag == Action::Tag::CancelSelection) {
+    auto newState = state;
+    newState.selection = Coord(-1, -1);
+    return std::make_pair(true, newState);
+  }
+
+  // If the team has concluded their turn
+  else if (action.tag == Action::Tag::EndTurn) {
+
+    // Duplicate state and invalidate selection
+    auto newState = state;
+    newState.selection = Coord(-1, -1);
+
+    // Restore MP and AP
+    newState.remainingMP = newState.map.startingMP;
+    newState.remainingAP = newState.map.startingAP;
+
+    // Count teams just to double check
+    newState.teams = countTeams(state.map);
+
+    // Search for the first team that has a team number greater than current
+    auto it = std::find_if(newState.teams.begin(), newState.teams.end(),
+        [state](const std::pair<Team, unsigned int>& kvp) { 
+          return kvp.first > state.currentTeam;
+        });
+
+    // If a later team could not be found, go back to the first team and
+    // increment the turn count
+    if (it == newState.teams.end()) {
+      it = newState.teams.begin();
+      newState.turnNumber += 1;
+    }
+
+    // If the iterator is valid overwrite current team
+    if (it != newState.teams.end()) {
+      newState.currentTeam = it->first;
+    }
+
+    // Return the new state
+    return std::make_pair(true, newState);
   }
 
   // If everything fails, return the failure flag
