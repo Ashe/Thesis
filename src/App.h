@@ -52,7 +52,7 @@ class App {
     static Status getStatus();
 
     // Get app resources
-    static const Resources& resources();
+    static Resources& resources();
 
     // Open the dev console
     static void openDevConsole();

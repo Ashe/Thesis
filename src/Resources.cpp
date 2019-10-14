@@ -58,12 +58,33 @@ Resources::load() {
         }
       }
 
+      // Strategy maps
+      else if (ext == ".stratmap") {
+        std::ifstream infile(fp);
+        std::stringstream ss;
+        ss << infile.rdbuf();
+        strategyMaps_.emplace(fp.stem(), ss.str());
+        Console::log("Loaded strategy map: %s as %s",
+            fp.c_str(), fp.stem().c_str());
+        loaded = true;
+      }
+
       // If resource failed to load
       if (!loaded) {
         Console::log("[Error] Failed to load resource: %s", fp.c_str());
       }
     }
   }
+}
+
+// Retrieve all map names
+std::set<std::string> 
+Resources::getStratMapIds() const {
+  std::set<std::string> ids;
+  for (const auto& kvp : strategyMaps_) {
+    ids.insert(kvp.first);
+  }
+  return ids;
 }
 
 // Attempt to retrieve a Scene
@@ -97,7 +118,17 @@ Resources::getFont(const std::string& id) const {
   }
   Console::log("[Error] Unable to retrieve font: %s", id.c_str());
   return nullptr;
+}
 
+// Attempt to get a strategy map
+std::string 
+Resources::getStrategyMapString(const std::string& id) const {
+  auto it = strategyMaps_.find(id);
+  if (it != strategyMaps_.end()) {
+    return it->second;
+  }
+  Console::log("[Error] Unable to strategy map : %s", id.c_str());
+  return std::string();
 }
 
 // Release resources

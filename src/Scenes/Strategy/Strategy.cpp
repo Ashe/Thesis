@@ -507,9 +507,40 @@ Strategy::Game::addDebugDetails() {
   // Map editor
   if (enableEditor_) {
     if(ImGui::Begin("Map Management", &enableEditor_)) {
-      float w = 100.f;
-      ImGui::PushItemWidth(w);
-      ImGui::SetNextTreeNodeOpen(true);
+    float w = 100.f;
+    ImGui::PushItemWidth(w);
+      static char name[128] = "";
+      const auto& maps = App::resources().getStratMapIds();
+      ImGui::InputText("###SaveName", name, IM_ARRAYSIZE(name));
+      ImGui::SameLine();
+      if (ImGui::BeginCombo("###LoadName", name, ImGuiComboFlags_NoPreview)) {
+        for (const auto& m : maps) {
+          bool selected = name == m;
+          if (ImGui::Selectable(m.c_str(), selected)) {
+            strncpy(name, m.c_str(), sizeof name - 1);
+          }
+        }
+        ImGui::EndCombo();
+      }
+      if (ImGui::Button("Save map")) {
+        const std::string filename = "Assets/Maps/" + 
+            std::string(name) + ".stratmap";
+        std::ofstream file;
+        file.open(filename);
+        file << state.map;
+        file.close();
+        App::resources().load();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Load")) {
+        const auto& mapstr = App::resources().getStrategyMapString(name);
+        if (mapstr != "") {
+          std::stringstream ss;
+          ss << mapstr;
+          ss >> currentMap_;
+          resetGame();
+        }
+      }
       if (ImGui::TreeNode("Editor:")) {
         ImGui::Text("Object Position: (%d, %d)",
             hoveredTile_.x, 
@@ -518,43 +549,39 @@ Strategy::Game::addDebugDetails() {
         ImGui::Combo("Object",
             reinterpret_cast<int*>(&editorObject_), 
             objectList, IM_ARRAYSIZE(objectList));
-        ImGui::TreePop();
-      }
-      ImGui::SetNextTreeNodeOpen(true);
-      if (ImGui::TreeNode("Generator:")) {
-        static int width = state.map.size.x;
-        static int height = state.map.size.y;
         static int mp = state.remainingMP;
         static int ap = state.remainingAP;
-        ImGui::SetNextTreeNodeOpen(true);
-        if (ImGui::TreeNode("Size:")) {
-          ImGui::InputInt("Width", reinterpret_cast<int*>(&width));
-          ImGui::InputInt("Height", reinterpret_cast<int*>(&height));
-          if (width < 4) { width = 4; }
-          if (height < 4) { height = 4; }
-          ImGui::TreePop();
-        }
-        ImGui::SetNextTreeNodeOpen(true);
         if (ImGui::TreeNode("Resources:")) {
           ImGui::InputInt("Movement Points", reinterpret_cast<int*>(&mp));
           ImGui::InputInt("Action Points", reinterpret_cast<int*>(&ap));
           if (mp < 1) { mp = 1; }
           if (ap < 1) { ap = 1; }
+          currentMap_.startingMP = mp;
+          currentMap_.startingAP = ap;
           ImGui::TreePop();
         }
+        if (ImGui::Button("Overwrite current map")) {
+          currentMap_ = state.map;
+          resetGame();
+        }
+        ImGui::TreePop();
+      }
+      if (ImGui::TreeNode("Generator:")) {
+        static int width = state.map.size.x;
+        static int height = state.map.size.y;
+        ImGui::InputInt("Width", reinterpret_cast<int*>(&width));
+        ImGui::InputInt("Height", reinterpret_cast<int*>(&height));
+        if (width < 4) { width = 4; }
+        if (height < 4) { height = 4; }
         if (ImGui::Button("Generate Blank Map")) {
           Map map;
           map.size = Coord(width, height);
-          map.startingMP = mp;
-          map.startingAP = ap;
           currentMap_ = map;
           resetGame();
         }
         if (ImGui::Button("Generate Default Map")) {
           Map map;
           map.size = Coord(width, height);
-          map.startingMP = mp;
-          map.startingAP = ap;
           currentMap_ = getDefaultUnitPlacement(map);
           resetGame();
         }

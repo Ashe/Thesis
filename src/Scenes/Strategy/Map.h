@@ -4,9 +4,12 @@
 #ifndef STRATEGY_MAP_H
 #define STRATEGY_MAP_H
 
-#include <SFML/Graphics.hpp>
 #include <map>
+#include <istream>
+#include <ostream>
+#include <string>
 
+#include "../../Console.h"
 #include "Objects.h"
 #include "Common.h"
 
@@ -28,5 +31,11 @@ namespace Strategy {
     // Starting action point amount for this map
     Points startingAP = 3;
   };
+
+  // Save the map to a stream
+  std::ostream& operator<< (std::ostream& os, const Map& m);
+
+  // Load a map from a stream
+  std::istream& operator>> (std::istream& is, Map& m);
 }
 #endif

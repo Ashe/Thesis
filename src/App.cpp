@@ -497,7 +497,7 @@ App::getStatus() {
 }
 
 // Get app resources
-const Resources& 
+Resources& 
 App::resources() {
   return resources_;
 }

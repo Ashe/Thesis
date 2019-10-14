@@ -4,6 +4,8 @@
 #ifndef STRATEGY_H
 #define STRATEGY_H
 
+#include <fstream>
+#include <istream>
 #include <algorithm>
 #include <cmath>
 #include <climits>
