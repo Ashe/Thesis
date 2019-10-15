@@ -1026,6 +1026,77 @@ Strategy::Game::getPossibleMoves(const GameState& state) {
   return actions;
 }
 
+// Get all attacks for the selected unit in range
+std::vector<Strategy::Action> 
+Strategy::Game::getPossibleAttacks(const GameState& state) {
+
+  // Prepare to collect movement attacks
+  std::vector<Action> actions;
+
+  // Ensure that selection is valid
+  if (validateCoords(state.map, state.selection)) {
+
+    // Ensure that an allied unit is selected
+    const auto& unitPos = state.selection;
+    const auto& unit = readMap(state.map, unitPos);
+    if (unit.first == state.currentTeam && isUnit(unit.second)) {
+
+      // Get the range and prepare to find locations
+      const auto& range = getUnitRange(unit.second);
+
+      // Cache any locations in sight to speed things up
+      std::set<int> inSight;
+
+      // Check every tile in a range * range square around unit
+      for (int j = unitPos.y - range; j <= unitPos.y + range; ++j) {
+        for (int i = unitPos.x - range; i <= unitPos.x + range; ++i) {
+
+          // Validate the position first
+          const auto& pos = Coord(i, j);
+          if (validateCoords(state.map, pos)) {
+
+            // Prepare to add the action
+            Action action;
+            action.tag = Action::Tag::Attack;
+            action.location = pos;
+
+            // If this position has been cached or is the unit's location, push
+            if (std::find(inSight.begin(), inSight.end(), 
+                  coordToIndex(state.map, pos)) != inSight.end()
+                || pos == unitPos) {
+              actions.push_back(action);
+            }
+
+            // Otherwise, use line of sight to determine whether to add it
+            else {
+
+              // Get line of sight
+              const auto& line = getLineOfSight(state.map, unitPos, pos);
+
+              // If the line isn't empty, line of sight was achieved
+              if (!line.empty()) {
+
+                // Add all tiles in range to the set to stop repeats
+                for (int r = 0; r <= range && r < line.size(); ++r) {
+                  inSight.insert(coordToIndex(state.map, Coord(i, j)));
+                }
+
+                // Add this location if in range
+                if (line.size() <= range + 1) {
+                  actions.push_back(action);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Return possible attacks
+  return actions;
+}
+
 // Check if there's a winning team and retrieve it if so
 std::pair<Strategy::GameStatus, Strategy::Team> 
 Strategy::Game::getGameStatus(const GameState& state) {
@@ -1211,6 +1282,15 @@ Strategy::Game::tryPushAction(const GameState& prev, const Action& action) {
 
       // Recalculate line of sight as selected unit could have changed
       recalculateLineOfSight();
+
+      // @TODO: DELETE THIS
+      Console::log("Available attacks:");
+      const auto& as = getPossibleAttacks(state);
+      for (const auto& a : as) {
+        if (a.tag == Action::Tag::Attack) {
+          Console::log("(%d, %d)", a.location.x, a.location.y);
+        }
+      }
     }
 
     // Ensure that the units in sight is up to date

@@ -162,6 +162,9 @@ namespace Strategy {
       // Get possible moves from the current Coord in a state
       static std::vector<Action> getPossibleMoves(const GameState& state);
 
+      // Get all attacks for the selected unit in range
+      static std::vector<Action> getPossibleAttacks(const GameState& state);
+
       // Check if there's a winning team and retrieve it if so
       static std::pair<GameStatus, Team> getGameStatus(const GameState& state);
 
