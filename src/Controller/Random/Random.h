@@ -20,33 +20,44 @@ namespace Controller::Random {
   std::pair<bool, std::stack<A>> decide(
       const S& state,
       std::function<std::vector<A>(const S&)> getOptions,
+      std::function<bool(const S&, const S&)> isStateEndpoint,
       std::function<std::pair<bool, const S>(const S&, const A&)> takeAction) {
 
     // Prepare to generate a random list of actions
     std::stack<A> actionsToTake;
-
-    // Get options to play
-    std::vector<A> options = getOptions(state);
-
-    // Make a random-number-generator
     std::random_device random;
     std::mt19937 generator(random());
+    S currentState = state;
 
-    // Shuffle available options
-    std::shuffle(options.begin(), options.end(), generator);
+    // Continue making decisions until endpoint reached
+    while (!isStateEndpoint(state, currentState)) {
 
-    // Try to make moves, and if one succeeds, return it
-    for (auto i = options.cbegin(); i != options.cend(); ++i) {
-      const A action = *i;
-      const auto attempt = takeAction(state, action);
-      if (attempt.first) {
-        actionsToTake.push(action);
-        return std::make_pair(true, actionsToTake);
+      // Get options to play
+      std::vector<A> options = getOptions(state);
+
+      // Shuffle available options
+      std::shuffle(options.begin(), options.end(), generator);
+
+      // Try to make moves, and if one succeeds, return it
+      bool success = false;
+      for (auto i = options.cbegin(); !success && i != options.cend(); ++i) {
+        const A action = *i;
+        const auto attempt = takeAction(state, action);
+        if (attempt.first) {
+          actionsToTake.push(action);
+          currentState = attempt.second;
+          success = true;
+        }
+      }
+
+      // If no moves could be made with no end point reached, return fail
+      if (!success) {
+        return std::make_pair(false, actionsToTake);
       }
     }
 
-    // Return unsuccessfully with the current state
-    return std::make_pair(false, actionsToTake);
+    // Return the actions to take
+    return std::make_pair(true, actionsToTake);
   }
 }
 

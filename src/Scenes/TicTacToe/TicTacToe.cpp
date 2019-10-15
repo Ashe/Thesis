@@ -138,6 +138,8 @@ TicTacToe::Game::addDebugDetails() {
 
   // State viewer window
   if (ImGui::Begin("State Viewer")) {
+    float w = 100.f;
+    ImGui::PushItemWidth(w);
     ImGui::Text("State: %u", currentState_);
     ImGui::PushButtonRepeat(true);
     ImGui::SameLine();
@@ -182,6 +184,7 @@ TicTacToe::Game::addDebugDetails() {
     }
     if (ImGui::Button("Reset Game")) { resetGame(); }
   }
+  ImGui::PopItemWidth();
   ImGui::End();
 }
 
@@ -491,7 +494,7 @@ TicTacToe::Game::continueGame() {
   // If its a random, invoke RandomController::Type::decide
   else if (controller == Controller::Type::Random) {
     attempt = Controller::Random::decide<GameState, Move> (
-        state, getValidMoves, makeMove);
+        state, getValidMoves, isStateGoal, makeMove);
   }
 
   // If it's an AStar, invoke AStarController::Type::decide
