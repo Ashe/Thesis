@@ -55,6 +55,9 @@ namespace Strategy {
       // Whenever the scene is re-shown, ensure graphics are correct
       void onShow() override;
 
+      // Add a menu entry to the debug menu
+      void addDebugMenuEntries() override;
+
       // Add details to debug windows
       void addDebugDetails() override;
 
@@ -87,7 +90,7 @@ namespace Strategy {
       std::vector<std::pair<Coord, Range>> unitsInSight_;
 
       // Should turns or states be recorded?
-      bool isRecordingStates_ = false;
+      bool isRecordingStates_ = true;
 
       // Should a unit move or attack
       bool isInAttackMode_;

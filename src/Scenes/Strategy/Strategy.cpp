@@ -430,6 +430,12 @@ Strategy::Game::onShow() {
   resizeGame();
 }
 
+// Add a menu entry to the debug menu
+void 
+Strategy::Game::addDebugMenuEntries() {
+  ImGui::MenuItem("Map Editor", NULL, &enableEditor_);
+}
+
 // Add details to debug windows
 void 
 Strategy::Game::addDebugDetails() {
@@ -441,20 +447,22 @@ Strategy::Game::addDebugDetails() {
 
   // State viewer
   if (ImGui::Begin("State Viewer")) {
-    ImGui::Text("State: %u", currentState_);
+    ImGui::Text("State:");
     ImGui::PushButtonRepeat(true);
     ImGui::SameLine();
     if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
       if (currentState_ > 0) {
         --currentState_;
-        Console::log("Switched to prev state: %d", currentState_);
       }
     }
+    ImGui::SameLine();
+    ImGui::SliderInt("##state", 
+        reinterpret_cast<int*>(&currentState_), 
+        0, states_.size() - 1);
     ImGui::SameLine();
     if (ImGui::ArrowButton("##right", ImGuiDir_Right)) {
       if (currentState_ < states_.size() - 1) {
         ++currentState_;
-        Console::log("Switched to next state: %d", currentState_);
       }
     }
     ImGui::Text("Current turn: %u", state.turnNumber);
@@ -497,20 +505,14 @@ Strategy::Game::addDebugDetails() {
     ImGui::Columns(1);
     ImGui::Spacing();
     ImGui::Text("Current turn: "); ImGui::SameLine();
+    const auto col = getTeamColour(state.currentTeam);
+    ImGui::TextColored(col, "Team %u", state.currentTeam); 
     const auto teamIt = state.teams.find(state.currentTeam);
     if (teamIt != state.teams.end()) {
-      const auto col = getTeamColour(state.currentTeam);
-      ImGui::TextColored(col, "Team %u (%u members left)", 
-          state.currentTeam, teamIt->second);
-    }
-    else {
-      ImGui::Text("No participating teams to play.");
+      ImGui::SameLine();
+      ImGui::TextColored(col, "(%u members left)", teamIt->second);
     }
     if (ImGui::Button("Reset Game")) { resetGame(); }
-    ImGui::Spacing();
-    if (ImGui::Button(enableEditor_ ? "Hide Map Loader" : "Show Map Loader")) {
-      enableEditor_ = !enableEditor_;
-    }
   }
   ImGui::End();
 
