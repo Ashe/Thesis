@@ -264,7 +264,7 @@ TicTacToe::Game::checkGameover(const GameState& state) {
 
 // Attempts to make the move on the game state and returns new state
 // Returns (isStateValid, newState)
-std::pair<bool, const TicTacToe::GameState>
+std::pair<bool, TicTacToe::GameState>
 TicTacToe::Game::makeMove(const GameState& state, const Move& move) {
 
   // Extract data from move

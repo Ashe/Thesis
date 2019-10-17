@@ -13,6 +13,7 @@
 #include "../../Scene.h"
 #include "../../Resources.h"
 #include "../../Controller/Common.h"
+#include "../../Controller/Random/Random.h"
 #include "../../Controller/AStar/AStar.h"
 
 #include "Common.h"
@@ -84,6 +85,9 @@ namespace Strategy {
       // Line of sights
       std::vector<Coord> lineOfSight_;
       std::vector<std::pair<Coord, Range>> unitsInSight_;
+
+      // Should turns or states be recorded?
+      bool isRecordingStates_ = false;
 
       // Should a unit move or attack
       bool isInAttackMode_;
@@ -165,6 +169,12 @@ namespace Strategy {
       // Get all attacks for the selected unit in range
       static std::vector<Action> getPossibleAttacks(const GameState& state);
 
+      // Get all possible actions one could take
+      static std::vector<Action> getAllPossibleActions(const GameState& state);
+
+      // Check to see if a State is an endpoint for decision making
+      static bool isStateEndpoint(const GameState& a, const GameState& b);
+
       // Check if there's a winning team and retrieve it if so
       static std::pair<GameStatus, Team> getGameStatus(const GameState& state);
 
@@ -189,7 +199,9 @@ namespace Strategy {
       void resetGame();
 
       // Try to perform an action and push the state if possible
-      bool tryPushAction(const GameState& state, const Action& action);
+      std::pair<bool, GameState> tryPushAction(
+          const GameState& state, 
+          const Action& action);
 
       // Pushes a new state into the state list
       void pushState(const GameState& state);

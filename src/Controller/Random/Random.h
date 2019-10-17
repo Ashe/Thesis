@@ -21,10 +21,10 @@ namespace Controller::Random {
       const S& state,
       std::function<std::vector<A>(const S&)> getOptions,
       std::function<bool(const S&, const S&)> isStateEndpoint,
-      std::function<std::pair<bool, const S>(const S&, const A&)> takeAction) {
+      std::function<std::pair<bool, S>(const S&, const A&)> takeAction) {
 
     // Prepare to generate a random list of actions
-    std::stack<A> actionsToTake;
+    std::vector<A> actions;
     std::random_device random;
     std::mt19937 generator(random());
     S currentState = state;
@@ -33,7 +33,7 @@ namespace Controller::Random {
     while (!isStateEndpoint(state, currentState)) {
 
       // Get options to play
-      std::vector<A> options = getOptions(state);
+      std::vector<A> options = getOptions(currentState);
 
       // Shuffle available options
       std::shuffle(options.begin(), options.end(), generator);
@@ -42,9 +42,9 @@ namespace Controller::Random {
       bool success = false;
       for (auto i = options.cbegin(); !success && i != options.cend(); ++i) {
         const A action = *i;
-        const auto attempt = takeAction(state, action);
+        const auto attempt = takeAction(currentState, action);
         if (attempt.first) {
-          actionsToTake.push(action);
+          actions.push_back(action);
           currentState = attempt.second;
           success = true;
         }
@@ -52,11 +52,15 @@ namespace Controller::Random {
 
       // If no moves could be made with no end point reached, return fail
       if (!success) {
-        return std::make_pair(false, actionsToTake);
+        return std::make_pair(false, std::stack<A>());
       }
     }
 
     // Return the actions to take
+    std::stack<A> actionsToTake;
+    for (auto it = actions.crbegin(); it != actions.crend(); ++it) {
+      actionsToTake.push(*it);
+    }
     return std::make_pair(true, actionsToTake);
   }
 }

@@ -103,7 +103,7 @@ namespace TicTacToe {
 
       // Attempts to make the move on the game state and returns new state
       // Returns (isStateValid, newState)
-      static std::pair<bool, const GameState> makeMove(
+      static std::pair<bool, GameState> makeMove(
           const GameState& state, 
           const Move& move);
 

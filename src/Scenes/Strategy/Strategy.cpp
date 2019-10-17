@@ -55,10 +55,12 @@ Strategy::Game::onUpdate(const sf::Time& dt) {
     // If this is a new tile
     if (changed) {
 
-      // Only perform these if the current player is human
+      // Get the current state
       const auto& attempt = getState(currentState_);
       if (!attempt.first) { return; }
       const auto& state = attempt.second;
+
+      // Only perform these if the current player is human
       if (getController(state.currentTeam) == Controller::Type::Human) {
 
         // Recalculate pathfinding route
@@ -192,6 +194,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
         action.tag = Action::Tag::EndTurn;
         action.location = Coord(-1, -1);
         tryPushAction(state, action);
+        continueGame();
       }
 
       // Otherwise deselect unit
@@ -251,11 +254,18 @@ Strategy::Game::onEvent(const sf::Event& event) {
       if (!attempt.first) { return; }
       const auto& state = attempt.second;
 
-      // End the turn
-      Action action;
-      action.tag = Action::Tag::EndTurn;
-      action.location = Coord(-1, -1);
-      tryPushAction(state, action);
+      // Check if the current player is human
+      if (getController(state.currentTeam) == Controller::Type::Human) {
+
+        // End the turn
+        Action action;
+        action.tag = Action::Tag::EndTurn;
+        action.location = Coord(-1, -1);
+        tryPushAction(state, action);
+
+        // Continue the game as AI might do something
+        continueGame();
+      }
     }
   }
 
@@ -448,6 +458,7 @@ Strategy::Game::addDebugDetails() {
       }
     }
     ImGui::Text("Current turn: %u", state.turnNumber);
+    ImGui::Checkbox("Record all state changes", &isRecordingStates_);
     ImGui::Text("Hovered tile: (%d, %d)",
         hoveredTile_.x, 
         hoveredTile_.y);
@@ -476,9 +487,8 @@ Strategy::Game::addDebugDetails() {
       ImGui::NextColumn();
       auto& controller = getControllerRef(kvp.first);
       std::string comboLabel;
-      for (unsigned int i = 0; i < kvp.first; ++i) { comboLabel += " "; }
       ImGui::Combo(
-          comboLabel.c_str(),
+          (std::string("###teamCombo") + std::to_string(kvp.first)).c_str(),
           reinterpret_cast<int*>(&controller), 
           Controller::typeList, IM_ARRAYSIZE(Controller::typeList));
       ImGui::NextColumn();
@@ -1097,6 +1107,78 @@ Strategy::Game::getPossibleAttacks(const GameState& state) {
   return actions;
 }
 
+// Get all possible actions one could take
+std::vector<Strategy::Action> 
+Strategy::Game::getAllPossibleActions(const GameState& state) {
+
+  // Prepare to collect actions
+  std::vector<Action> actions;
+
+  // MUST provide end turn action
+  Action endTurn;
+  endTurn.tag = Action::Tag::EndTurn;
+  endTurn.location = Coord(-1, -1);
+  actions.push_back(endTurn);
+
+  // Add possible selections
+  for (const auto& kvp : state.map.field) {
+
+    // Get data of object
+    const auto& pos = indexToCoord(state.map, kvp.first);
+    const auto& team = kvp.second.first;
+    const auto& object = kvp.second.second;
+
+    // If object is an allied unit and has a valid coordinate
+    if (validateCoords(state.map, pos) 
+        && team == state.currentTeam 
+        && isUnit(object)) {
+
+      // Prepare an Action
+      Action action;
+
+      // Add a selection action if it's a different unit
+      if (pos != state.selection) {
+        action.tag = Action::Tag::SelectUnit;
+        action.location = pos;
+      }
+
+      // Add a deselection action
+      // @NOTE: I don't know why an AI would do this
+      else {
+        action.tag = Action::Tag::CancelSelection;
+        action.location = Coord(-1, -1);
+      }
+
+      // Add action to action list
+      actions.push_back(action);
+    }
+  }
+
+  // Add moves to the list
+  const auto& moves = getPossibleMoves(state);
+  actions.insert(actions.end(), moves.begin(), moves.end());
+
+  // Add attacks to the list
+  const auto& attacks = getPossibleAttacks(state);
+  actions.insert(actions.end(), attacks.begin(), attacks.end());
+
+  // Return actions we've found
+  return actions;
+}
+
+// Check to see if a State is an endpoint for decision making
+bool 
+Strategy::Game::isStateEndpoint(const GameState& a, const GameState& b) {
+
+  // Return true if any of the following are true:
+  // - Game is over in state
+  // - If the current team has changed
+  // - If a new turn has begun
+  return getGameStatus(b).first != GameStatus::InProgress
+      || b.currentTeam != a.currentTeam
+      || b.turnNumber != a.turnNumber;
+}
+
 // Check if there's a winning team and retrieve it if so
 std::pair<Strategy::GameStatus, Strategy::Team> 
 Strategy::Game::getGameStatus(const GameState& state) {
@@ -1192,16 +1274,52 @@ Strategy::Game::continueGame() {
     return;
   }
 
+  // If the controller was Controller::Random, decide
+  else if (controller == Controller::Type::Random) {
+    attempt = Controller::Random::decide<GameState, Action>(
+        state,
+        getAllPossibleActions,
+        isStateEndpoint,
+        takeAction);
+  }
+
   // If AI successfully made moves, update and continue
-  if (attempt.first && attempt.second.size() > 0) {
-    // @TODO: use tryPushAction to push state
+  auto currentState = state;
+  bool failed = attempt.second.empty() || !attempt.first;
+  while (!failed && !attempt.second.empty()) {
+    const auto& action = attempt.second.top();
+    const auto newState = takeAction(currentState, action);
+    if (newState.first) {
+      logAction(currentState, action);
+      currentState = newState.second;
+      if (isRecordingStates_) {
+        pushState(currentState);
+      }
+    }
+    else {
+      failed = true;
+    }
+    attempt.second.pop();
+  }
+
+  // If we didn't fail, continue the game
+  if (!failed) {
+
+    // If only recording turns, push the state now
+    if (!isRecordingStates_) {
+      pushState(currentState);
+    }
+    viewLatestState();
+    continueGame();
   }
 }
 
 // Clear future states when things happen
 void
 Strategy::Game::clearFutureStates() {
-  states_.erase(states_.begin() + currentState_ + 1, states_.end());
+  if (!states_.empty()) {
+    states_.erase(states_.begin() + currentState_ + 1, states_.end());
+  }
 }
 
 // View the latest state stored
@@ -1227,10 +1345,7 @@ Strategy::Game::resetGame() {
   state.currentTeam = it != state.teams.end() ? it->first : -1;
   state.remainingMP = state.map.startingMP;
   state.remainingAP = state.map.startingAP;
-  states_.push_back(state);
-
-  // Start the game
-  continueGame();
+  pushState(state);
 
   // Set current state to the most up-to-date state
   viewLatestState();
@@ -1247,10 +1362,13 @@ Strategy::Game::resetGame() {
   // Recalculate paths and line of sight
   recalculatePath();
   recalculateLineOfSight();
+
+  // Start the game
+  continueGame();
 }
 
 // Try to perform an action and push the state if possible
-bool 
+std::pair<bool, Strategy::GameState>
 Strategy::Game::tryPushAction(const GameState& prev, const Action& action) {
 
   // Attempt to perform action
@@ -1268,10 +1386,7 @@ Strategy::Game::tryPushAction(const GameState& prev, const Action& action) {
     // Destructively push the new state, clearing any future data
     pushState(state);
 
-    // Resume any AI
-    continueGame();
-
-    // Observe the latest state after AI moves
+    // Observe changes
     viewLatestState();
 
     // Only human players need path and line of sight calculation
@@ -1283,25 +1398,16 @@ Strategy::Game::tryPushAction(const GameState& prev, const Action& action) {
       // Recalculate line of sight as selected unit could have changed
       recalculateLineOfSight();
 
-      // @TODO: DELETE THIS
-      Console::log("Available attacks:");
-      const auto& as = getPossibleAttacks(state);
-      for (const auto& a : as) {
-        if (a.tag == Action::Tag::Attack) {
-          Console::log("(%d, %d)", a.location.x, a.location.y);
-        }
-      }
+      // Ensure that the units in sight is up to date
+      recalculateUnitsInSight();
     }
 
-    // Ensure that the units in sight is up to date
-    recalculateUnitsInSight();
-
     // Return success
-    return true;
+    return std::make_pair(true, state);
   }
 
   // Signify failure in performing the action
-  return false;
+  return std::make_pair(false, prev);
 }
 
 // Pushes a new state into the state list
@@ -1508,24 +1614,24 @@ Strategy::Game::logAction(const GameState& state, const Action& action) {
   const auto& selection = readMap(state.map, state.selection);
   const auto& location = readMap(state.map, action.location);
   const auto& s = (std::string("Team ") + std::to_string(team)
-      + std::string(" (") + controller + std::string("):")).c_str();
+      + std::string(" (") + controller + std::string("):"));
 
   // Log different messages depending on action
   switch (action.tag) {
     case Action::Tag::EndTurn:
-      Console::log("%s End of turn %u.", s, state.turnNumber); break;
+      Console::log("%s End of turn %u.", s.c_str(), state.turnNumber); break;
     case Action::Tag::SelectUnit:
-      Console::log("%s Selected unit: %s.", s, toString(location.second));
+      Console::log("%s Selected unit: %s.", s.c_str(), toString(location.second));
       break;
     case Action::Tag::MoveUnit:
       Console::log("%s Moved %s unit from (%d, %d) to (%d, %d).",
-          s, toString(selection.second),
+          s.c_str(), toString(selection.second),
           state.selection.x, state.selection.y,
           action.location.x, action.location.y);
       break;
     case Action::Tag::Attack:
       Console::log("%s Attacked (%d, %d) using %s unit.",
-          s, action.location.x, action.location.y,
+          s.c_str(), action.location.x, action.location.y,
           toString(selection.second));
     default: break;
   }
