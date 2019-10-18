@@ -170,7 +170,6 @@ Strategy::Game::onEvent(const sf::Event& event) {
               // Log the entire move if successful and continue game
               if (lastAction.first) {
                 logAction(state, lastAction.second);
-                continueGame();
                 viewLatestState();
                 recalculatePath();
                 recalculateLineOfSight();
@@ -1296,6 +1295,7 @@ Strategy::Game::continueGame() {
       currentState = newState.second;
       if (isRecordingStates_) {
         pushState(currentState);
+        viewLatestState();
       }
     }
     else {
@@ -1621,9 +1621,14 @@ Strategy::Game::logAction(const GameState& state, const Action& action) {
   // Log different messages depending on action
   switch (action.tag) {
     case Action::Tag::EndTurn:
-      Console::log("%s End of turn %u.", s.c_str(), state.turnNumber); break;
+      Console::log("%s End of turn %u.", s.c_str(), state.turnNumber); 
+      break;
     case Action::Tag::SelectUnit:
       Console::log("%s Selected unit: %s.", s.c_str(), toString(location.second));
+      break;
+    case Action::Tag::CancelSelection:
+      Console::log("%s Cancelled selection of (%d, %d).", 
+          s.c_str(), state.selection.x, state.selection.y); 
       break;
     case Action::Tag::MoveUnit:
       Console::log("%s Moved %s unit from (%d, %d) to (%d, %d).",
