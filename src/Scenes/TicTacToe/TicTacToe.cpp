@@ -507,8 +507,7 @@ TicTacToe::Game::continueGame() {
         isStateGoal,
         estimateCostHeuristic,
         weighMove,
-        makeMove,
-        std::less<Cost>());
+        makeMove);
   }
 
   // If AI successfully made their move, update and continue game

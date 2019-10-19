@@ -61,6 +61,7 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
   src/Scenes/Strategy/Map.cpp
   src/Scenes/Strategy/Objects.h
   src/Scenes/Strategy/Action.h
+  src/Scenes/Strategy/Cost.h
 
   # Development
   src/Console.h

@@ -20,6 +20,7 @@
 #include "GameState.h"
 #include "Map.h"
 #include "Action.h"
+#include "Cost.h"
 
 // Encapsulate Strategy related classes
 namespace Strategy {
@@ -123,16 +124,19 @@ namespace Strategy {
       // - Used to transform or read game states
       ///////////////////////////////////////////
 
+      // Evaluate how good an action is going to be
+      static Cost weighAction(
+          const GameState& from, 
+          const GameState& to,
+          const Action& action);
+
       // Attempt to take action on a gamestate
       static std::pair<bool, GameState> takeAction(
           const GameState& state,
           const Action& action);
 
-      // Translate coords into map index
-      static unsigned int coordToIndex(const Map& m, const Coord& coord);
-
-      // Translate map index into a coord
-      static Coord indexToCoord(const Map& m, unsigned int index);
+      // Estimate the Cost of completing a turn from the current State 
+      static Cost heuristic(const GameState& state);
 
       // Check if coordinates are valid
       static bool validateCoords(
@@ -161,7 +165,7 @@ namespace Strategy {
           const Coord& a,
           const Coord& b);
 
-      // Get units in line of sight
+      // Get enemy units in line of sight
       static std::vector<std::pair<Coord, Range>> getUnitsInSight(
           const Map& map,
           const Coord& location);
@@ -180,6 +184,12 @@ namespace Strategy {
 
       // Check if there's a winning team and retrieve it if so
       static std::pair<GameStatus, Team> getGameStatus(const GameState& state);
+
+      // Translate coords into map index
+      static unsigned int coordToIndex(const Map& m, const Coord& coord);
+
+      // Translate map index into a coord
+      static Coord indexToCoord(const Map& m, unsigned int index);
 
       // Get a default map layout of units
       static Map getDefaultUnitPlacement(const Map& map);

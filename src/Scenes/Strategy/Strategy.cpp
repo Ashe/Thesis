@@ -610,6 +610,88 @@ Strategy::Game::addDebugDetails() {
 // - Used to transform or read game states
 ///////////////////////////////////////////
 
+// Evaluate how good an action is going to be
+Strategy::Cost 
+Strategy::Game::weighAction(
+    const GameState& from, 
+    const GameState& to,
+    const Action& action) {
+
+  // Prepare to weight the action
+  Cost cost = minimumCost;
+
+  // Get the current team
+  const Team& team = from.currentTeam;
+
+  // Apply penalties for leaving enemies alive
+  // - this will make the AI prefer states with less enemies
+  for (const auto& kvp : to.teams) {
+    if (kvp.first != team) {
+      cost.remainingEnemyPenalty += kvp.second;
+    }
+  }
+
+  // Check to see if any allies have been lost
+  // - This allows the AI to prefer states where they keep allies alive
+  // - This is for friendly fire, allies can't die during their turn otherwise
+  auto itFrom = from.teams.find(team);
+  auto itTo = to.teams.find(team);
+  cost.lostAlliesPenalty = 0;
+  if (itFrom != from.teams.end()) {
+
+    // If values for both can be found, use the difference to find lost allies
+    if (itTo != to.teams.end()) {
+      if (itTo->second < itFrom->second) {
+        cost.lostAlliesPenalty = itTo->second - itFrom->second;
+      }
+    }
+
+    // If there's no entry in the current state, all allies have died
+    else {
+      cost.lostAlliesPenalty = itFrom -> second;
+    }
+  }
+
+  // Check to see if there are allies within the range of enemies
+  // - This will allow the AI to prioritise moving allies out of range / sight
+  for (const auto& object : to.map.field) {
+
+    // Only iterate through allied units
+    const auto& pos = indexToCoord(to.map, object.first);
+    const auto& unit = object.second;
+    if (unit.first == team && isUnit(unit.second)) {
+
+      // Check to see if any enemies are in sight
+      const auto& enemies = getUnitsInSight(to.map, pos);
+
+      // Check to see if the ally is in range of an enemy
+      bool inEnemyRange = false;
+      for (unsigned int i = 0; !inEnemyRange && i < enemies.size(); ++i) {
+        const auto& enemyAndDistance = enemies[i];
+        const auto& object = readMap(to.map, enemyAndDistance.first);
+        const auto& range = getUnitRange(object.second);
+
+        // If the ally is in range of an enemy, record it 
+        if (enemyAndDistance.second <= range) {
+          inEnemyRange = true;
+          cost.alliesAtRiskPenalty += 1;
+        }
+      }
+    }
+  }
+
+  // If this is an End Turn action, amplify the current state
+  // - With the 'destination' in reach, A* will always end turn straight away
+  // - With this, taking penalties by pathfinding becomes cheaper than ending
+  // - It becomes much harder for the AI to end it's turn if it's not happy
+  if (action.tag == Action::Tag::EndTurn) {
+    cost = cost * 100;
+  }
+
+  // Return the calculated cost of this action
+  return cost;
+}
+
 // Attempt to take action on a gamestate
 std::pair<bool, Strategy::GameState>
 Strategy::Game::takeAction(const GameState& state, const Action& action) {
@@ -775,17 +857,15 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
   return std::make_pair(false, state);
 }
 
-// Translate coords into map index
-unsigned int 
-Strategy::Game::coordToIndex(const Map& m, const Coord& coord) {
-  return coord.x + coord.y * m.size.x;
-}
+// Estimate the Cost of completing a turn from the current State 
+Strategy::Cost 
+Strategy::Game::heuristic(const GameState& state) {
 
-// Translate map index into a coord
-Strategy::Coord 
-Strategy::Game::indexToCoord(const Map& m, unsigned int index) {
-  const unsigned int rem = index % m.size.x;
-  return Coord( rem, (index - rem) / m.size.x);
+  // There are no requirements to end the turn in this game
+  // So the heuristic is just the minimum cost possible
+  // (There are no moves going in the 'wrong direction',
+  // all moves equally get you closer to an endpoint)
+  return minimumCost;
 }
 
 // Check if coordinates are valid
@@ -1199,6 +1279,19 @@ Strategy::Game::getGameStatus(const GameState& state) {
   return std::make_pair(GameStatus::InProgress, Team(0));
 }
 
+// Translate coords into map index
+unsigned int 
+Strategy::Game::coordToIndex(const Map& m, const Coord& coord) {
+  return coord.x + coord.y * m.size.x;
+}
+
+// Translate map index into a coord
+Strategy::Coord 
+Strategy::Game::indexToCoord(const Map& m, unsigned int index) {
+  const unsigned int rem = index % m.size.x;
+  return Coord( rem, (index - rem) / m.size.x);
+}
+
 // Get a default map layout of units
 Strategy::Map 
 Strategy::Game::getDefaultUnitPlacement(const Map& map) {
@@ -1275,13 +1368,33 @@ Strategy::Game::continueGame() {
     return;
   }
 
-  // If the controller was Controller::Random, decide
+  // If the controller was Controller::Random, decide randomly
   else if (controller == Controller::Type::Random) {
     attempt = Controller::Random::decide<GameState, Action>(
         state,
         getAllPossibleActions,
         isStateEndpoint,
         takeAction);
+  }
+
+  // If the controller is Controller::AStar, use pathfinding
+  else if (controller == Controller::Type::AStar) {
+
+    // @TODO: DELETE THIS
+    // Make a temporary personality
+    Personality personality;
+
+    // Invoke decide() to make AStar pathfind to a decision
+    attempt = Controller::AStar::decide<GameState, Action, Cost>(
+        state,
+        minimumCost,
+        maximumCost,
+        getAllPossibleActions,
+        isStateEndpoint,
+        heuristic,
+        weighAction,
+        takeAction,
+        personality);
   }
 
   // If AI successfully made moves, update and continue
@@ -1313,6 +1426,9 @@ Strategy::Game::continueGame() {
     }
     viewLatestState();
     continueGame();
+  }
+  else {
+    Console::log("[Error] Pathfinding failed.");
   }
 }
 

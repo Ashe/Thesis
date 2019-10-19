@@ -15,29 +15,28 @@ namespace TicTacToe {
     unsigned int logicPenalty = 0;
   };
 
-  // Compare costs
+  // Compare Costs
   inline bool operator< (const Cost& a, const Cost& b) {
     return a.logicPenalty < b.logicPenalty;
   }
 
-  // Combine costs
+  // Combine Costs
   inline Cost operator+ (const Cost& a, const Cost& b) {
     return Cost{ a.logicPenalty + b.logicPenalty};
   }
 
   // These are BAD penalties
-  static unsigned int opponentNearWin = 10;
-  static unsigned int opponentNearWinAdditional = 20;
-  static unsigned int unnocupiedPenalty = 1;
+  constexpr unsigned int opponentNearWin = 10;
+  constexpr unsigned int opponentNearWinAdditional = 20;
+  constexpr unsigned int unnocupiedPenalty = 1;
 
   // Here's some reductions
-  static unsigned int nearWinInitialBonus = 2;
-  static unsigned int nearWinAdditionalBonus = 5;
+  constexpr unsigned int nearWinInitialBonus = 2;
+  constexpr unsigned int nearWinAdditionalBonus = 5;
 
   // Important values
-  static const Cost minimumCost = Cost{0};
-  static const Cost maximumCost = Cost{UINT_MAX};
-
+  constexpr Cost minimumCost = Cost{0};
+  constexpr Cost maximumCost = Cost{UINT_MAX};
 }
 
 #endif

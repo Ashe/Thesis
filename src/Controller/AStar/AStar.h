@@ -74,7 +74,7 @@ namespace Controller::AStar {
       std::function<C(const S&)> heuristic,
       std::function<C(const S&, const S&, const A&)> weighAction,
       std::function<std::pair<bool, const S>(const S&, const A&)> takeAction,
-      std::function<bool(const C&, const C&)> compareCost) {// = std::less) {
+      std::function<bool(const C&, const C&)> compareCost = std::less<C>()) {
 
     // All available states to explore
     std::vector<S> remaining = {startingState};
@@ -176,7 +176,8 @@ namespace Controller::AStar {
       // For each neighbour
       std::for_each(states.begin(), states.end(),
           [&remaining, &history, &gScore, &fScore, &state, &maximumCost, 
-              &weighAction, &heuristic] (const std::pair<S, A>& future) {
+           &weighAction, &heuristic, &compareCost] 
+              (const std::pair<S, A>& future) {
 
         // Initialise gScore of neighbour if it's not there
         if (gScore.find(future.first) == gScore.end()) {
@@ -188,7 +189,7 @@ namespace Controller::AStar {
             weighAction(state, future.first, future.second);
 
         // If our projected score is better than the one recorded
-        if (tentative_gScore < gScore[future.first]) {
+        if (compareCost(tentative_gScore, gScore[future.first])) {
 
           // Record how we got to this node (insert new state and the action)
           history.insert(std::make_pair(
