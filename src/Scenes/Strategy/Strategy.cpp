@@ -611,6 +611,95 @@ Strategy::Game::addDebugDetails() {
 // - Used to transform or read game states
 ///////////////////////////////////////////
 
+// Estimate the Cost of completing a turn from the current State 
+Strategy::Cost 
+Strategy::Game::heuristic(const GameState& state) {
+
+  // This function needs to estimate a cost of completing the turn
+  // There are no requirements to end a turn, HOWEVER
+  // - Using the same heuristic for all states is very inefficient
+  // - There's no way of knowing if a state is good without weighing it
+  // - Optimisation of 'cutting off' routes is more difficult
+
+  // Prepare to weight the action
+  Cost cost = minimumCost;
+
+  // Get the current team
+  const Team& team = state.currentTeam;
+
+  // The 'endOfTurn' flag signals if the AI ends their turn
+  bool endOfTurn = getGameStatus(state).first != GameStatus::InProgress;
+
+  // Apply penalties for leaving enemies alive
+  // - this will make the AI prefer states with less enemies
+  for (const auto& kvp : state.teams) {
+    if (kvp.first != team) {
+      cost.remainingEnemyPenalty += kvp.second;
+    }
+  }
+
+  // If there's no enemies or allies, remember it for later
+  bool noEnemiesLeft = cost.remainingEnemyPenalty == 0;
+
+  // Prepare to collect enemies in range
+  std::set<unsigned int> alliesInRangeOfEnemies;
+  std::set<unsigned int> enemiesOutOfRangeOfAllies;
+
+  // Check to see if there are allies within the range of enemies
+  // Also check for enemies out of range of allies
+  // - This will allow the AI to prioritise moving allies out of range / sight
+  // - This will also make allies close in on enemies
+  for (const auto& object : state.map.field) {
+
+    // Only iterate through allied units
+    const auto& pos = indexToCoord(state.map, object.first);
+    const auto& unit = object.second;
+    if (unit.first == team && isUnit(unit.second)) {
+
+      // Check to see if any enemies are in sight
+      const auto& unitRange = getUnitRange(unit.second);
+      const auto& enemies = getUnitsInSight(state.map, pos);
+
+      // Check to see if the ally is in range of an enemy
+      for (unsigned int i = 0; i < enemies.size(); ++i) {
+        const auto& enemyAndDistance = enemies[i];
+        const auto& object = readMap(state.map, enemyAndDistance.first);
+        const auto& enemyRange = getUnitRange(object.second);
+
+        // If the enemy is NOT in range of the current unit, apply penalty
+        if (enemyAndDistance.second > unitRange) {
+          enemiesOutOfRangeOfAllies.insert(
+              coordToIndex(state.map, enemyAndDistance.first));
+        }
+
+        // If the ally is in range of an enemy, record them
+        if (enemyAndDistance.second <= enemyRange) {
+          alliesInRangeOfEnemies.insert(coordToIndex(state.map, pos));
+        }
+      }
+    }
+  }
+
+  // Set costs to allies and enemies in ranges
+  cost.alliesAtRiskPenalty = alliesInRangeOfEnemies.size();
+  cost.enemiesOutOfRangePenalty = enemiesOutOfRangeOfAllies.size();
+
+  // If this is an End Turn action, amplify the current state
+  // - With the 'destination' in reach, A* will always end turn straight away
+  // - With this, taking penalties by pathfinding becomes cheaper than ending
+  // - It becomes much harder for the AI to end it's turn if it's not happy
+  // - A large penalty can be avoided by eliminating the enemy mid turn
+  // - Suiciding must trigger this, otherwise suicide will bypass the penalty
+  // - If amplified too high, action will be evaluated last, inefficient
+  // - If not amplied enough, pathfinding may terminate early
+  if (!noEnemiesLeft && endOfTurn) {
+    cost.wastedResourcesPenalty += state.remainingMP + state.remainingAP;
+  }
+
+  // Return the calculated cost of this action
+  return cost;
+}
+
 // Evaluate how good an action is going to be
 Strategy::Cost 
 Strategy::Game::weighAction(
@@ -715,7 +804,7 @@ Strategy::Game::weighAction(
   // - If amplified too high, action will be evaluated last, inefficient
   // - If not amplied enough, pathfinding may terminate early
   if (!noEnemiesLeft && (endOfTurn || noAlliesLeft)) {
-    cost = cost * cost.remainingEnemyPenalty;
+    cost.wastedResourcesPenalty += to.remainingMP + to.remainingAP;
   }
 
   // Return the calculated cost of this action
@@ -885,17 +974,6 @@ Strategy::Game::takeAction(const GameState& state, const Action& action) {
 
   // If everything fails, return the failure flag
   return std::make_pair(false, state);
-}
-
-// Estimate the Cost of completing a turn from the current State 
-Strategy::Cost 
-Strategy::Game::heuristic(const GameState& state) {
-
-  // There are no requirements to end the turn in this game
-  // So the heuristic is just the minimum cost possible
-  // (There are no moves going in the 'wrong direction',
-  // all moves equally get you closer to an endpoint)
-  return minimumCost;
 }
 
 // Check if coordinates are valid
@@ -1294,6 +1372,32 @@ Strategy::Game::isStateEndpoint(const GameState& a, const GameState& b) {
 std::pair<Strategy::GameStatus, Strategy::Team> 
 Strategy::Game::getGameStatus(const GameState& state) {
 
+  // Check for games that go on too long
+  const unsigned int maxTurns = state.map.size.x * state.map.size.y * 2;
+  if (state.turnNumber > maxTurns) {
+
+    // Find most amount of units
+    unsigned int mostUnits = 0;
+    unsigned int teamsWithMostUnits = 0;
+    Team winningTeam = Team(0);
+    for (const auto& kvp : state.teams) {
+      if (kvp.second > mostUnits) {
+        winningTeam = kvp.first;
+        mostUnits = kvp.second;
+        teamsWithMostUnits = 1;
+      }
+      else if (kvp.second == mostUnits) {
+        teamsWithMostUnits += 1;
+      }
+    }
+
+    // If there's a single team with the most, they win
+    return std::make_pair(
+        teamsWithMostUnits == 1 ? 
+            GameStatus::Won : GameStatus::Tied,
+        winningTeam);
+  }
+
   // Render win text if there's only one team left
   if (state.teams.size() <= 1) {
     if (state.teams.size() == 1) {
@@ -1412,13 +1516,12 @@ Strategy::Game::continueGame() {
 
     // @TODO: DELETE THIS
     // Make a temporary personality
-    float random = ((float) rand()) / (float) RAND_MAX;
     Personality personality;
-    random = ((float) rand()) / (float) RAND_MAX;
-    personality.enemiesOutOfRangeMultiplier = random * 3.f;
-    personality.alliesAtRiskMultiplier = random * 2.f;
-    random = ((float) rand()) / (float) RAND_MAX;
-    personality.remainingEnemyMultiplier = random * 5.f;
+    personality.remainingEnemyMultiplier = 20.f;
+    personality.lostAlliesMultiplier = 100.f;
+    personality.enemiesOutOfRangeMultiplier = 10.f;
+    personality.alliesAtRiskMultiplier = 5.f;
+    personality.wastedResourcesMultiplier = 10.f;
 
     // Invoke decide() to make AStar pathfind to a decision
     attempt = Controller::AStar::decide<GameState, Action, Cost>(

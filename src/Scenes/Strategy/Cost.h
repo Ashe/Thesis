@@ -4,7 +4,6 @@
 #ifndef STRATEGY_COST_H
 #define STRATEGY_COST_H
 
-#include <algorithm>
 #include <climits>
 
 // Seperate Strategy related classes from other games
@@ -29,6 +28,10 @@ namespace Strategy {
     // Count the enemies out of range
     // - Used to incentivise getting close (but out ranging) the enemy
     unsigned int enemiesOutOfRangePenalty = 0;
+
+    // Total the wasted MP and AP
+    // - Used to incentivise ending the turn with less resources
+    unsigned int wastedResourcesPenalty = 0;
   };
 
   // When combining costs, take the latter
@@ -38,7 +41,8 @@ namespace Strategy {
      a.remainingEnemyPenalty + b.remainingEnemyPenalty,
      a.lostAlliesPenalty + b.lostAlliesPenalty,
      a.alliesAtRiskPenalty + b.alliesAtRiskPenalty,
-     a.enemiesOutOfRangePenalty + b.enemiesOutOfRangePenalty
+     a.enemiesOutOfRangePenalty + b.enemiesOutOfRangePenalty,
+     a.wastedResourcesPenalty + b.wastedResourcesPenalty
    };
   }
 
@@ -49,6 +53,7 @@ namespace Strategy {
       c.lostAlliesPenalty * m,
       c.alliesAtRiskPenalty * m,
       c.enemiesOutOfRangePenalty * m,
+      c.wastedResourcesPenalty * m
     };
   }
 
@@ -60,6 +65,7 @@ namespace Strategy {
     float lostAlliesMultiplier = 1.f;
     float alliesAtRiskMultiplier = 1.f;
     float enemiesOutOfRangeMultiplier = 1.f;
+    float wastedResourcesMultiplier = 1.f;
 
     // Ask the personality to compare two costs
     constexpr bool operator()(const Cost& a, const Cost& b) const {
@@ -70,12 +76,14 @@ namespace Strategy {
           a.remainingEnemyPenalty * remainingEnemyMultiplier +
           a.lostAlliesPenalty * lostAlliesMultiplier +
           a.alliesAtRiskPenalty * alliesAtRiskMultiplier +
-          a.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier;
+          a.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier +
+          a.wastedResourcesPenalty * wastedResourcesMultiplier;
       const float costB = 
           b.remainingEnemyPenalty * remainingEnemyMultiplier +
           b.lostAlliesPenalty * lostAlliesMultiplier +
           b.alliesAtRiskPenalty * alliesAtRiskMultiplier +
-          b.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier;
+          b.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier +
+          b.wastedResourcesPenalty * wastedResourcesMultiplier;
 
       // Compare ultimate values
       return costA < costB;
@@ -83,8 +91,9 @@ namespace Strategy {
   };
 
   // Important values
-  constexpr Cost minimumCost = Cost{ 0, 0, 0 };
-  constexpr Cost maximumCost = Cost{ UINT_MAX, UINT_MAX, UINT_MAX };
+  constexpr Cost minimumCost = Cost{ 0, 0, 0, 0 };
+  constexpr Cost maximumCost = Cost{ 
+      UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX};
 }
 
 #endif

@@ -124,6 +124,9 @@ namespace Strategy {
       // - Used to transform or read game states
       ///////////////////////////////////////////
 
+      // Estimate the Cost of completing a turn from the current State 
+      static Cost heuristic(const GameState& state);
+
       // Evaluate how good an action is going to be
       static Cost weighAction(
           const GameState& from, 
@@ -134,9 +137,6 @@ namespace Strategy {
       static std::pair<bool, GameState> takeAction(
           const GameState& state,
           const Action& action);
-
-      // Estimate the Cost of completing a turn from the current State 
-      static Cost heuristic(const GameState& state);
 
       // Check if coordinates are valid
       static bool validateCoords(
