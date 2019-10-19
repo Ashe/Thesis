@@ -4,6 +4,7 @@
 #ifndef STRATEGY_COST_H
 #define STRATEGY_COST_H
 
+#include <algorithm>
 #include <climits>
 
 // Seperate Strategy related classes from other games
@@ -13,23 +14,32 @@ namespace Strategy {
   // Remember that its a COST system so that larger costs can be ruled out
   struct Cost {
 
-    // Used to prioritise winning the game
+    // Count enemies that are still alive
+    // - Used to prioritise winning the game
     unsigned int remainingEnemyPenalty = 0;
 
-    // Used to prioritise staying alive
+    // Count allies that have died this turn
+    // - Used to prioritise staying alive
     unsigned int lostAlliesPenalty = 0;
 
-    // Used to increase chances of survival by staying hidden
+    // Count allies that are in range of the enemy
+    // - Used to increase chances of survival by staying hidden
     unsigned int alliesAtRiskPenalty = 0;
+
+    // Count the enemies out of range
+    // - Used to incentivise getting close (but out ranging) the enemy
+    unsigned int enemiesOutOfRangePenalty = 0;
   };
 
-  // Combine Costs by adding their components
+  // When combining costs, take the latter
+  // - All that matters is the current state
   inline Cost operator+ (const Cost& a, const Cost& b) {
-    return Cost{
-      a.remainingEnemyPenalty + b.remainingEnemyPenalty,
-      a.lostAlliesPenalty + b.lostAlliesPenalty,
-      a.alliesAtRiskPenalty + b.alliesAtRiskPenalty,
-    };
+   return Cost{
+     a.remainingEnemyPenalty + b.remainingEnemyPenalty,
+     a.lostAlliesPenalty + b.lostAlliesPenalty,
+     a.alliesAtRiskPenalty + b.alliesAtRiskPenalty,
+     a.enemiesOutOfRangePenalty + b.enemiesOutOfRangePenalty
+   };
   }
 
   // Allow a cost to be scaled
@@ -37,7 +47,8 @@ namespace Strategy {
     return Cost{
       c.remainingEnemyPenalty * m,
       c.lostAlliesPenalty * m,
-      c.alliesAtRiskPenalty * m
+      c.alliesAtRiskPenalty * m,
+      c.enemiesOutOfRangePenalty * m,
     };
   }
 
@@ -48,8 +59,7 @@ namespace Strategy {
     float remainingEnemyMultiplier = 1.f;
     float lostAlliesMultiplier = 1.f;
     float alliesAtRiskMultiplier = 1.f;
-    float unusedMPMultiplier = 1.f;
-    float unusedAPMultiplier = 1.f;
+    float enemiesOutOfRangeMultiplier = 1.f;
 
     // Ask the personality to compare two costs
     constexpr bool operator()(const Cost& a, const Cost& b) const {
@@ -59,11 +69,13 @@ namespace Strategy {
       const float costA = 
           a.remainingEnemyPenalty * remainingEnemyMultiplier +
           a.lostAlliesPenalty * lostAlliesMultiplier +
-          a.alliesAtRiskPenalty * alliesAtRiskMultiplier;
+          a.alliesAtRiskPenalty * alliesAtRiskMultiplier +
+          a.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier;
       const float costB = 
           b.remainingEnemyPenalty * remainingEnemyMultiplier +
           b.lostAlliesPenalty * lostAlliesMultiplier +
-          b.alliesAtRiskPenalty * alliesAtRiskMultiplier;
+          b.alliesAtRiskPenalty * alliesAtRiskMultiplier +
+          b.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier;
 
       // Compare ultimate values
       return costA < costB;

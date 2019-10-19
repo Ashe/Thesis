@@ -228,6 +228,7 @@ Strategy::Game::onEvent(const sf::Event& event) {
         // Make a state with the new map and push it
         auto newState = state;
         newState.map = map.second;
+        newState.teams = countTeams(newState.map);
         pushState(newState);
 
         // View the changes
@@ -623,6 +624,9 @@ Strategy::Game::weighAction(
   // Get the current team
   const Team& team = from.currentTeam;
 
+  // The 'endOfTurn' flag signals if the AI ends their turn
+  bool endOfTurn = action.tag == Action::Tag::EndTurn;
+
   // Apply penalties for leaving enemies alive
   // - this will make the AI prefer states with less enemies
   for (const auto& kvp : to.teams) {
@@ -630,6 +634,10 @@ Strategy::Game::weighAction(
       cost.remainingEnemyPenalty += kvp.second;
     }
   }
+
+  // If there's no enemies or allies, remember it for later
+  bool noEnemiesLeft = cost.remainingEnemyPenalty == 0;
+  bool noAlliesLeft = false;
 
   // Check to see if any allies have been lost
   // - This allows the AI to prefer states where they keep allies alive
@@ -642,18 +650,27 @@ Strategy::Game::weighAction(
     // If values for both can be found, use the difference to find lost allies
     if (itTo != to.teams.end()) {
       if (itTo->second < itFrom->second) {
-        cost.lostAlliesPenalty = itTo->second - itFrom->second;
+        cost.lostAlliesPenalty = itFrom->second - itTo->second;
       }
     }
 
     // If there's no entry in the current state, all allies have died
+    // - This takes the AI out of the game
+    // - The 'end turn' multiplier should be added
     else {
       cost.lostAlliesPenalty = itFrom -> second;
+      noAlliesLeft = true;
     }
   }
 
+  // Prepare to collect enemies in range
+  std::set<unsigned int> alliesInRangeOfEnemies;
+  std::set<unsigned int> enemiesOutOfRangeOfAllies;
+
   // Check to see if there are allies within the range of enemies
+  // Also check for enemies out of range of allies
   // - This will allow the AI to prioritise moving allies out of range / sight
+  // - This will also make allies close in on enemies
   for (const auto& object : to.map.field) {
 
     // Only iterate through allied units
@@ -662,30 +679,43 @@ Strategy::Game::weighAction(
     if (unit.first == team && isUnit(unit.second)) {
 
       // Check to see if any enemies are in sight
+      const auto& unitRange = getUnitRange(unit.second);
       const auto& enemies = getUnitsInSight(to.map, pos);
 
       // Check to see if the ally is in range of an enemy
-      bool inEnemyRange = false;
-      for (unsigned int i = 0; !inEnemyRange && i < enemies.size(); ++i) {
+      for (unsigned int i = 0; i < enemies.size(); ++i) {
         const auto& enemyAndDistance = enemies[i];
         const auto& object = readMap(to.map, enemyAndDistance.first);
-        const auto& range = getUnitRange(object.second);
+        const auto& enemyRange = getUnitRange(object.second);
 
-        // If the ally is in range of an enemy, record it 
-        if (enemyAndDistance.second <= range) {
-          inEnemyRange = true;
-          cost.alliesAtRiskPenalty += 1;
+        // If the enemy is NOT in range of the current unit, apply penalty
+        if (enemyAndDistance.second > unitRange) {
+          enemiesOutOfRangeOfAllies.insert(
+              coordToIndex(to.map, enemyAndDistance.first));
+        }
+
+        // If the ally is in range of an enemy, record them
+        if (enemyAndDistance.second <= enemyRange) {
+          alliesInRangeOfEnemies.insert(coordToIndex(to.map, pos));
         }
       }
     }
   }
 
+  // Set costs to allies and enemies in ranges
+  cost.alliesAtRiskPenalty = alliesInRangeOfEnemies.size();
+  cost.enemiesOutOfRangePenalty = enemiesOutOfRangeOfAllies.size();
+
   // If this is an End Turn action, amplify the current state
   // - With the 'destination' in reach, A* will always end turn straight away
   // - With this, taking penalties by pathfinding becomes cheaper than ending
   // - It becomes much harder for the AI to end it's turn if it's not happy
-  if (action.tag == Action::Tag::EndTurn) {
-    cost = cost * 100;
+  // - A large penalty can be avoided by eliminating the enemy mid turn
+  // - Suiciding must trigger this, otherwise suicide will bypass the penalty
+  // - If amplified too high, action will be evaluated last, inefficient
+  // - If not amplied enough, pathfinding may terminate early
+  if (!noEnemiesLeft && (endOfTurn || noAlliesLeft)) {
+    cost = cost * cost.remainingEnemyPenalty;
   }
 
   // Return the calculated cost of this action
@@ -1382,7 +1412,13 @@ Strategy::Game::continueGame() {
 
     // @TODO: DELETE THIS
     // Make a temporary personality
+    float random = ((float) rand()) / (float) RAND_MAX;
     Personality personality;
+    random = ((float) rand()) / (float) RAND_MAX;
+    personality.enemiesOutOfRangeMultiplier = random * 3.f;
+    personality.alliesAtRiskMultiplier = random * 2.f;
+    random = ((float) rand()) / (float) RAND_MAX;
+    personality.remainingEnemyMultiplier = random * 5.f;
 
     // Invoke decide() to make AStar pathfind to a decision
     attempt = Controller::AStar::decide<GameState, Action, Cost>(
@@ -1853,23 +1889,25 @@ Strategy::Game::renderObject(
     const auto texSize = sprite.getTextureRect();
     sprite.setScale(tileLength_ / texSize.width, tileLength_ / texSize.height);
 
-    // Get initial sprite colour
-    auto col = getTeamColour(team);
+    // Change colour if it's a unit
+    if (isUnit(object)) {
+      auto col = getTeamColour(team);
 
-    // Manipulate sprite colour - dim if not highlighted
-    switch (style) {
-      case RenderStyle::NotPlaying:
-        col *= sf::Color(255, 255, 255, 150); break;
-      case RenderStyle::Playing:
-        col *= sf::Color(255, 255, 255, 200); break;
-      case RenderStyle::Hovered:
-        col *= sf::Color(255, 255, 255, 255); break;
-      case RenderStyle::Selected:
-        col = sf::Color(255, 204, 0, 255); break;
-      case RenderStyle::Ghost:
-      default: col *= sf::Color(255, 255, 255, 175); break;
-    };
-    sprite.setColor(col);
+      // Manipulate sprite colour - dim if not highlighted
+      switch (style) {
+        case RenderStyle::NotPlaying:
+          col *= sf::Color(255, 255, 255, 150); break;
+        case RenderStyle::Playing:
+          col *= sf::Color(255, 255, 255, 200); break;
+        case RenderStyle::Hovered:
+          col *= sf::Color(255, 255, 255, 255); break;
+        case RenderStyle::Selected:
+          col = sf::Color(255, 204, 0, 255); break;
+        case RenderStyle::Ghost:
+        default: col *= sf::Color(255, 255, 255, 175); break;
+      };
+      sprite.setColor(col);
+    }
 
     // Draw sprite
     window.draw(sprite);

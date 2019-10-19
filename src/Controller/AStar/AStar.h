@@ -94,8 +94,15 @@ namespace Controller::AStar {
     std::unordered_map<S, C> fScore;
     fScore[startingState] = heuristic(startingState);
 
+    // Count how many moves have been processed
+    unsigned int processed = 0;
+
     // Keep processing until there are no states left to check
     while (remaining.size() > 0) {
+
+      // Print an output
+      Console::log("Processing move: %u", processed);
+      processed += 1;
 
       // Get the highest priority state to operate on
       auto current = std::min_element(remaining.begin(), remaining.end(),
