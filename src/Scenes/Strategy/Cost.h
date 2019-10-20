@@ -13,6 +13,22 @@ namespace Strategy {
   // Remember that its a COST system so that larger costs can be ruled out
   struct Cost {
 
+    // Static struct of penalties to apply
+    struct Penalty {
+      static constexpr unsigned int actionTaken = 2;
+      static constexpr unsigned int enemyAlive = 10;
+      static constexpr unsigned int friendlyFire = 10;
+      static constexpr unsigned int allyExposed = 1;
+      static constexpr unsigned int enemyOutOfRange = 2;
+      static constexpr unsigned int wastedAttack = 10;
+      static constexpr unsigned int wastedMP = 20;
+      static constexpr unsigned int wastedAP = 30;
+    };
+
+    // Count how many actions have been taken
+    // - Used to incentivise doing things efficiently
+    unsigned int actionsTakenPenalty = 0;
+
     // Count enemies that are still alive
     // - Used to prioritise winning the game
     unsigned int remainingEnemyPenalty = 0;
@@ -34,10 +50,16 @@ namespace Strategy {
     unsigned int wastedResourcesPenalty = 0;
   };
 
+  // Important Cost instances
+  constexpr Cost minimumCost = Cost{ 0, 0, 0, 0, 0 };
+  constexpr Cost maximumCost = Cost{ 
+      UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX};
+
   // When combining costs, take the latter
   // - All that matters is the current state
   inline Cost operator+ (const Cost& a, const Cost& b) {
    return Cost{
+     a.actionsTakenPenalty + b.actionsTakenPenalty,
      a.remainingEnemyPenalty + b.remainingEnemyPenalty,
      a.lostAlliesPenalty + b.lostAlliesPenalty,
      a.alliesAtRiskPenalty + b.alliesAtRiskPenalty,
@@ -49,6 +71,7 @@ namespace Strategy {
   // Allow a cost to be scaled
   inline Cost operator* (const Cost& c, unsigned int m) {
     return Cost{
+      c.actionsTakenPenalty * m,
       c.remainingEnemyPenalty * m,
       c.lostAlliesPenalty * m,
       c.alliesAtRiskPenalty * m,
@@ -61,6 +84,7 @@ namespace Strategy {
   struct Personality {
 
     // Modification multipliers for prioritising aspects of the game
+    float actionsTakenMultiplier = 1.f;
     float remainingEnemyMultiplier = 1.f;
     float lostAlliesMultiplier = 1.f;
     float alliesAtRiskMultiplier = 1.f;
@@ -73,12 +97,14 @@ namespace Strategy {
       // Use personality's preferences to modify 'true' values
       // This allows the AI to ignore or prioritise things
       const float costA = 
+          a.actionsTakenPenalty * actionsTakenMultiplier +
           a.remainingEnemyPenalty * remainingEnemyMultiplier +
           a.lostAlliesPenalty * lostAlliesMultiplier +
           a.alliesAtRiskPenalty * alliesAtRiskMultiplier +
           a.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier +
           a.wastedResourcesPenalty * wastedResourcesMultiplier;
       const float costB = 
+          b.actionsTakenPenalty * actionsTakenMultiplier +
           b.remainingEnemyPenalty * remainingEnemyMultiplier +
           b.lostAlliesPenalty * lostAlliesMultiplier +
           b.alliesAtRiskPenalty * alliesAtRiskMultiplier +
@@ -89,11 +115,6 @@ namespace Strategy {
       return costA < costB;
     }
   };
-
-  // Important values
-  constexpr Cost minimumCost = Cost{ 0, 0, 0, 0 };
-  constexpr Cost maximumCost = Cost{ 
-      UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX};
 }
 
 #endif
