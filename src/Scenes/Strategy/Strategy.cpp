@@ -355,8 +355,7 @@ Strategy::Game::onRender(sf::RenderWindow& window) {
         RenderStyle::Playing : RenderStyle::NotPlaying;
 
     // Elevate the style if further things apply
-    if (team == state.currentTeam 
-        && getController(team) == Controller::Type::Human) {
+    if (team == state.currentTeam) {
       if (pos == state.selection) { style = RenderStyle::Selected; }
       else if (pos == hoveredTile_) { style = RenderStyle::Hovered; }
     }
@@ -623,10 +622,18 @@ Strategy::Game::heuristic(const GameState& state) {
     }
   }
 
+  // Get allies and enemies exposed
+  const auto& exposed = getAlliesAndEnemiesInRange(state, state.currentTeam);
+  const unsigned int alliesExposed = exposed.first;
+  const unsigned int enemiesNOTExposed = enemyCount - exposed.second;
+
   // Calculate a cost
   Cost cost;
-  cost.actionsTakenPenalty = Cost::Penalty::actionTaken;
+  cost.antiLogicPenalty = Cost::Penalty::actionTaken;
   cost.remainingEnemyPenalty = Cost::Penalty::enemyAlive * enemyCount;
+  cost.alliesAtRiskPenalty = alliesExposed * Cost::Penalty::allyExposed;
+  cost.enemiesOutOfRangePenalty = 
+      enemiesNOTExposed * Cost::Penalty::enemyOutOfRange;
   cost.wastedResourcesPenalty = 
       Cost::Penalty::wastedMP * state.remainingMP +
       Cost::Penalty::wastedAP * state.remainingAP;
@@ -636,13 +643,14 @@ Strategy::Game::heuristic(const GameState& state) {
 // Evaluate how good an action is going to be
 Strategy::Cost 
 Strategy::Game::weighAction(
+    const GameState& start,
     const GameState& from, 
     const GameState& to,
     const Action& action) {
 
   // Prepare to weight the action
   Cost cost = minimumCost;
-  cost.actionsTakenPenalty += Cost::Penalty::actionTaken;
+  cost.antiLogicPenalty += Cost::Penalty::actionTaken;
 
   // Get the current team
   const Team& team = from.currentTeam;
@@ -669,6 +677,7 @@ Strategy::Game::weighAction(
     case Action::Tag::EndTurn:
       calculateRemainingEnemies = true;
       calculateAlliesExposed = true;
+      calculateEnemiesOutOfRange = true;
       calculateResourceWaste = true;
     default:
       break;
@@ -676,27 +685,23 @@ Strategy::Game::weighAction(
 
   // Apply penalties for leaving enemies alive
   // - this will make the AI prefer states with less enemies
-  unsigned int enemyCountFrom = 0;
   unsigned int enemyCountTo = 0;
-  if (calculateMissedAttack || calculateRemainingEnemies) {
-
-    // Count enemy amount differences
-    if (calculateMissedAttack) {
-      for (const auto& kvp : from.teams) {
-        if (kvp.first != team) {
-          enemyCountFrom += kvp.second;
-        }
-      }
+  for (const auto& kvp : to.teams) {
+    if (kvp.first != team) {
+      enemyCountTo += kvp.second;
     }
-    for (const auto& kvp : to.teams) {
+  }
+  if (calculateMissedAttack || calculateRemainingEnemies) {
+    unsigned int enemyCountFrom = 0;
+    for (const auto& kvp : from.teams) {
       if (kvp.first != team) {
-        enemyCountTo += kvp.second;
+        enemyCountFrom += kvp.second;
       }
     }
 
     // Apply penalties
     if (calculateMissedAttack && enemyCountFrom == enemyCountTo) {
-      cost.wastedResourcesPenalty += Cost::Penalty::wastedAttack;
+      cost.antiLogicPenalty += Cost::Penalty::wastedAttack;
     }
     if (calculateRemainingEnemies) {
       cost.remainingEnemyPenalty += 
@@ -736,51 +741,27 @@ Strategy::Game::weighAction(
   // Also check for enemies out of range of allies
   // - This will allow the AI to prioritise moving allies out of range / sight
   // - This will also make allies close in on enemies
-  if (calculateAlliesExposed || 
-      calculateEnemiesOutOfRange) {
+  const auto& toData = getAlliesAndEnemiesInRange(to, team);
+  unsigned int alliesExposedTo = toData.first;
+  unsigned int enemiesExposedTo = toData.second;
+  if (calculateAlliesExposed || calculateEnemiesOutOfRange) {
 
-    // Prepare to collect enemies in range
-    std::set<unsigned int> alliesInRangeOfEnemies;
-    std::set<unsigned int> enemiesOutOfRangeOfAllies;
+    // Collect data for the previous state
+    unsigned int alliesExposedFrom = 0;
+    unsigned int enemiesExposedFrom = 0;
 
-    for (const auto& object : to.map.field) {
-
-      // Only iterate through allied units
-      const auto& pos = indexToCoord(to.map, object.first);
-      const auto& unit = object.second;
-      if (unit.first == team && isUnit(unit.second)) {
-
-        // Check to see if any enemies are in sight
-        const auto& unitRange = getUnitRange(unit.second);
-        const auto& enemies = getUnitsInSight(to.map, pos);
-
-        // Check to see if the ally is in range of an enemy
-        for (unsigned int i = 0; i < enemies.size(); ++i) {
-          const auto& enemyAndDistance = enemies[i];
-          const auto& object = readMap(to.map, enemyAndDistance.first);
-          const auto& enemyRange = getUnitRange(object.second);
-
-          // If the enemy is NOT in range of the current unit, apply penalty
-          if (calculateEnemiesOutOfRange
-              && enemyAndDistance.second > unitRange) {
-            enemiesOutOfRangeOfAllies.insert(
-                coordToIndex(to.map, enemyAndDistance.first));
-          }
-
-          // If the selection or ally is in range of an enemy, apply penalties
-          if (calculateAlliesExposed 
-              && enemyAndDistance.second <= enemyRange) {
-            alliesInRangeOfEnemies.insert(coordToIndex(to.map, pos));
-          }
-        }
-      }
-    }
+    // Get data to compare
+    const auto& fromData = getAlliesAndEnemiesInRange(from, team);
+    alliesExposedFrom = fromData.first;
+    enemiesExposedFrom = fromData.second;
+    alliesExposedTo = toData.first;
+    enemiesExposedTo = toData.second;
 
     // Set costs to allies and enemies in ranges
     cost.alliesAtRiskPenalty += 
-        alliesInRangeOfEnemies.size() * Cost::Penalty::allyExposed;
+        alliesExposedTo * Cost::Penalty::allyExposed;
     cost.enemiesOutOfRangePenalty += 
-      enemiesOutOfRangeOfAllies.size() * Cost::Penalty::enemyOutOfRange;
+      (enemyCountTo - enemiesExposedTo) * Cost::Penalty::enemyOutOfRange;
   }
 
   // If this is an End Turn action, amplify the current state
@@ -797,8 +778,45 @@ Strategy::Game::weighAction(
         to.remainingAP * Cost::Penalty::wastedAP;
   }
 
+  // Apply penalties for ending the turn without doing anything
   if (action.tag == Action::Tag::EndTurn) {
-    //cost = cost * enemyCountTo;
+
+    // Count enemies in the starting state for comparison
+    unsigned int enemyCountStart = 0;
+    for (const auto& kvp : start.teams) {
+      if (kvp.first != team) {
+        enemyCountStart += kvp.second;
+      }
+    }
+
+    // Get enemies and allies in range in the starting state
+    const auto& startData = getAlliesAndEnemiesInRange(start, team);
+    unsigned int alliesExposedStart = startData.first;
+    unsigned int enemiesExposedStart = startData.second;
+
+    // Apply a penalty for not reducing number of allies exposed
+    if (alliesExposedTo > alliesExposedStart) {
+      cost.antiLogicPenalty += (alliesExposedTo - alliesExposedStart) *
+          Cost::Penalty::allyExposed;
+    }
+
+    // If there have been no kills, apply more penalties
+    if (enemyCountStart <= enemyCountTo) {
+
+      // Apply a penalty for each enemy
+      cost.antiLogicPenalty += enemyCountTo * Cost::Penalty::enemyAlive;
+
+      // Apply a further penalty for not killing to avoid enemies
+      if (alliesExposedTo >= alliesExposedStart) {
+        cost.antiLogicPenalty += alliesExposedTo * Cost::Penalty::allyExposed;
+      }
+
+      // If no more enemies have been exposed, apply penalty
+      if (enemiesExposedTo <= enemiesExposedStart) {
+        cost.antiLogicPenalty += 
+          (enemyCountTo - enemiesExposedTo) * Cost::Penalty::enemyOutOfRange;
+      }
+    }
   }
 
   // Return the calculated cost of this action
@@ -1184,6 +1202,55 @@ Strategy::Game::getUnitsInSight(const Map& map, const Coord& u) {
 
   // Return what was discovered
   return units;
+}
+
+// Check the number of allies in range of enemies and enemies in range of
+// allies in the current state for the given team
+std::pair<unsigned int, unsigned int> 
+Strategy::Game::getAlliesAndEnemiesInRange(
+    const GameState& state,
+    const Team& team) {
+
+  // Record who's in range
+  std::set<unsigned int> alliesInRangeOfEnemies;
+  std::set<unsigned int> enemiesInRangeOfAllies;
+
+  // Iterate through all units
+  for (const auto& object : state.map.field) {
+
+    // Only iterate through allied units
+    const auto& pos = indexToCoord(state.map, object.first);
+    const auto& unit = object.second;
+    if (unit.first == team && isUnit(unit.second)) {
+
+      // Check to see if any enemies are in sight
+      const auto& unitRange = getUnitRange(unit.second);
+      const auto& enemies = getUnitsInSight(state.map, pos);
+
+      // Check to see if the ally is in range of an enemy
+      for (unsigned int i = 0; i < enemies.size(); ++i) {
+        const auto& enemyAndDistance = enemies[i];
+        const auto& object = readMap(state.map, enemyAndDistance.first);
+        const auto& enemyRange = getUnitRange(object.second);
+
+        // If the enemy is NOT in range of the current unit, apply penalty
+        if (enemyAndDistance.second <= unitRange) {
+          enemiesInRangeOfAllies.insert(
+              coordToIndex(state.map, enemyAndDistance.first));
+        }
+
+        // If the selection or ally is in range of an enemy, apply penalties
+        if (enemyAndDistance.second <= enemyRange) {
+          alliesInRangeOfEnemies.insert(coordToIndex(state.map, pos));
+        }
+      }
+    }
+  }
+
+  // Return the amount of allies / enemies in range
+  return std::make_pair(
+      alliesInRangeOfEnemies.size(), 
+      enemiesInRangeOfAllies.size());
 }
 
 // Get possible moves from the current Coord in a state
@@ -1782,7 +1849,8 @@ Strategy::Game::recalculatePath() {
       },
 
       // Weigh action (every move is 1 MP)
-      [](const GameState& a, const GameState& b, const Action& action) {
+      [](const GameState& start, const GameState& a, const GameState& b, 
+          const Action& action) {
         return 1;
       },
       takeAction,

@@ -326,6 +326,7 @@ TicTacToe::Game::estimateCostHeuristic(const GameState& state) {
 // Determine the cost of performing a move with a given state
 TicTacToe::Cost
 TicTacToe::Game::weighMove(
+    const GameState& start, 
     const GameState& from, 
     const GameState& to, 
     const Move& move) {

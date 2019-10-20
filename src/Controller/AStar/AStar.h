@@ -72,7 +72,7 @@ namespace Controller::AStar {
       std::function<std::vector<A>(const S&)> getPossibleActions,
       std::function<bool(const S&, const S&)> isStateEndpoint,
       std::function<C(const S&)> heuristic,
-      std::function<C(const S&, const S&, const A&)> weighAction,
+      std::function<C(const S&, const S&, const S&, const A&)> weighAction,
       std::function<std::pair<bool, const S>(const S&, const A&)> takeAction,
       std::function<bool(const C&, const C&)> compareCost = std::less<C>()) {
 
@@ -182,8 +182,8 @@ namespace Controller::AStar {
 
       // For each neighbour
       std::for_each(states.begin(), states.end(),
-          [&remaining, &history, &gScore, &fScore, &state, &maximumCost, 
-           &weighAction, &heuristic, &compareCost] 
+          [&remaining, &history, &gScore, &fScore, &startingState, &state, 
+          &maximumCost, &weighAction, &heuristic, &compareCost] 
               (const std::pair<S, A>& future) {
 
         // Initialise gScore of neighbour if it's not there
@@ -193,7 +193,7 @@ namespace Controller::AStar {
 
         // Work out cost of taking this action with the current state
         const C tentative_gScore = gScore[state] + 
-            weighAction(state, future.first, future.second);
+            weighAction(startingState, state, future.first, future.second);
 
         // If our projected score is better than the one recorded
         if (compareCost(tentative_gScore, gScore[future.first])) {

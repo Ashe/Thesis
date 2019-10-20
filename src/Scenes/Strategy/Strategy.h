@@ -129,6 +129,7 @@ namespace Strategy {
 
       // Evaluate how good an action is going to be
       static Cost weighAction(
+          const GameState& start,
           const GameState& from, 
           const GameState& to,
           const Action& action);
@@ -169,6 +170,12 @@ namespace Strategy {
       static std::vector<std::pair<Coord, Range>> getUnitsInSight(
           const Map& map,
           const Coord& location);
+
+      // Check the number of allies in range of enemies and enemies in range of
+      // allies in the current state for the given team
+      static std::pair<unsigned int, unsigned int> getAlliesAndEnemiesInRange(
+          const GameState& state,
+          const Team& team);
 
       // Get possible moves from the current Coord in a state
       static std::vector<Action> getPossibleMoves(const GameState& state);

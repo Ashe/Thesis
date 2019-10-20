@@ -25,9 +25,10 @@ namespace Strategy {
       static constexpr unsigned int wastedAP = 30;
     };
 
-    // Count how many actions have been taken
-    // - Used to incentivise doing things efficiently
-    unsigned int actionsTakenPenalty = 0;
+    // Keep a record of doing sensical moves
+    // - Used to prevent attacks that don't do anything
+    // - Used to try and create conflict between teams
+    unsigned int antiLogicPenalty = 0;
 
     // Count enemies that are still alive
     // - Used to prioritise winning the game
@@ -59,7 +60,7 @@ namespace Strategy {
   // - All that matters is the current state
   inline Cost operator+ (const Cost& a, const Cost& b) {
    return Cost{
-     a.actionsTakenPenalty + b.actionsTakenPenalty,
+     a.antiLogicPenalty + b.antiLogicPenalty,
      a.remainingEnemyPenalty + b.remainingEnemyPenalty,
      a.lostAlliesPenalty + b.lostAlliesPenalty,
      a.alliesAtRiskPenalty + b.alliesAtRiskPenalty,
@@ -71,7 +72,7 @@ namespace Strategy {
   // Allow a cost to be scaled
   inline Cost operator* (const Cost& c, unsigned int m) {
     return Cost{
-      c.actionsTakenPenalty * m,
+      c.antiLogicPenalty * m,
       c.remainingEnemyPenalty * m,
       c.lostAlliesPenalty * m,
       c.alliesAtRiskPenalty * m,
@@ -84,7 +85,7 @@ namespace Strategy {
   struct Personality {
 
     // Modification multipliers for prioritising aspects of the game
-    float actionsTakenMultiplier = 1.f;
+    float antiLogicMultiplier = 1.f;
     float remainingEnemyMultiplier = 1.f;
     float lostAlliesMultiplier = 1.f;
     float alliesAtRiskMultiplier = 1.f;
@@ -97,14 +98,14 @@ namespace Strategy {
       // Use personality's preferences to modify 'true' values
       // This allows the AI to ignore or prioritise things
       const float costA = 
-          a.actionsTakenPenalty * actionsTakenMultiplier +
+          a.antiLogicPenalty * antiLogicMultiplier +
           a.remainingEnemyPenalty * remainingEnemyMultiplier +
           a.lostAlliesPenalty * lostAlliesMultiplier +
           a.alliesAtRiskPenalty * alliesAtRiskMultiplier +
           a.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier +
           a.wastedResourcesPenalty * wastedResourcesMultiplier;
       const float costB = 
-          b.actionsTakenPenalty * actionsTakenMultiplier +
+          b.antiLogicPenalty * antiLogicMultiplier +
           b.remainingEnemyPenalty * remainingEnemyMultiplier +
           b.lostAlliesPenalty * lostAlliesMultiplier +
           b.alliesAtRiskPenalty * alliesAtRiskMultiplier +

@@ -119,6 +119,7 @@ namespace TicTacToe {
 
       // Determine the cost of performing a move with given state
       static Cost weighMove(
+          const GameState& start, 
           const GameState& from, 
           const GameState& to, 
           const Move& move);
