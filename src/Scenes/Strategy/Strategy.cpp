@@ -613,31 +613,7 @@ Strategy::Game::addDebugDetails() {
 // Estimate the Cost of completing a turn from the current State 
 Strategy::Cost 
 Strategy::Game::heuristic(const GameState& state) {
-
-  // Count the enemies left
-  unsigned int enemyCount = 0;
-  for (const auto& kvp : state.teams) {
-    if (kvp.first != state.currentTeam) {
-      enemyCount += kvp.second;
-    }
-  }
-
-  // Get allies and enemies exposed
-  const auto& exposed = getAlliesAndEnemiesInRange(state, state.currentTeam);
-  const unsigned int alliesExposed = exposed.first;
-  const unsigned int enemiesNOTExposed = enemyCount - exposed.second;
-
-  // Calculate a cost
-  Cost cost;
-  cost.antiLogicPenalty = Cost::Penalty::actionTaken;
-  cost.remainingEnemyPenalty = Cost::Penalty::enemyAlive * enemyCount;
-  cost.alliesAtRiskPenalty = alliesExposed * Cost::Penalty::allyExposed;
-  cost.enemiesOutOfRangePenalty = 
-      enemiesNOTExposed * Cost::Penalty::enemyOutOfRange;
-  cost.wastedResourcesPenalty = 
-      Cost::Penalty::wastedMP * state.remainingMP +
-      Cost::Penalty::wastedAP * state.remainingAP;
-  return cost;
+  return minimumCost;
 }
 
 // Evaluate how good an action is going to be
@@ -648,179 +624,8 @@ Strategy::Game::weighAction(
     const GameState& to,
     const Action& action) {
 
-  // Prepare to weight the action
-  Cost cost = minimumCost;
-  cost.antiLogicPenalty += Cost::Penalty::actionTaken;
-
-  // Get the current team
-  const Team& team = from.currentTeam;
-
-  // Bools for calculating different parts of the cost
-  bool calculateMissedAttack = false;
-  bool calculateRemainingEnemies = false;
-  bool calculateFriendlyFire = false;
-  bool calculateAlliesExposed = false;
-  bool calculateEnemiesOutOfRange = false;
-  bool calculateResourceWaste = false;
-
-  // Change costs depending on action
-  switch (action.tag) {
-    case Action::Tag::MoveUnit:
-      calculateAlliesExposed = true;
-      calculateEnemiesOutOfRange = true;
-      break;
-    case Action::Tag::Attack:
-      calculateMissedAttack = true;
-      calculateFriendlyFire = true;
-      calculateAlliesExposed = true;
-      break;
-    case Action::Tag::EndTurn:
-      calculateRemainingEnemies = true;
-      calculateAlliesExposed = true;
-      calculateEnemiesOutOfRange = true;
-      calculateResourceWaste = true;
-    default:
-      break;
-  }
-
-  // Apply penalties for leaving enemies alive
-  // - this will make the AI prefer states with less enemies
-  unsigned int enemyCountTo = 0;
-  for (const auto& kvp : to.teams) {
-    if (kvp.first != team) {
-      enemyCountTo += kvp.second;
-    }
-  }
-  if (calculateMissedAttack || calculateRemainingEnemies) {
-    unsigned int enemyCountFrom = 0;
-    for (const auto& kvp : from.teams) {
-      if (kvp.first != team) {
-        enemyCountFrom += kvp.second;
-      }
-    }
-
-    // Apply penalties
-    if (calculateMissedAttack && enemyCountFrom == enemyCountTo) {
-      cost.antiLogicPenalty += Cost::Penalty::wastedAttack;
-    }
-    if (calculateRemainingEnemies) {
-      cost.remainingEnemyPenalty += 
-          enemyCountTo * Cost::Penalty::enemyAlive;
-    }
-  }
-
-  // Check to see if any allies have been lost
-  // - This allows the AI to prefer states where they keep allies alive
-  // - This is for friendly fire, allies can't die during their turn otherwise
-  if (calculateFriendlyFire) {
-    auto itFrom = from.teams.find(team);
-    auto itTo = to.teams.find(team);
-    if (itFrom != from.teams.end()) {
-
-      // If values for both can be found, use the difference to find lost allies
-      if (itTo != to.teams.end()) {
-        if (itTo->second < itFrom->second) {
-          cost.lostAlliesPenalty += 
-              (itFrom->second - itTo->second) * Cost::Penalty::friendlyFire;
-        }
-      }
-
-      // If there's no entry in the current state, all allies have died
-      // - This takes the AI out of the game
-      // - The 'end turn' multiplier should be added
-      else {
-        cost.lostAlliesPenalty += (itFrom -> second) * 
-            Cost::Penalty::friendlyFire;
-
-        // @TODO: Implement a 'you lose' penalty
-      }
-    }
-  }
-
-  // Check to see if there are allies within the range of enemies
-  // Also check for enemies out of range of allies
-  // - This will allow the AI to prioritise moving allies out of range / sight
-  // - This will also make allies close in on enemies
-  const auto& toData = getAlliesAndEnemiesInRange(to, team);
-  unsigned int alliesExposedTo = toData.first;
-  unsigned int enemiesExposedTo = toData.second;
-  if (calculateAlliesExposed || calculateEnemiesOutOfRange) {
-
-    // Collect data for the previous state
-    unsigned int alliesExposedFrom = 0;
-    unsigned int enemiesExposedFrom = 0;
-
-    // Get data to compare
-    const auto& fromData = getAlliesAndEnemiesInRange(from, team);
-    alliesExposedFrom = fromData.first;
-    enemiesExposedFrom = fromData.second;
-    alliesExposedTo = toData.first;
-    enemiesExposedTo = toData.second;
-
-    // Set costs to allies and enemies in ranges
-    cost.alliesAtRiskPenalty += 
-        alliesExposedTo * Cost::Penalty::allyExposed;
-    cost.enemiesOutOfRangePenalty += 
-      (enemyCountTo - enemiesExposedTo) * Cost::Penalty::enemyOutOfRange;
-  }
-
-  // If this is an End Turn action, amplify the current state
-  // - With the 'destination' in reach, A* will always end turn straight away
-  // - With this, taking penalties by pathfinding becomes cheaper than ending
-  // - It becomes much harder for the AI to end it's turn if it's not happy
-  // - A large penalty can be avoided by eliminating the enemy mid turn
-  // - Suiciding must trigger this, otherwise suicide will bypass the penalty
-  // - If amplified too high, action will be evaluated last, inefficient
-  // - If not amplied enough, pathfinding may terminate early
-  if (calculateResourceWaste) {
-    cost.wastedResourcesPenalty += 
-        to.remainingMP * Cost::Penalty::wastedMP + 
-        to.remainingAP * Cost::Penalty::wastedAP;
-  }
-
-  // Apply penalties for ending the turn without doing anything
-  if (action.tag == Action::Tag::EndTurn) {
-
-    // Count enemies in the starting state for comparison
-    unsigned int enemyCountStart = 0;
-    for (const auto& kvp : start.teams) {
-      if (kvp.first != team) {
-        enemyCountStart += kvp.second;
-      }
-    }
-
-    // Get enemies and allies in range in the starting state
-    const auto& startData = getAlliesAndEnemiesInRange(start, team);
-    unsigned int alliesExposedStart = startData.first;
-    unsigned int enemiesExposedStart = startData.second;
-
-    // Apply a penalty for not reducing number of allies exposed
-    if (alliesExposedTo > alliesExposedStart) {
-      cost.antiLogicPenalty += (alliesExposedTo - alliesExposedStart) *
-          Cost::Penalty::allyExposed;
-    }
-
-    // If there have been no kills, apply more penalties
-    if (enemyCountStart <= enemyCountTo) {
-
-      // Apply a penalty for each enemy
-      cost.antiLogicPenalty += enemyCountTo * Cost::Penalty::enemyAlive;
-
-      // Apply a further penalty for not killing to avoid enemies
-      if (alliesExposedTo >= alliesExposedStart) {
-        cost.antiLogicPenalty += alliesExposedTo * Cost::Penalty::allyExposed;
-      }
-
-      // If no more enemies have been exposed, apply penalty
-      if (enemiesExposedTo <= enemiesExposedStart) {
-        cost.antiLogicPenalty += 
-          (enemyCountTo - enemiesExposedTo) * Cost::Penalty::enemyOutOfRange;
-      }
-    }
-  }
-
   // Return the calculated cost of this action
-  return cost;
+  return minimumCost;
 }
 
 // Attempt to take action on a gamestate
@@ -1601,10 +1406,6 @@ Strategy::Game::continueGame() {
   // If the controller is Controller::AStar, use pathfinding
   else if (controller == Controller::Type::AStar) {
 
-    // @TODO: DELETE THIS
-    // Make a temporary personality
-    Personality personality;
-
     // Invoke decide() to make AStar pathfind to a decision
     attempt = Controller::AStar::decide<GameState, Action, Cost>(
         state,
@@ -1614,8 +1415,7 @@ Strategy::Game::continueGame() {
         isStateEndpoint,
         heuristic,
         weighAction,
-        takeAction,
-        personality);
+        takeAction);
   }
 
   // If AI successfully made moves, update and continue
