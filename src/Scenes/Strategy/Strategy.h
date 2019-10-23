@@ -4,6 +4,8 @@
 #ifndef STRATEGY_H
 #define STRATEGY_H
 
+#include <future>
+#include <thread>
 #include <fstream>
 #include <istream>
 #include <algorithm>
@@ -79,6 +81,10 @@ namespace Strategy {
       // Controllers used to play the game
       std::map<Team, Controller::Type> controllers_;
       const Controller::Type defaultController_ = Controller::Type::Human;
+
+      // Get the decision from the AI controllers
+      std::future<std::pair<bool, std::stack<Action>>> aiDecision_;
+      bool isAIThinking_ = false;
 
       // Player pathfinding route
       std::vector<Action> path_;

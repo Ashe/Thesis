@@ -75,6 +75,11 @@ Strategy::Game::onUpdate(const sf::Time& dt) {
     path_.clear();
     hoveredTile_ = Coord(-1, -1);
   }
+
+  // If the AI is thinking, continue the game for when it's finished
+  if (isAIThinking_) {
+    continueGame();
+  }
 }
 
 // Handle input and game size changes
@@ -1366,90 +1371,107 @@ Strategy::Game::getDefaultUnitPlacement(const Map& map) {
 void
 Strategy::Game::continueGame() {
 
-  // Retrieve the latest game state
-  const auto statePair = getState(states_.size() - 1);
-  if (!statePair.first) { return; }
-  const auto state = statePair.second;
-
-  // Check for game overs
-  const auto& status = getGameStatus(state);
-  if (status.first != GameStatus::InProgress) {
-    if (status.first == GameStatus::Won) {
-      Console::log("Game Over, Team %u Wins!", status.second);
-    }
-    else { Console::log("Game Over, Tied."); }
-    return;
-  }
-
-  // Check what controller is currently playing
-  const auto& it = controllers_.find(state.currentTeam);
-  if (it == controllers_.end()) { return; }
-  const auto& controller = it->second;
-
   // Prepare to query controller for what actions to perform
-  auto attempt = std::make_pair(false, std::stack<Action>());
+  if (!isAIThinking_) { 
 
-  // If the controller is HUMAN, do nothing
-  if (controller == Controller::Type::Human) {
-    return;
-  }
+    // Retrieve the latest game state
+    const auto statePair = getState(states_.size() - 1);
+    if (!statePair.first) { return; }
+    const auto state = statePair.second;
 
-  // If the controller was Controller::Random, decide randomly
-  else if (controller == Controller::Type::Random) {
-    attempt = Controller::Random::decide<GameState, Action>(
-        state,
-        getAllPossibleActions,
-        isStateEndpoint,
-        takeAction);
-  }
-
-  // If the controller is Controller::AStar, use pathfinding
-  else if (controller == Controller::Type::AStar) {
-
-    // Invoke decide() to make AStar pathfind to a decision
-    attempt = Controller::AStar::decide<GameState, Action, Cost>(
-        state,
-        minimumCost,
-        maximumCost,
-        getAllPossibleActions,
-        isStateEndpoint,
-        heuristic,
-        weighAction,
-        takeAction);
-  }
-
-  // If AI successfully made moves, update and continue
-  auto currentState = state;
-  bool failed = attempt.second.empty() || !attempt.first;
-  while (!failed && !attempt.second.empty()) {
-    const auto& action = attempt.second.top();
-    const auto newState = takeAction(currentState, action);
-    if (newState.first) {
-      logAction(currentState, action);
-      currentState = newState.second;
-      if (isRecordingStates_) {
-        pushState(currentState);
-        viewLatestState();
+    // Check for game overs
+    const auto& status = getGameStatus(state);
+    if (status.first != GameStatus::InProgress) {
+      if (status.first == GameStatus::Won) {
+        Console::log("Game Over, Team %u Wins!", status.second);
       }
+      else { Console::log("Game Over, Tied."); }
+      return;
+    }
+
+    // Check what controller is currently playing
+    const auto& it = controllers_.find(state.currentTeam);
+    if (it == controllers_.end()) { return; }
+    const auto& controller = it->second;
+
+    // If the controller is HUMAN, do nothing
+    if (controller == Controller::Type::Human) {
+      return;
+    }
+
+    // If the controller was Controller::Random, decide randomly
+    else if (controller == Controller::Type::Random) {
+      isAIThinking_ = true;
+      aiDecision_ = std::async(std::launch::async,
+          Controller::Random::decide<GameState, Action>,
+              state,
+              getAllPossibleActions,
+              isStateEndpoint,
+              takeAction);
+    }
+
+    // If the controller is Controller::AStar, use pathfinding
+    else if (controller == Controller::Type::AStar) {
+
+      // Invoke decide() to make AStar pathfind to a decision
+      isAIThinking_ = true;
+      aiDecision_ = std::async(std::launch::async,
+          Controller::AStar::decide<GameState, Action, Cost>,
+              state,
+              minimumCost,
+              maximumCost,
+              getAllPossibleActions,
+              isStateEndpoint,
+              heuristic,
+              weighAction,
+              takeAction,
+              std::less<Cost>());
+    }
+  }
+
+  // If the AI is thinking and has come up with a decision
+  if (isAIThinking_ && aiDecision_.valid()) {
+
+    // Retrieve the latest game state
+    const auto statePair = getState(states_.size() - 1);
+    if (!statePair.first) { return; }
+    const auto state = statePair.second;
+
+    // If AI successfully made moves, update and continue
+    isAIThinking_ = false;
+    auto currentState = state;
+    auto attempt = aiDecision_.get();
+    bool failed = attempt.second.empty() || !attempt.first;
+    while (!failed && !attempt.second.empty()) {
+      const auto& action = attempt.second.top();
+      const auto newState = takeAction(currentState, action);
+      if (newState.first) {
+        logAction(currentState, action);
+        currentState = newState.second;
+        if (isRecordingStates_) {
+          pushState(currentState);
+          viewLatestState();
+        }
+      }
+      else {
+        failed = true;
+      }
+      attempt.second.pop();
+    }
+
+    // If we didn't fail, continue the game
+    if (!failed) {
+
+      // If only recording turns, push the state now
+      if (!isRecordingStates_) {
+        pushState(currentState);
+      }
+      viewLatestState();
+      continueGame();
     }
     else {
-      failed = true;
+      Console::log("[Error] Pathfinding failed.");
     }
-    attempt.second.pop();
-  }
-
-  // If we didn't fail, continue the game
-  if (!failed) {
-
-    // If only recording turns, push the state now
-    if (!isRecordingStates_) {
-      pushState(currentState);
-    }
-    viewLatestState();
-    continueGame();
-  }
-  else {
-    Console::log("[Error] Pathfinding failed.");
   }
 }
 
