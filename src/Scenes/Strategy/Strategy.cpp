@@ -518,6 +518,13 @@ Strategy::Game::addDebugDetails() {
       ImGui::TextColored(col, "(%u members left)", teamIt->second);
     }
     if (ImGui::Button("Reset Game")) { resetGame(); }
+    if (!isAIThinking_) {
+      ImGui::SameLine();
+      if (ImGui::Button("Continue Game")) { 
+        clearFutureStates();
+        continueGame(); 
+      }
+    }
   }
   ImGui::End();
 
@@ -1800,9 +1807,6 @@ Strategy::Game::resetGame() {
   // Recalculate paths and line of sight
   recalculatePath();
   recalculateLineOfSight();
-
-  // Start the game
-  continueGame();
 }
 
 // Try to perform an action and push the state if possible
