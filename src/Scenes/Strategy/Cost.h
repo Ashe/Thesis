@@ -15,8 +15,19 @@ namespace Strategy {
 
     // Static struct of penalties to apply
     struct Penalty {
+
+      // Logic penalties
       static constexpr unsigned int unusedMP = 1;
       static constexpr unsigned int unusedAP = 2;
+      static constexpr unsigned int friendlyFire = 5;
+      static constexpr unsigned int missShot = 5;
+
+      // Playstyle penalties: Defensive
+      static constexpr unsigned int exposedToEnemy = 1;
+      static constexpr unsigned int unnecessaryRisk = 1;
+
+      // Playstyle penalties: Offensive
+      static constexpr unsigned int movedAwayFromEnemy = 1;
     };
 
     // The actual value of the penalty

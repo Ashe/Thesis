@@ -22,9 +22,10 @@ namespace Controller {
   // Convert controller enum to string
   inline std::string typeToString(const Controller::Type& controller) {
     switch(controller) {
+      case Type::Human: return "Human"; break;
       case Type::Random: return "Random"; break;
       case Type::AStar: return "AStar"; break;
-      default: return "Human"; break;
+      default: return "UNKNOWN"; break;
     }
   }
 }

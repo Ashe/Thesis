@@ -8,7 +8,9 @@
 #include <thread>
 #include <fstream>
 #include <istream>
+#include <tuple>
 #include <algorithm>
+#include <math.h>
 #include <cmath>
 #include <climits>
 
@@ -123,6 +125,9 @@ namespace Strategy {
       bool enableEditor_ = false;
       Team editorTeam_ = Team(0);
       Object editorObject_ = Object::Nothing;
+
+      // AI viewer variables
+      bool enableAIViewer_ = false;
 
       ///////////////////////////////////////////
       // PURE FUNCTIONS:
