@@ -629,6 +629,27 @@ Strategy::Game::weighAction(
     const GameState& to,
     const Action& action) {
 
+  // This function will evaluate if the chosen action is cost-free or not,
+  // free-cost actions are method we will funnel AStar's path
+  // The questions posed should be designed in order of ease to achieve
+  // The penalty for failing the question should be relative to the satisfaction
+  
+  // The first choice to make will be based on the type of action
+  // - There is no penalty in switching characters
+  if (action.tag == Action::Tag::SelectUnit || Action::Tag::CancelSelection) {
+    return minimumCost;
+  }
+
+  // - Ending turn applies a penalty equal to remaining AP and MP
+  else if (action.tag == Action::Tag::EndTurn) {
+    Cost cost;
+    cost.value = from.remainingMP * Cost::Penalty::unusedMP +
+        from.remainingAP * Cost::Penalty::unusedAP;
+    return cost;
+    
+  }
+  
+
   // Return the calculated cost of this action
   return minimumCost;
 }

@@ -15,29 +15,36 @@ namespace Strategy {
 
     // Static struct of penalties to apply
     struct Penalty {
+      static constexpr unsigned int unusedMP = 1;
+      static constexpr unsigned int unusedAP = 2;
     };
+
+    // The actual value of the penalty
+    unsigned int value = 0;
 
   };
 
   // Important Cost instances
-  constexpr Cost minimumCost = Cost{};
-  constexpr Cost maximumCost = Cost{};
+  constexpr Cost minimumCost = Cost{0};
+  constexpr Cost maximumCost = Cost{UINT_MAX};
 
   // Combine costs
   constexpr Cost operator+ (const Cost& a, const Cost& b) {
    return Cost{
+     a.value + b.value
    };
   }
 
   // Allow a cost to be scaled
   constexpr Cost operator* (const Cost& c, unsigned int m) {
     return Cost{
+      c.value * m
     };
   }
 
   // Compare two cost instances
   constexpr bool operator< (const Cost& a, const Cost& b) {
-    return true;
+    return a.value < b.value;
   }
 }
 
