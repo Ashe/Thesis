@@ -15,107 +15,48 @@ namespace Strategy {
 
     // Static struct of penalties to apply
     struct Penalty {
-      static constexpr unsigned int actionTaken = 2;
-      static constexpr unsigned int enemyAlive = 10;
-      static constexpr unsigned int friendlyFire = 10;
-      static constexpr unsigned int allyExposed = 1;
-      static constexpr unsigned int enemyOutOfRange = 2;
-      static constexpr unsigned int wastedAttack = 10;
-      static constexpr unsigned int wastedMP = 20;
-      static constexpr unsigned int wastedAP = 30;
+
+      // Logic penalties
+      static constexpr unsigned int unusedMP = 1;
+      static constexpr unsigned int unusedAP = 2;
+      static constexpr unsigned int friendlyFire = 5;
+      static constexpr unsigned int missShot = 5;
+
+      // Playstyle penalties: Defensive
+      static constexpr unsigned int exposedToEnemy = 1;
+      static constexpr unsigned int unnecessaryRisk = 1;
+
+      // Playstyle penalties: Offensive
+      static constexpr unsigned int movedAwayFromEnemy = 1;
     };
 
-    // Keep a record of doing sensical moves
-    // - Used to prevent attacks that don't do anything
-    // - Used to try and create conflict between teams
-    unsigned int antiLogicPenalty = 0;
+    // The actual value of the penalty
+    unsigned int value = 0;
 
-    // Count enemies that are still alive
-    // - Used to prioritise winning the game
-    unsigned int remainingEnemyPenalty = 0;
-
-    // Count allies that have died this turn
-    // - Used to prioritise staying alive
-    unsigned int lostAlliesPenalty = 0;
-
-    // Count allies that are in range of the enemy
-    // - Used to increase chances of survival by staying hidden
-    unsigned int alliesAtRiskPenalty = 0;
-
-    // Count the enemies out of range
-    // - Used to incentivise getting close (but out ranging) the enemy
-    unsigned int enemiesOutOfRangePenalty = 0;
-
-    // Total the wasted MP and AP
-    // - Used to incentivise ending the turn with less resources
-    unsigned int wastedResourcesPenalty = 0;
   };
 
   // Important Cost instances
-  constexpr Cost minimumCost = Cost{ 0, 0, 0, 0, 0 };
-  constexpr Cost maximumCost = Cost{ 
-      UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX};
+  constexpr Cost minimumCost = Cost{0};
+  constexpr Cost maximumCost = Cost{UINT_MAX};
 
-  // When combining costs, take the latter
-  // - All that matters is the current state
-  inline Cost operator+ (const Cost& a, const Cost& b) {
+  // Combine costs
+  constexpr Cost operator+ (const Cost& a, const Cost& b) {
    return Cost{
-     a.antiLogicPenalty + b.antiLogicPenalty,
-     a.remainingEnemyPenalty + b.remainingEnemyPenalty,
-     a.lostAlliesPenalty + b.lostAlliesPenalty,
-     a.alliesAtRiskPenalty + b.alliesAtRiskPenalty,
-     a.enemiesOutOfRangePenalty + b.enemiesOutOfRangePenalty,
-     a.wastedResourcesPenalty + b.wastedResourcesPenalty
+     a.value + b.value
    };
   }
 
   // Allow a cost to be scaled
-  inline Cost operator* (const Cost& c, unsigned int m) {
+  constexpr Cost operator* (const Cost& c, unsigned int m) {
     return Cost{
-      c.antiLogicPenalty * m,
-      c.remainingEnemyPenalty * m,
-      c.lostAlliesPenalty * m,
-      c.alliesAtRiskPenalty * m,
-      c.enemiesOutOfRangePenalty * m,
-      c.wastedResourcesPenalty * m
+      c.value * m
     };
   }
 
-  // Use a personality to compare Cost components
-  struct Personality {
-
-    // Modification multipliers for prioritising aspects of the game
-    float antiLogicMultiplier = 1.f;
-    float remainingEnemyMultiplier = 1.f;
-    float lostAlliesMultiplier = 1.f;
-    float alliesAtRiskMultiplier = 1.f;
-    float enemiesOutOfRangeMultiplier = 1.f;
-    float wastedResourcesMultiplier = 1.f;
-
-    // Ask the personality to compare two costs
-    constexpr bool operator()(const Cost& a, const Cost& b) const {
-
-      // Use personality's preferences to modify 'true' values
-      // This allows the AI to ignore or prioritise things
-      const float costA = 
-          a.antiLogicPenalty * antiLogicMultiplier +
-          a.remainingEnemyPenalty * remainingEnemyMultiplier +
-          a.lostAlliesPenalty * lostAlliesMultiplier +
-          a.alliesAtRiskPenalty * alliesAtRiskMultiplier +
-          a.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier +
-          a.wastedResourcesPenalty * wastedResourcesMultiplier;
-      const float costB = 
-          b.antiLogicPenalty * antiLogicMultiplier +
-          b.remainingEnemyPenalty * remainingEnemyMultiplier +
-          b.lostAlliesPenalty * lostAlliesMultiplier +
-          b.alliesAtRiskPenalty * alliesAtRiskMultiplier +
-          b.enemiesOutOfRangePenalty * enemiesOutOfRangeMultiplier +
-          b.wastedResourcesPenalty * wastedResourcesMultiplier;
-
-      // Compare ultimate values
-      return costA < costB;
-    }
-  };
+  // Compare two cost instances
+  constexpr bool operator< (const Cost& a, const Cost& b) {
+    return a.value < b.value;
+  }
 }
 
 #endif

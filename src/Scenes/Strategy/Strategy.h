@@ -4,9 +4,13 @@
 #ifndef STRATEGY_H
 #define STRATEGY_H
 
+#include <future>
+#include <thread>
 #include <fstream>
 #include <istream>
+#include <tuple>
 #include <algorithm>
+#include <math.h>
 #include <cmath>
 #include <climits>
 
@@ -80,6 +84,10 @@ namespace Strategy {
       std::map<Team, Controller::Type> controllers_;
       const Controller::Type defaultController_ = Controller::Type::Human;
 
+      // Get the decision from the AI controllers
+      std::future<std::pair<bool, std::stack<Action>>> aiDecision_;
+      bool isAIThinking_ = false;
+
       // Player pathfinding route
       std::vector<Action> path_;
 
@@ -117,6 +125,9 @@ namespace Strategy {
       bool enableEditor_ = false;
       Team editorTeam_ = Team(0);
       Object editorObject_ = Object::Nothing;
+
+      // AI viewer variables
+      bool enableAIViewer_ = false;
 
       ///////////////////////////////////////////
       // PURE FUNCTIONS:
