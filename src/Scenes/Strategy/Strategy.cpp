@@ -702,11 +702,15 @@ Strategy::Game::weighAction(
   // - Apply a penalty for hitting nothing OR hitting an ally
   else if (action.tag == Action::Tag::Attack) {
     const auto& object = readMap(from.map, action.location);
-    if (object.first == team || !isUnit(object.second)) {
-      if (isUnit(object.second)) {
+    if (isUnit(object.second)) {
+      if (object.first == team) {
          cost.value = Cost::Penalty::friendlyFire;
       }
-      else {
+    }
+    // If it's not a unit, then it's either a wall or nothing
+    // Shooting walls is okay
+    else {
+      if (object.second == Object::Nothing) {
         cost.value = Cost::Penalty::missShot;
       }
     }
@@ -816,7 +820,7 @@ Strategy::Game::weighAction(
           // Is there STILL an enemy in the range of the current unit?
           // - Penalise if there's no longer an attackable enemy
           else {
-            cost.value = Cost::Penalty::movedAwayFromEnemy;
+            cost.value = Cost::Penalty::notEngagingEnemy;
           }
         }
 
@@ -828,8 +832,8 @@ Strategy::Game::weighAction(
           
             // Are we moving closer to an enemy unit?
             // - Penalise making the distance to the enemy larger
-            if (currentClosestEnemy.second > previousClosestEnemy.second) {
-              cost.value = Cost::Penalty::movedAwayFromEnemy;
+            if (currentClosestEnemy.second >= previousClosestEnemy.second) {
+              cost.value = Cost::Penalty::notEngagingEnemy;
             }
           }
         }
@@ -874,9 +878,9 @@ Strategy::Game::weighAction(
 
           // Are we moving closer to the enemy to try and get in LoS?
           // - Penalise making the average distance to the enemy larger
-          if (currentAverageDistanceToEnemies > 
+          if (currentAverageDistanceToEnemies >=
               previousAverageDistanceToEnemies) {
-            cost.value = Cost::Penalty::movedAwayFromEnemy;
+            cost.value = Cost::Penalty::notEngagingEnemy;
           }
         }
       }
@@ -896,7 +900,10 @@ Strategy::Game::weighAction(
       // Are we still in a position to attack after repositioning?
       // - Penalise losing the target or running into more enemies
       else if (previousThreats == 1) {
-        if (currentThreats == 0 || currentThreats > previousThreats) {
+        if (currentThreats == 0) {
+          cost.value = Cost::Penalty::notEngagingEnemy;
+        }
+        else if(currentThreats >= previousThreats) {
           cost.value = Cost::Penalty::exposedToEnemy;
         }
       }
@@ -914,8 +921,42 @@ Strategy::Game::weighAction(
   // Are we ending a turn with the least amount of resources wasted? 
   // - Ending turn applies a penalty equal to remaining AP and MP
   else if (action.tag == Action::Tag::EndTurn) {
-    cost.value = from.remainingMP * Cost::Penalty::unusedMP +
-        from.remainingAP * Cost::Penalty::unusedAP;
+
+    // Count number of enemies
+    unsigned int startEnemyCount = 0;
+    for (const auto& t : start.teams) {
+      if (t.first != team) {
+        startEnemyCount += t.second;
+      }
+    }
+    unsigned int enemyCount = 0;
+    unsigned int allyCount = 0;
+    for (const auto& t : from.teams) {
+      if (t.first != team) {
+        enemyCount += t.second;
+      }
+      else {
+        allyCount += t.second;
+      }
+    }
+
+    // Work out how many enemies have been killed
+    unsigned int enemiesKilled = enemyCount < startEnemyCount ?
+        startEnemyCount - enemyCount : 0;
+
+    // Count how many enemies were in sight
+    // - This stops expecting kills when the enemy wasn't in sight
+    const auto& counts = getAlliesAndEnemiesInRange(start, team);
+    const unsigned int recomendedKillcount = std::min(std::min(
+        counts.second, allyCount), (unsigned int) start.remainingAP);
+
+    // Count the difference in kills
+    const unsigned int killsMissed = enemiesKilled < recomendedKillcount
+        ? recomendedKillcount - enemiesKilled : 0;
+
+    cost.value = from.remainingMP * Cost::Penalty::unusedMP
+        + from.remainingAP * Cost::Penalty::unusedAP
+        + killsMissed * Cost::Penalty::enemyLeftAlive;
   }
 
 //// Return the calculated cost of this action

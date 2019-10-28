@@ -27,7 +27,8 @@ namespace Strategy {
       static constexpr unsigned int unnecessaryRisk = 1;
 
       // Playstyle penalties: Offensive
-      static constexpr unsigned int movedAwayFromEnemy = 1;
+      static constexpr unsigned int notEngagingEnemy = 1;
+      static constexpr unsigned int enemyLeftAlive = 1;
     };
 
     // The actual value of the penalty
