@@ -525,11 +525,6 @@ Strategy::Game::addDebugDetails() {
         continueGame(); 
       }
     }
-    else {
-      if (ImGui::Button("Cancel AI thinking")) { 
-        isAIThinking_ = false;
-      }
-    }
   }
   ImGui::End();
 
@@ -636,23 +631,27 @@ Strategy::Game::addDebugDetails() {
         // AStar
         if (controller == Controller::Type::AStar) {
           ImGui::Text("States processed: %u", 
-              controllerAStar_.statesProcessed);
-          ImGui::Text("Open states remaining: %lu", 
-              controllerAStar_.remaining.size());
+              controllerAStar_.getStatesProcessed());
           ImGui::Spacing();
-          unsigned int freePaths = 0;
+          const auto& actionAndCost = controllerAStar_.getCurrentAction();
+          ImGui::Columns(2);
+          ImGui::Text("%s (%d, %d)",
+              actionToString(actionAndCost.first),
+              actionAndCost.first.location.x,
+              actionAndCost.first.location.y);
+          ImGui::NextColumn();
+          ImGui::Text("Cost: %u",
+              actionAndCost.second.value);
+          ImGui::Columns(1);
+          ImGui::Text("Open states remaining: %lu", 
+              controllerAStar_.getRemaining().size());
           Cost totalCost = minimumCost;
-          for (const auto& kvp : controllerAStar_.fScore) {
+          const auto& fScores = controllerAStar_.getFScores();
+          for (const auto& kvp : fScores) {
             totalCost = totalCost + kvp.second;
-            if (kvp.second == minimumCost) {
-              freePaths += 1;
-            }
           }
-          if (!controllerAStar_.fScore.empty()) {
-            ImGui::Text("Total free paths: %u", freePaths);
-            ImGui::Text("Average cost: %f", 
-                (float)totalCost.value / controllerAStar_.fScore.size());
-          }
+          ImGui::Text("Average cost: %f", 
+              (float)totalCost.value / fScores.size());
         }
       }
       else {
@@ -707,11 +706,34 @@ Strategy::Game::weighAction(
          cost.value = Cost::Penalty::friendlyFire;
       }
     }
-    // If it's not a unit, then it's either a wall or nothing
-    // Shooting walls is okay
+
+    // Check what non-unit objects are being shot
     else {
+
+      // Are we shooting something worthwhile?
+      // - Penalise shooting nothing
       if (object.second == Object::Nothing) {
         cost.value = Cost::Penalty::missShot;
+      }
+
+      // If we're shooting a wall
+      else if (object.second == Object::Wall) {
+
+        // Are we prioritising the killing of enemies over walls
+        // - Penalise shooting walls when there are enemies to shoot
+        const auto& previousInSight = getUnitsInSight(from.map, from.selection);
+        if (!previousInSight.empty()) {
+          cost.value = Cost::Penalty::notEngagingEnemy;
+        }
+        else {
+
+          // Does the destroyed wall expose enemies?
+          // - Penalise the destruction of walls that don't reveal enemies
+          const auto& inSight = getUnitsInSight(to.map, to.selection);
+          if (inSight.empty()) {
+            cost.value = Cost::Penalty::poorTargetingPriority;
+          }
+        }
       }
     }
   }
@@ -954,22 +976,13 @@ Strategy::Game::weighAction(
     const unsigned int killsMissed = enemiesKilled < recomendedKillcount
         ? recomendedKillcount - enemiesKilled : 0;
 
+    // Accumulate cost based on enemies remaining and MP/AP wasted
     cost.value = from.remainingMP * Cost::Penalty::unusedMP
         + from.remainingAP * Cost::Penalty::unusedAP
         + killsMissed * Cost::Penalty::enemyLeftAlive;
   }
 
-//// Return the calculated cost of this action
-//std::string a = "";
-//switch (action.tag) {
-//  case Action::Tag::SelectUnit: a = "Select unit"; break;
-//  case Action::Tag::CancelSelection: a = "Deselect unit"; break;
-//  case Action::Tag::MoveUnit: a = "Move unit"; break;
-//  case Action::Tag::Attack: a = "Attack"; break;
-//  case Action::Tag::EndTurn: a = "End turn"; break;
-//  default: break;
-//}
-//Console::log("Action: %s Cost: %u", a.c_str(), cost.value);
+  // Return the calculated cost of this action
   return cost;
 }
 

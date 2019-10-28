@@ -67,21 +67,14 @@ namespace Controller {
   template <class S, class A, class C>
   struct AStar {
 
-    // Keep track of the number of actions processed
-    unsigned int statesProcessed = 0;
+  public:
 
-    // All available states to explore
-    std::vector<S> remaining;
-
-    // Store FScores (costs of finishing pathing of all states)
-    std::unordered_map<S, C> fScore;
-
-    // Accurate cost of getting to a state
-    std::unordered_map<S, C> gScore;
-
-    // Map of which action led to which thought state
-    // Map<future State, Pair<previous State, Action taken>>
-    std::unordered_map<S, std::pair<S, A>> history;
+    // Public getters
+    const std::pair<A, C>& getCurrentAction() const { return currentAction; }
+    const unsigned int& getStatesProcessed() const { return statesProcessed; }
+    const std::vector<S>& getRemaining() const { return remaining; }
+    const std::unordered_map<S, C>& getFScores() const { return fScore; }
+    const std::unordered_map<S, C>& getGScores() const { return gScore; }
 
     // Evaluates options and returns a stack of actions to take
     std::pair<bool, std::stack<A>> operator() (
@@ -116,7 +109,7 @@ namespace Controller {
       // Keep processing until there are no states left to check
       while (remaining.size() > 0) {
 
-        // Record how many moves have been processed
+        // @ANALYSIS: Record how many moves have been processed
         statesProcessed += 1;
 
         // Get the highest priority state to operate on
@@ -210,6 +203,9 @@ namespace Controller {
           const C tentative_gScore = gScore[state] + 
               weighAction(startingState, state, future.first, future.second);
 
+          // @ANALYSIS: Record what the action is
+          currentAction = std::make_pair(future.second, tentative_gScore);
+
           // If our projected score is better than the one recorded
           if (compareCost(tentative_gScore, gScore[future.first])) {
 
@@ -236,6 +232,28 @@ namespace Controller {
       // Return unsuccessfully with the current state
       return std::make_pair(false, std::stack<A>());
     }
+
+  private:
+
+    // All available states to explore
+    std::vector<S> remaining;
+
+    // Store FScores (costs of finishing pathing of all states)
+    std::unordered_map<S, C> fScore;
+
+    // Accurate cost of getting to a state
+    std::unordered_map<S, C> gScore;
+
+    // Map of which action led to which thought state
+    // Map<future State, Pair<previous State, Action taken>>
+    std::unordered_map<S, std::pair<S, A>> history;
+
+    // Keep track of the number of actions processed
+    unsigned int statesProcessed = 0;
+
+    // Keep track of the current Action and its Cost
+    std::pair<A, C> currentAction;
+
   };
 }
 
