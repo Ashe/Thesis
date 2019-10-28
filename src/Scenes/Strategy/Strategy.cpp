@@ -695,7 +695,7 @@ Strategy::Game::weighAction(
   // There is no penalty in switching characters
   if (action.tag == Action::Tag::SelectUnit || 
       action.tag == Action::Tag::CancelSelection) {
-    //return cost;
+    cost.value = Cost::Penalty::characterChoice;
   }
 
   // Are we killing an enemy with an attack?
