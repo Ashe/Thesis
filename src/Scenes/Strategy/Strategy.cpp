@@ -631,7 +631,9 @@ Strategy::Game::addDebugDetails() {
         // AStar
         if (controller == Controller::Type::AStar) {
           ImGui::Text("States processed: %u", 
-              Controller::AStar::statesProcessed);
+              controllerAStar_.statesProcessed);
+          ImGui::Text("Open states remaining: %lu", 
+              controllerAStar_.remaining.size());
         }
       }
       else {
@@ -1694,7 +1696,7 @@ Strategy::Game::continueGame() {
       // Invoke decide() to make AStar pathfind to a decision
       isAIThinking_ = true;
       aiDecision_ = std::async(std::launch::async,
-          Controller::AStar::decide<GameState, Action, Cost>,
+          std::ref(controllerAStar_),
               state,
               minimumCost,
               maximumCost,
@@ -1931,8 +1933,8 @@ Strategy::Game::recalculatePath() {
   infinState.remainingMP = INT_MAX;
 
   // Employ the use of AStar to find a path
-  auto attempt = Controller::AStar::decide
-    <GameState, Action, unsigned int>(
+  Controller::AStar<GameState, Action, unsigned int> pather;
+  auto attempt = pather(
       infinState,
       0,
       UINT_MAX,

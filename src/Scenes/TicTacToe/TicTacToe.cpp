@@ -500,7 +500,8 @@ TicTacToe::Game::continueGame() {
 
   // If it's an AStar, invoke AStarController::Type::decide
   else if (controller == Controller::Type::AStar) {
-    attempt = Controller::AStar::decide<GameState, Move, Cost>(
+    Controller::AStar<GameState, Move, Cost> controller;
+    attempt = controller(
         state,
         minimumCost,
         maximumCost,

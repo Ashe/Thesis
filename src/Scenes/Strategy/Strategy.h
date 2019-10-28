@@ -85,6 +85,7 @@ namespace Strategy {
       const Controller::Type defaultController_ = Controller::Type::Human;
 
       // Get the decision from the AI controllers
+      Controller::AStar<GameState, Action, Cost> controllerAStar_;
       std::future<std::pair<bool, std::stack<Action>>> aiDecision_;
       bool isAIThinking_ = false;
 
