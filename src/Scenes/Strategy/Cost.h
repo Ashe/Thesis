@@ -57,6 +57,11 @@ namespace Strategy {
   constexpr bool operator< (const Cost& a, const Cost& b) {
     return a.value < b.value;
   }
+  
+  // Check two cost instances for equality
+  constexpr bool operator== (const Cost& a, const Cost& b) {
+    return a.value == b.value;
+  }
 }
 
 #endif

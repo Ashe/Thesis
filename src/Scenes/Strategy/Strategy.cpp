@@ -518,11 +518,16 @@ Strategy::Game::addDebugDetails() {
       ImGui::TextColored(col, "(%u members left)", teamIt->second);
     }
     if (ImGui::Button("Reset Game")) { resetGame(); }
+    ImGui::SameLine();
     if (!isAIThinking_) {
-      ImGui::SameLine();
       if (ImGui::Button("Continue Game")) { 
         clearFutureStates();
         continueGame(); 
+      }
+    }
+    else {
+      if (ImGui::Button("Cancel AI thinking")) { 
+        isAIThinking_ = false;
       }
     }
   }
@@ -634,6 +639,20 @@ Strategy::Game::addDebugDetails() {
               controllerAStar_.statesProcessed);
           ImGui::Text("Open states remaining: %lu", 
               controllerAStar_.remaining.size());
+          ImGui::Spacing();
+          unsigned int freePaths = 0;
+          Cost totalCost = minimumCost;
+          for (const auto& kvp : controllerAStar_.fScore) {
+            totalCost = totalCost + kvp.second;
+            if (kvp.second == minimumCost) {
+              freePaths += 1;
+            }
+          }
+          if (!controllerAStar_.fScore.empty()) {
+            ImGui::Text("Total free paths: %u", freePaths);
+            ImGui::Text("Average cost: %f", 
+                (float)totalCost.value / controllerAStar_.fScore.size());
+          }
         }
       }
       else {
@@ -1260,7 +1279,40 @@ Strategy::Game::getLineOfSight(
   return line;
 }
 
-// Get units in line of sight
+// Get all objects in line of sight (used for targeting)
+std::vector<std::pair<Strategy::Coord, Strategy::Range>> 
+Strategy::Game::getObjectsInSight(const Map& map, const Coord& u) {
+
+  // Prepare to collect units in range
+  std::vector<std::pair<Coord, Range>> units;
+
+  // Check if there's a unit at the given position
+  const auto& location = readMap(map, u);
+  if (validateCoords(map, u) 
+      && isUnit(location.second)) {
+
+    // Iterate through every enemy and determine if they're in line of sight
+    for (const auto& kvp : map.field) {
+      const auto& pos = indexToCoord(map, kvp.first);
+      const auto& object = kvp.second.second;
+
+      // If this is an enemy unit, record if it's in sight or not
+      if (object != Object::Nothing) {
+        const auto& line = getLineOfSight(
+            map, u, pos);
+        if (!line.empty()) {
+          const Range r = std::max(0, (int)line.size() - 1);
+          units.push_back(std::make_pair(pos, r));
+        }
+      }
+    }
+  }
+
+  // Return what was discovered
+  return units;
+}
+
+// Get enemy units in line of sight (used for threat calculations)
 std::vector<std::pair<Strategy::Coord, Strategy::Range>> 
 Strategy::Game::getUnitsInSight(const Map& map, const Coord& u) {
 
@@ -1399,7 +1451,7 @@ Strategy::Game::getPossibleAttacks(const GameState& state) {
       if (true) {
 
         // Get every unit in sight
-        const auto& inSight = getUnitsInSight(state.map, unitPos);
+        const auto& inSight = getObjectsInSight(state.map, unitPos);
 
         // Iterate through all the enemies in sight
         for (const auto& posAndRange : inSight) {

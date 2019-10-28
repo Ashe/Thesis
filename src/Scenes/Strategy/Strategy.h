@@ -178,6 +178,11 @@ namespace Strategy {
           const Coord& a,
           const Coord& b);
 
+      // Get all objects in line of sight
+      static std::vector<std::pair<Coord, Range>> getObjectsInSight(
+          const Map& map,
+          const Coord& location);
+
       // Get enemy units in line of sight
       static std::vector<std::pair<Coord, Range>> getUnitsInSight(
           const Map& map,
