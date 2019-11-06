@@ -87,6 +87,20 @@
 
 % Pathfinding in computer games (69 cites)
 % https://arrow.dit.ie/cgi/viewcontent.cgi?article=1063&context=itbj
+% "Pathfinding strategies have the responsibility of finding a path from any coordinate in the game world to another" - p57
+% "Conceptually, a graph G is composed of two sets, and can be written as G = (V,E) where: V- Vertices: A set of discrete points in n-space, but this usually corresponds to a 3D map and E- Edges : A set of connections between the vertices, which can be either directed or not" - p59/60
+% "Pathfinding algorithms also generally need to know about the properties of these elements. For example, the length, travel-time or general cost of every edge needs to be known" - p60
+% "It is of no use to develop complex systems for high-level decision making if an agent cannot find its way around a set of obstacles to implement that decision." - p60
+% "A pathfinder will define a path through a virtual world to solve a given set of constraints" - p60
+% "In most cases it is desirable to have agents that finds optimal pathways as following sub-optimal pathways may be perceived as a lack of intelligence by a human player" - p63
+% "In addition to holding the map location each node has three other attirbutes. These are fitness, goal and heuristic commonly known as f, g and h respectively." -p64
+% "g is the cost of getting from the start node to the current node i.e. the sum of all the values in the path between the start and the current node" - p64
+% "h stands for heuristic which is an estimated cost from the current node to the goaln ode (usually the straight line distance from this node to the goal)" - p64
+% "f is the sum of g and h and is the best estimate of the cost of the path going through the current node. In essence the lower the value of f the more efficient the path" - p64
+% "The purpose of f, g,  and h  is to quantify how promising a path is up to the present node. Additionally A* maintains two lists, an Open and a Closed list. The Open list contains all the nodes in the map that have not been fully explored yet, whereas the Closed list consists of all the nodes that have been fully explored." -p64
+% [The actual A* algorithm is laid out] - p65
+% "A* requires a large amount of CPU resources, if there are many nodes to search through as isthe case  in large maps which are  becoming popular in the newer  games.  In sequentialprograms this may cause a slight delay in the game. This delay is compounded if A* is searching for paths for multiple AI agents and/or when the agent has to move from one side of the map to the other. This drain on CPU resources may cause the game to freeze until the optimal path is found" - p67/68
+% "A key issue constraining the advancement of the games industry is its over reliance on A* forpathfinding." - p68
 @article{graham2003pathfinding,
   title={Pathfinding in computer games},
   author={Graham, Ross and McCabe, Hugh and Sheridan, Stephen},
@@ -101,6 +115,11 @@
 
 % Using a genetic algorithm to explore A*-like pathfinding algorithms (45 cites)
 % https://www.cse.unr.edu/~sushil/class/gas/papers/Using%20a%20Genetic%20Algorithm%20to%20Explore%20A_-like%20Pathfinding%20Algorithms.pdf
+% "Pathfinding algorithms are a subset of net search algorithms" - p75 (UNFOUND CITATION: Artificial Intelligence 3rd ed, P.H. Winston)
+% "Pathfinding is often used in the context of games where nets represent the game map" - p72
+% "A* is the de-facto pathfinding algorithm that, under the right conditions, guarantees to find a path with the lowest possible traversal cost. A* and other pathfinding algorithms work on a net." - p73
+% "The guarantee of lowest cost paths only applies if the remaining estimate to the goal isan underestimate." - p73
+% "The performance of A* relies heavily upon the estimate of remaining distance to the goal, called a heuristic. For A* to find the shortest path, the heuristic must underestimate the remaining distance." - p73
 @inproceedings{leigh2007using,
   title={Using a genetic algorithm to explore A*-like pathfinding algorithms},
   author={Leigh, Ryan and Louis, Sushil J and Miles, Chris},
@@ -385,4 +404,43 @@
   author={Russell, Stuart J and Norvig, Peter},
   year={2016},
   publisher={Malaysia; Pearson Education Limited,}
+}
+
+% Map based Strategies for Robot Navigation in Unknown Environments (57 cites)
+% https://www.aaai.org/Papers/Symposia/Spring/1996/SS-96-04/SS96-04-017.pdf
+% FIND CITATIONS FOR THE FOLLOWING:
+% "Research has been conducted to extend the A* algorithm to dealwith this problem most notably the D* algorithm (which is short for dynamic A*)"
+% "A* works by building all paths that lead to the goal, one path at a time and starts by ranking each partial path currently in consideration via the following formula [A* formula]"
+@inproceedings{stentz1996map,
+  title={Map-based strategies for robot navigation in unknown environments},
+  author={Stentz, Anthony},
+  booktitle={AAAI spring symposium on planning with incomplete information for robot problems},
+  pages={110--116},
+  year={1996}
+}
+
+% Depth-first iterative-deepening: an optimal admissable tree search (2077 cites)
+% https://www.iis.sinica.edu.tw/~tshsu/tcg/2012/slides/slide3.pdf
+% FIND CITATIONS FOR THE FOLLOWING:
+% "Many methods have been used in the past to speed up A*. Iterative Deepening A* (IDA*) uses no storage and uses a depth-first, iterative-deepening search of the net"
+@article{korf1985depth,
+  title={Depth-first iterative-deepening: An optimal admissible tree search},
+  author={Korf, Richard E},
+  journal={Artificial intelligence},
+  volume={27},
+  number={1},
+  pages={97--109},
+  year={1985},
+  publisher={Elsevier}
+}
+
+% Fringe Search: Beating A* at Pathfinding on Game Maps (92 cites)
+% http://www.ru.is/faculty/yngvi/pdf/BjornssonEHS05.pdf
+@article{bjornsson2005fringe,
+  title={Fringe Search: Beating A* at Pathfinding on Game Maps.},
+  author={Bj{\"o}rnsson, Yngvi and Enzenberger, Markus and Holte, Robert C and Schaeffer, Jonathan},
+  journal={CIG},
+  volume={5},
+  pages={125--132},
+  year={2005}
 }
