@@ -1,7 +1,14 @@
+% # SEARCHES:
+
 % ## AI Decision making in games:
 
-% Call for AI research in RTS games (115 cites)
+% Call for AI research in RTS games (115 cites, not many references)
 % https://www.aaai.org/Papers/Workshops/2004/WS-04-04/WS04-04-028.pdf
+% "Increased playing strength can be converted into higher entertainment value by adapting to the player's performance level to keep games challenging" - p2
+% "Agents cannot afford to think at the game action level. Instead, abstractions of the world state have to be foudn that allow programs to conduct forward searches in abstract spaces and translate found solutions back into the original state space" - p2
+% "AI systems can be confused by simple maneuvers like flanking attacks and diversions" - p2
+% "Understanding the importance of static terrain features like choke points and dynamic spatial properties such as visibility and enemy influence is crucial for generating successful plans" - p2
+% "Another important aspect is the temporal relationship of actions" - p2
 @inproceedings{buro2004call,
   title={Call for AI research in RTS games},
   author={Buro, Michael},
@@ -11,8 +18,17 @@
   organization={AAAI press}
 }
 
-% Current AI in games: A review (115 cites)
+% Current AI in games: A review (115 cites, mostly web articles)
 % https://eprints.qut.edu.au/45741/1/AJIIPS_paper.pdf
+% "The most prevalent techniques include finite state machines, scripting, agents and flocking. These techniques are well established, simple and have been successfully employed by game developers for a number of years" - p1
+% "The use of fuzzy logic and fuzzy state machines as an alternative to finite state machines is starting to become widely accepted and commonplace" - p1
+% "Finite state machines are used more frequently in computer games than any other AI technique. This is because they are simple to program, easy to understand and debug, and general enough to be used for any problem" - p2 (UNFOUND CITATION: "Implementing a state machine language")
+% "The idea of an FSM is to divide a game object's behaviour into logical states so that the object has one state for each different type of behaviour it exhibits" - p2 (UNFOUND CITATION: "Desigining a general robust AI engine")
+% "An FSM may not always provide the optimal solution, but it generally provides a simple solution that works. Furthermore, a game object that uses an FSM can use other techniques such as neural networks or fuzzy logic" - p2 (UNFOUND CITATION: "Desigining a general robust AI engine")
+% "FSMs in games tend to include states within states, multiple state variables, randomness in state transitions and code executing every game tick" - p2 (UNFOUND CITATION: "Implementing a state machine language")
+% "Game FSMs that are not well planned and structured can grow out-of-hand quickly and become very challenging to maintain." - p2
+% "[FSMs can be used to] simulate the emotion of a non-player character" - p2 (UNFOUND CITATION "Game programming gems")
+% "Important decisions that need to be made when designing an agent is the architecture and whether the agent is to be ractive, goal-directed or some combination of the two" - p2
 @article{sweetser2002current,
   title={Current AI in games: A review},
   author={Sweetser, Penelope and Wiles, Janet},
@@ -24,8 +40,24 @@
   publisher={ANU}
 }
 
-% AI in computer games (187 cites)
+% AI in computer games (187 cites, Book)
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.77.7072&rep=rep1&type=pdf
+% "AI is very dependent on concrete details of the game environment, which is the main reason why it's often added as one of the last subsystems" - p59
+% "Customers value great AI" - p60
+% "Market mechanisms will make it very difficult for AI to receive equal ranking with features such as graphics and physics" - p60
+% "A game using probabilistic networks to predict the player's next move in order to precompute graphics may be on a high AI level" - p60
+% "The goal in game AI is not to compute the most optimal behaviour for winning against the player. Instead, the outcome should be as believable and fun as possible" -p60
+% "Given the highly limited computational resources, a sophisticated movement is a really hard thing to do!" - p61
+% "The so-called A* algorithm is the most common basic ingredient for computing a long-distance route for an NPC" - p61
+% "The waypoints with their connections span a net over the map, defining which regions / points can be directly reached from other regions / points. Given a starting point and a destination, the A* algorithm tries to find the shortest path along the waypoint connections." - p61
+% "The algorithm uses an estimation component, which has to provide an estimate for the distance between a point and the destination point. Thereby, the algorithm can focus its expansion of a possible path on the most promising connections." - p61
+% "FSMs (finate state machines) describe under which events/conditions a current state is to be replaced by another" - p61
+% "The game has no general FSM interpreter, but the FSMs are realized by scripts and simple if-then statements" - p61
+% "Decision trees conceptually are even slightly simpler than FSMs and represent branching structures that are often used to make high-level strategic decisions" - 62
+% "The nodes in the tree are test conditions, which lead to different sub-trees. A final leaf node contains a resulting decision. Similar to FSMs, decision trees are conceptual tools and can be realized by simple if-then statements" - p62
+% "Game AI spans a large array of tasks, and it is not easy to generalize the various approaches. They are most often highly tailored to the specific games and situations" - p62
+% "AI approaches from academia, such as genetic algorithms or neural networks, are hardly ever used in game development. Such approaches are generally believed to require too many resources for development, tuning and testing. The general approaches must be heavily modified and specialized for a specific game to get anything acceptable" - p64
+% "A* is the most successful technique that AI research has come up with - and nearly the only one applied in computer games" - p64
 @article{nareyek2004ai,
   title={AI in computer games},
   author={Nareyek, Alexander},
@@ -40,8 +72,10 @@
 % ## Pathfinding algorithms for decision making:
 
 % Implementing reccomendation algorithms for decision making processes (5 cites)
-% NOTE: This paper features a pathfinding algorithm very similar to the one in this project
+% NOTE: While this paper features elements used in this project, not much of it is applicable to a games context, even if it is using pathfinding in a different way.
 % http://revistaie.ase.ro/content/63/08%20-%20Stanciu,%20Petrusel.pdf
+% "We can argue that the decision making process can be look at as at a sequence of actions performed by the decision maker." - p87
+% "We argue that existing high-level approaches to decision process modelign cannot precisely show why some decision makers succeed where others fail and it also cannot enable the transfer of knoweldge from one individual to another." - p87
 @article{stanciu2012implementing,
   title={Implementing Recommendation Algorithms for Decision Making Processes.},
   author={Stanciu, Paula-Ligia and PETRU{\c{S}}EL, R{\u{a}}zvan},
@@ -283,4 +317,72 @@
   pages={1--40},
   year={1997},
   publisher={Cambridge University Press}
+}
+
+% # META SOURCES
+
+% A practical guide to building a complete game AI: Volume 1 (7 cites, INTERNET ARTICLE)
+% http://homepage.ttu.edu.tw/jmchen/gameprog/slides/gameai.pdf
+% FIND CITATION FOR: "In general, game AI focuses on creating the appearance of intelligence"
+@article{howland2000practical,
+  title={A Practical Guide to Building a Complete Game AI: Volume I},
+  author={Howland, Geoff},
+  journal={Lupine Games. Dispon{\i}vel em http://www. lupinegames. com/articles/prac ai. html},
+  year={2000}
+}
+
+% A formal basis for the heuristic determination of minimum cost paths (8916 cites)
+% https://www.cs.auckland.ac.nz/compsci767s2c/projectReportExamples.d/astarNilsson.pdf
+% FIND CITATIONS FOR THE FOLLOWING:
+% "A* is an improved version of Dijkstra's shortest-path algorithm" (UNFOUND CITATION "AI Game Programming Wisdom")
+% "The algorithm maintains two lists: open and closed..." (it talks a lot about how A* works) - p63
+% "The nodes in the open list are ranked according to the formula f(n) = g(n) + h(n) where g(n) is...." - p63
+@article{hart1968formal,
+  title={A formal basis for the heuristic determination of minimum cost paths},
+  author={Hart, Peter E and Nilsson, Nils J and Raphael, Bertram},
+  journal={IEEE transactions on Systems Science and Cybernetics},
+  volume={4},
+  number={2},
+  pages={100--107},
+  year={1968},
+  publisher={IEEE}
+}
+
+% A note on two problems with connexion with graphs (24356 cites, The original Dijkstra)
+% http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.165.7577&rep=rep1&type=pdf
+@article{dijkstra1959note,
+  title={A note on two problems in connexion with graphs},
+  author={Dijkstra, Edsger W},
+  journal={Numerische mathematik},
+  volume={1},
+  number={1},
+  pages={269--271},
+  year={1959},
+  publisher={Springer}
+}
+
+% A* pathfinding for beginners (169 cites, find why it was sited in 'AI in computer games', research P lester)
+% http://csis.pace.edu/~benjamin/teaching/cs627/webfiles/Astar.pdf
+@article{lester2005pathfinding,
+  title={A* pathfinding for beginners},
+  author={Lester, Patrick},
+  journal={online]. GameDev WebSite. http://www. gamedev. net/reference/articles/article2003. asp (Acesso em 08/02/2009)},
+  year={2005}
+}
+
+% The new science of management decision (8035 cites)
+@article{simon1960new,
+  title={The new science of management decision.},
+  author={Simon, Herbert A},
+  year={1960},
+  publisher={Harper \& Brothers}
+}
+
+% Artificial Intelligence: A modern approach (38072 cites)
+% http://thuvien.thanglong.edu.vn:8081/dspace/bitstream/DHTL_123456789/4010/1/CS503-2.pdf
+@book{russell2016artificial,
+  title={Artificial intelligence: a modern approach},
+  author={Russell, Stuart J and Norvig, Peter},
+  year={2016},
+  publisher={Malaysia; Pearson Education Limited,}
 }
