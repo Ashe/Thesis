@@ -50,12 +50,31 @@ namespace Strategy {
 }
 
 // Hash function
-// @NOTE: Very inefficient but it'll force the map to use the == operator
+// It's not a perfect hash, but it will seperate distinct states based on vars
+// The inspiration for the hash was found on the following link, 7/11/2019:
+// https://codereview.stackexchange.com/questions/171999/specializing-stdhash-for-stdarray
 // For our project this is all we need
 namespace std {
   template <> struct hash<Strategy::GameState> {
     size_t operator() (const Strategy::GameState& st) const {
-      return std::size_t();
+      std::hash<int> hasher;
+      std::size_t result = 0;
+      unsigned int unitsLeft = 0;
+      for (const auto& team : st.teams) {
+        unitsLeft += team.second;
+      }
+      const std::vector<int> toHash = {
+          (int) st.turnNumber, 
+          (int) st.currentTeam, 
+          (int) unitsLeft,
+          st.selection.x, 
+          st.selection.y,
+          st.remainingMP, 
+          st.remainingAP };
+      for (const auto& n : toHash) {
+        result = (result << 1) ^ hasher(n);
+      }
+      return result;
     }
   };
 }
