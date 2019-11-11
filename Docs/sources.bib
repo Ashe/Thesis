@@ -131,6 +131,17 @@
 
 % Grid-based path finding (141 cites)
 % https://svn.sable.mcgill.ca/sable/courses/COMP763/oldpapers/yap-02-grid-based.pdf
+% "In the past, better computer graphics have been the major technological sales feature of games." - p44
+% "Path-finding is an important problem for many applications, including transportation routing, robot planning, military simulations and computer games" - p44
+% "Path-finding involves analyzing a map to find the “best” cost of traveling from one point to another. Best can be a multi-valued function and use such criteria as the shortest path, least-cost path, safest path, etc. For many computer games this is an expensive calculation, made more difficult by the limited percentage of cycles that are devoted to AI processing." -44
+% "Typically, a grid is superimposed over a region, and a graph search is used to find the best path. Most game programs conduct path-finding on a (rectangular) tile grid. Each tile has a positive weight that is associated with the cost to travel into that tile" - p44
+% "The path-finding algorithm usually used is A*" - p44
+% "A few games use IDA* (Iterative Deepening A*), which avoids A*s memory overhead usually at the cost of a slower search." - p44
+% "Real-time constraitns limit the resources - both time and space - that can be used for path-finding." - p45
+% "The demands for realism in games will always result in more detailed domain terrains, resulting in a finer grid and a larger search space." - p45
+% "A* is the classic artificial intelligence optimization search algorithm. It uses a best-first search strategy, exploring the most likely candidate while eliminating provably inferior solutions." - p46
+% "Its effectiveness is based on having a good heuristicestimator, H, on the remaining distance from the current state to a goal state." - p46
+% "Since IDA* iterates and repeatedly explores paths, this may result in a horribly inefficient search." - p46
 @inproceedings{yap2002grid,
   title={Grid-based path-finding},
   author={Yap, Peter},
@@ -142,6 +153,18 @@
 
 % A*-based pathfinding in modern computer games (153 cites)
 % https://pdfs.semanticscholar.org/9ee1/5267cfce524c1e963534070aa7a192ae1f9c.pdf
+% "Games like role-playing  games and  real-time  strategy  games often have characters sent on missions from their current location to a predetermined or player determined destination." - p125
+% "A* is a generic search algorithm that can be used to find solutions for many problems, pathfinding just being one of them." - p125
+% "Reducing the search space may significantly speed up A*." - p126
+% "Finding the most appropriate data structure to represent the search space for the game world is absolutely critical to achieving realistic-looking movement and acceptable pathfinding performance." - p126
+% "Hierarchical pathfinding is an extremely powerful technique that speeds up the pathfinding process. The complexity of the problem can be reduced by breaking up the world hierarchically." - p126
+% "NavMesh is another popualr technique for AI pathfinding in 3D worlds. A NavMesh is a set of convex polygons that describe the 'walkable' surface of a 3D environment." - p126
+% "The secret to the success of A* is that it extends Dijkstra's algorithm by introducing heuristic approach" - p126
+% "A* algorithm improves the computational efficiency significantly by introducing a heuristic approach. Using a heuristic approach means, rather than an exhaustive expansion, only the states that look like better options are examined." - p127
+% "A good heuristic function which can accurately estimate the cost may make the algorithm much quicker. On the other hand, using a heuristic that overestimates the true cost a little usually results in a faster search with a reasonable path." - p127 (UNFOUND CITATION, Game programming gems)
+% "A* algorithm requires a huge amount of memory to track the progress of each search especially when searching on large and complex environments." - p127
+% "Another alternative to reduce space requirements in A* is to compute the whole path in small pieces. This is the core concept behind IDA*" - p128
+% "A priority queue is the best way to maintain an OPEN list." - p128
 @article{cui2011based,
   title={A*-based pathfinding in modern computer games},
   author={Cui, Xiao and Shi, Hao},
@@ -155,6 +178,7 @@
 
 % Partial pathfinding using map abstraction and refinement (164 cites)
 % http://new.aaai.org/Papers/AAAI/2005/AAAI05-221.pdf
+% NOTE: NO SUITABLE QUOTES FOUND
 @inproceedings{sturtevant2005partial,
   title={Partial pathfinding using map abstraction and refinement},
   author={Sturtevant, Nathan and Buro, Michael},
@@ -421,7 +445,7 @@
 
 % Depth-first iterative-deepening: an optimal admissable tree search (2077 cites)
 % https://www.iis.sinica.edu.tw/~tshsu/tcg/2012/slides/slide3.pdf
-% FIND CITATIONS FOR THE FOLLOWING:
+% NOTE: FIND CITATIONS FOR THE FOLLOWING:
 % "Many methods have been used in the past to speed up A*. Iterative Deepening A* (IDA*) uses no storage and uses a depth-first, iterative-deepening search of the net"
 @article{korf1985depth,
   title={Depth-first iterative-deepening: An optimal admissible tree search},
@@ -443,4 +467,73 @@
   volume={5},
   pages={125--132},
   year={2005}
+}
+
+% Games get serious (46 cites)
+% https://journals.sagepub.com/doi/full/10.2968/062004010
+% NOTE: FIND CITATIONS FOR THE FOLLOWING:
+% "Commercial games were a $9 billion (US) industry in 1999, and the rapid rate of growth has not abated."
+@article{schollmeyer2006games,
+  title={Games get serious},
+  author={Schollmeyer, Josh},
+  journal={Bulletin of the Atomic Scientists},
+  volume={62},
+  number={4},
+  pages={34--39},
+  year={2006},
+  publisher={SAGE Publications Sage UK: London, England}
+}
+
+% How qualitative spatial reasoning can improve strategy game AIs (108 cites)
+% https://www.aaai.org/Papers/Symposia/Spring/2001/SS-01-02/SS01-02-008.pdf
+% NOTE: FIND CITATIONS FOR THE FOLLOWING:
+% "Path-finding in computer games may be conceptually easy, but for many game domains it is difficult to do well"
+@article{forbus2002qualitative,
+  title={How qualitative spatial reasoning can improve strategy game AIs},
+  author={Forbus, Kenneth D and Mahoney, James V and Dill, Kevin},
+  journal={IEEE Intelligent Systems},
+  volume={17},
+  number={4},
+  pages={25--30},
+  year={2002},
+  publisher={IEEE}
+}
+
+% Human-level AI's killer application: Interactive computer games (551 cites)
+% http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.384.9845&rep=rep1&type=pdf
+% NOTE: FIND CITATIONS FOR THE FOLLOWING:
+% "Clearly, these problems must be resolved if we are to realize John Laird's vision of creating 'human-level AI' in these characters."
+@article{laird2001human,
+  title={Human-level AI's killer application: Interactive computer games},
+  author={Laird, John and VanLent, Michael},
+  journal={AI magazine},
+  volume={22},
+  number={2},
+  pages={15--15},
+  year={2001}
+}
+
+% Heuristics: Intelligent search strategies for computer problem solving (4162 cites)
+% NOTE: FIND CITATION FOR THE FOLLOWING:
+% "On a grid, A* can been shown to explore a search space that is proportional to D2, where D is the distance to a goal state."
+@article{pearl1984heuristics,
+  title={Heuristics: intelligent search strategies for computer problem solving},
+  author={Pearl, Judea},
+  year={1984},
+  publisher={Addison-Wesley Pub. Co., Inc., Reading, MA}
+}
+
+% Near optimal hierarchical path-finding (505 cites)
+% http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.479.4675&rep=rep1&type=pdf
+% NOTE: FIND CITATION FOR THE FOLLOWING:
+% "A much faster A*-based search algorithm giving nearly solutions named HPA*"
+@article{botea2004near,
+  title={Near optimal hierarchical path-finding},
+  author={Botea, Adi and M{\"u}ller, Martin and Schaeffer, Jonathan},
+  journal={Journal of game development},
+  volume={1},
+  number={1},
+  pages={7--28},
+  year={2004},
+  publisher={Citeseer}
 }
