@@ -193,6 +193,11 @@
 
 % Evolving Behaviour Trees for the Commercial Game DEFCON (107 cites)
 % http://ccg.doc.gold.ac.uk/ccg_old/papers/lim_evogames10.pdf
+% "Behaviour trees have been proposed as an impovement over FSMs for designing game AI. Their advantages over traditional AI approaches are being simple to design and implement, scalability when games get larger and more complex, and modularity to aid reusability and portability." - p1
+% "The problem with FSMs is that as the AI-bot grows in complexity, the number of states and transitions between them grows exponentially with the size of the game, making it difficult to manage." - p3
+% "Behaviour trees provide a simple, scalable and modular solution to embody complex AI behaviours. Each tree is goal-oriented, i.e. associated witha distinct, high-level goal which it attempts to achieve. These trees can be linked together with one another, allowing the implementation of complex behaviours by first defining smaller, sub-behaviours" - p3
+% "They are classified into 2 types, actions, which execute methods on the game, and conditions,which query the state of the game. Secondly, composite constructs can be usedto group such primitive constructs to perform a higher-level function. the 3 main types of composites are sequences,selectors and decorators." - p3
+% [Talks about sequences, selectors and decorators etc] - p4
 @article{limevolving,
   title={Evolving Behaviour Trees for the Commercial Game DEFCON},
   author={Lim, Chong-U and Baumgarten, Robin and Colton, Simon}
@@ -202,6 +207,9 @@
 
 % Parameterizing behavior trees (76 cites)
 % https://people.cs.umass.edu/~fmgarcia/Papers/Parameterizing%20Behavior%20Trees.pdf
+% "Behavior trees are garnering attention in the computer gaming industry for use in designing the artificial intelligence logic for environmental agents" - p144
+% "The paradigm enables sophisticated sequences of actions and contingencies to be represented as aconcise graphical structure following a set of very simple rules with equivalent representations as Communicating Se-quential Processes (CSPs)." - p144
+% "One of the most appealing aspects of behavior trees is their simplicity." - p144
 @inproceedings{shoulson2011parameterizing,
   title={Parameterizing behavior trees},
   author={Shoulson, Alexander and Garcia, Francisco M and Jones, Matthew and Mead, Robert and Badler, Norman I},
@@ -213,6 +221,8 @@
 
 % Performance analysis of stochastic behavior trees (36 cites)
 % http://www.csc.kth.se/~petter/Publications/ICRA14_cmo.pdf
+% "In FSMs, the state transitions are encoded in the states themselves, and switching from one state to the other leaves no memory of where the transition was made from." - p1
+% [How Behaviour trees work, including in depth descriptions of the different types of nodes] - p2
 @inproceedings{colledanchise2014performance,
   title={Performance analysis of stochastic behavior trees},
   author={Colledanchise, Michele and Marzinotto, Alejandro and {\"O}gren, Petter},
@@ -224,6 +234,7 @@
 
 % Building behavior trees from observations in real-time strategy games (16 cites)
 % https://www.cs.auckland.ac.nz/research/gameai/publications/Robertson_Watson_INISTA15.pdf
+% NOTE: While an interesting paper with plenty of references, I couldn't find anything particularly useful for this paper due to behaviour trees being less important when compared to pathfinding. May need revisiting.
 @inproceedings{robertson2015building,
   title={Building behavior trees from observations in real-time strategy games},
   author={Robertson, Glen and Watson, Ian},
@@ -235,6 +246,12 @@
 
 % Behavior modeling in commercial games (40 cites)
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.487.3985&rep=rep1&type=pdf
+% "Another relevant trend in the commercial gaming industry is the increase in content authoring by users." - p2
+% "The sensory mechanisms by which game characters “see” and in some cases “hear” the world range in complexity from the extremely simple to the surprisingly sophisticated and complex." - p3
+% "Environments are typically reduced to simplified representation used only for navigation." - p3
+% "The most common representations for decision-making processes in game characters are finite-state machines (FSMs). Character behaviors are modeled as a finite set of states with transitions between them in the form of a directed graph. The character resides in only one state at a time, with transitions between states driven by the conditions and actions occurring in the game." - p3
+% "In most cases FSMs, and rule-based approaches are represented in game-specific script or code, rather than within a general purpose implementation." - p4
+% "Recently, a few games have developed character behaviors using goal-directed reasoning techniques. In this technique game characters have a set of goals and actions are chosen in order to best satisfy the most relevant goal or goals." - p4
 @inproceedings{diller2004behavior,
   title={Behavior modeling in commercial games},
   author={Diller, David E and Ferguson, William and Leung, Alice M and Benyo, Brett and Foley, Dennis},
@@ -245,6 +262,10 @@
 
 % AI for Games (910 cites)
 % http://www.matt-versaggi.com/mit_open_courseware/GameAI/ArtificialIntelligenceforGamesSecondEdition.pdf
+% NOTE: THIS BOOK IS HUGE AND NEEDS A DEDICATED READING SESSION TO DIGEST EVERYTHING RELEVANT
+% "Although we want data to pass between behavior trees, we don’t want to break their elegantand consistent API. We certainly don’t want to pass data into tasks as parameters to their run method. This would mean that each task needs to know what arguments its child tasks take and how to find these data." - p361
+% "The most sensible approach is to decouple the data that behaviors need from the tasks them-selves. We will do this by using an external data store for all the data that the behavior tree needs. We’ll call this data store a blackboard." - p361
+% "This simple approach to communication is fine in the absence of a richer data-exchange mechanism but should probably not be used if you are going to give your behavior tree tasks access to a full blackboard" - p365
 @book{millington2019ai,
   title={AI for Games},
   author={Millington, Ian},
@@ -252,9 +273,9 @@
   publisher={CRC Press}
 }
 
-
 % Building human-level AI for Real-Time Strategy Games (87 cites)
 % https://www.aaai.org/ocs/index.php/FSS/FSS11/paper/viewFile/4209/4567
+% "A second approach is to develop an abstraction of the state space and use it for reasoning about goals. This approach is also problematic, because different types of abstractions are necessary for the different tasks that need to be performed." - p329
 @inproceedings{weber2011building,
   title={Building human-level ai for real-time strategy games},
   author={Weber, Ben George and Mateas, Michael and Jhala, Arnav},
@@ -263,6 +284,7 @@
 }
 
 % ## Decision Trees:
+% NOTE: Upon further inspection, decision trees require nothing more than a simple mention as a possible route for AI. As such, a lot of papers will not be read unless needed.
 
 % Simplifying Decision Trees (2442 cites)
 % http://www.bitsavers.org/pdf/mit/ai/aim/AIM-930.pdf
@@ -277,6 +299,9 @@
 
 % Induction of decision trees (21280 cites)
 % https://link.springer.com/content/pdf/10.1007/BF00116251.pdf
+% "The basis is a universe of objects that are described in terms of a collection of attributes. Each attribute measures some important feature of an object and will be limited here to taking a (usually small) set of discrete, mutually exclusive values." - p85
+% "Each object in the universe belongs to one of a set of mutually exclusive classes" - p86
+% "The other major ingredient is a training set of objects whose class is known. The induction task is to develop a classification rule that can determine the class of any object from its values of the attributes. The immediate question is whether or not the attributes provide sufficient information to do this." - p86
 @article{quinlan1986induction,
   title={Induction of decision trees},
   author={Quinlan, J. Ross},
@@ -503,6 +528,7 @@
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.384.9845&rep=rep1&type=pdf
 % NOTE: FIND CITATIONS FOR THE FOLLOWING:
 % "Clearly, these problems must be resolved if we are to realize John Laird's vision of creating 'human-level AI' in these characters."
+% "Often  require NPCs to perform a wide range of functions and to integrate capabilities that include sensing the environment, reasoning about its spatial layout, planning and executing actions, as well as communicating and coordinating with other NPCs  or players."
 @article{laird2001human,
   title={Human-level AI's killer application: Interactive computer games},
   author={Laird, John and VanLent, Michael},
@@ -525,7 +551,7 @@
 
 % Near optimal hierarchical path-finding (505 cites)
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.479.4675&rep=rep1&type=pdf
-% NOTE: FIND CITATION FOR THE FOLLOWING:
+% NOTE: FIND CITATIONS FOR THE FOLLOWING:
 % "A much faster A*-based search algorithm giving nearly solutions named HPA*"
 @article{botea2004near,
   title={Near optimal hierarchical path-finding},
@@ -536,4 +562,17 @@
   pages={7--28},
   year={2004},
   publisher={Citeseer}
+}
+
+% Three states and a plan: the AI of FEAR (228 cites)
+% http://alumni.media.mit.edu/~jorkin/gdc2006_orkin_jeff_fear.pdf
+% NOTE: FIND CITATIONS FOR THE FOLLOWING:
+% "If the audience of the Game Developers Conference were to be polled on the most common A.I techniques applied to games, one of the top answers would be Finite State Machines (FSMs)"
+@inproceedings{orkin2006three,
+  title={Three states and a plan: the AI of FEAR},
+  author={Orkin, Jeff},
+  booktitle={Game Developers Conference},
+  volume={2006},
+  pages={4},
+  year={2006}
 }
