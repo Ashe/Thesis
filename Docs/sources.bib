@@ -391,7 +391,7 @@
 
 % A practical guide to building a complete game AI: Volume 1 (7 cites, INTERNET ARTICLE)
 % http://homepage.ttu.edu.tw/jmchen/gameprog/slides/gameai.pdf
-% FIND CITATION FOR: "In general, game AI focuses on creating the appearance of intelligence"
+% "Game AI is about creating an environment and the appearance of thought from units. Game AI is behavioral, not scientific." - p1
 @article{howland2000practical,
   title={A Practical Guide to Building a Complete Game AI: Volume I},
   author={Howland, Geoff},
@@ -401,10 +401,12 @@
 
 % A formal basis for the heuristic determination of minimum cost paths (8916 cites)
 % https://www.cs.auckland.ac.nz/compsci767s2c/projectReportExamples.d/astarNilsson.pdf
-% FIND CITATIONS FOR THE FOLLOWING:
-% "A* is an improved version of Dijkstra's shortest-path algorithm" (UNFOUND CITATION "AI Game Programming Wisdom")
-% "The algorithm maintains two lists: open and closed..." (it talks a lot about how A* works) - p63
-% "The nodes in the open list are ranked according to the formula f(n) = g(n) + h(n) where g(n) is...." - p63
+% "A* is an improved version of Dijkstra's shortest-path algorithm" - p101
+% "The nodes in the open list are ranked according to the formula f(n) = g(n) + h(n) where g(n) is...." - p102
+% "The algorithm maintains two lists: open and closed..." (it talks a lot about how A* works) - p102
+% "It might be argued that the algorithms of Moore, Busacker and Saaty, and other equivalent algorithms (sometimes known as "water flow" or "amoeba" algorithms) are advantagous because they first encounter the goal by a path with a minimum number of steps. This argument merely reflects an imprecise formulation of the problem, since it implies that the number of steps, and not the cost of each step, is the quantity to be minimised." - p106
+% "The algorithm A* is actually a family of algorithms; the choice of a particular function h selects a particular algorithm from the family. The function h can be used to tailor A* for particular applications." - p107
+% "The selection of h, therefore, permits one to choose a desirable compromise between admissibility, heuristic effectiveness, and computational efficiency" - p107
 @article{hart1968formal,
   title={A formal basis for the heuristic determination of minimum cost paths},
   author={Hart, Peter E and Nilsson, Nils J and Raphael, Bertram},
@@ -418,6 +420,7 @@
 
 % A note on two problems with connexion with graphs (24356 cites, The original Dijkstra)
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.165.7577&rep=rep1&type=pdf
+% [How Dijkstra's algorithm works] - p270
 @article{dijkstra1959note,
   title={A note on two problems in connexion with graphs},
   author={Dijkstra, Edsger W},
@@ -429,8 +432,14 @@
   publisher={Springer}
 }
 
-% A* pathfinding for beginners (169 cites, find why it was sited in 'AI in computer games', research P lester)
+% A* pathfinding for beginners (169 cites)
 % http://csis.pace.edu/~benjamin/teaching/cs627/webfiles/Astar.pdf
+% [How A* works] - p1-7
+% [F = G + H] - p2
+% "The method we use here is called the Manhattan method, where you calculate the total number of squares moved horizontally and vertically to reach the target square from the currentsquare, ignoring diagonal movement, and ignoring any obstacles that may be in the way." - p3
+% "What if you have terrain that is walkable, but at a higher movement cost? Swamps, hills, stairs in a dungeon, etc. – these are all examples of terrain that is walkable, but at a higher cost than flat, open ground. Similarly, a road might have a lower movement cost than the surrounding terrain. This problem is easily handled by adding the terrain cost in when you are calculating the G cost of any given node.Simply add a bonus cost to such nodes. The A* pathfinding algorithm is already written to find the lowest cost path and should handle this easily." - p8
+% "An interesting additional consideration is something the professionals call “influence mapping.” Just as with the variable terrain costs described above, you could create an additional point system and apply it to paths for AI purposes. [...] This would teach the computer to favor safer paths, and help it avoid dumb situations where it keeps sending troops through a particular path, just because it is shorter (but also more dangerous)." - p8
+% "Dijkstra's is essentially the same as A*, exceptthere is no heuristic (H is always 0)." - p10
 @article{lester2005pathfinding,
   title={A* pathfinding for beginners},
   author={Lester, Patrick},
@@ -439,6 +448,7 @@
 }
 
 % The new science of management decision (8035 cites)
+% NOTE: This is a book that needs to be bought
 @article{simon1960new,
   title={The new science of management decision.},
   author={Simon, Herbert A},
@@ -447,7 +457,7 @@
 }
 
 % Artificial Intelligence: A modern approach (38072 cites)
-% http://thuvien.thanglong.edu.vn:8081/dspace/bitstream/DHTL_123456789/4010/1/CS503-2.pdf
+% NOTE: This book can be found on SHU's library gateway.
 @book{russell2016artificial,
   title={Artificial intelligence: a modern approach},
   author={Russell, Stuart J and Norvig, Peter},
@@ -457,9 +467,7 @@
 
 % Map based Strategies for Robot Navigation in Unknown Environments (57 cites)
 % https://www.aaai.org/Papers/Symposia/Spring/1996/SS-96-04/SS96-04-017.pdf
-% FIND CITATIONS FOR THE FOLLOWING:
-% "Research has been conducted to extend the A* algorithm to dealwith this problem most notably the D* algorithm (which is short for dynamic A*)"
-% "A* works by building all paths that lead to the goal, one path at a time and starts by ranking each partial path currently in consideration via the following formula [A* formula]"
+% "The problem with this approach is strictly computational: replanning is an expensive operation. If the robot's prior map information is sparse or inaccurate, then too much time will be spent replanning in Step 2 for the approach to be viable. The D * algorithm (Dynamic A *) [Stentz, 94J was developed to solve this computational problem. D* produces an optimal traverse by using incremental graph theory techniques to dramatically reduce the time required to replan. For environments with a large number of states, D* is capable of replanning hundreds of times faster than straight-forward, brute-force replanning algorithms." - p110
 @inproceedings{stentz1996map,
   title={Map-based strategies for robot navigation in unknown environments},
   author={Stentz, Anthony},
@@ -470,8 +478,13 @@
 
 % Depth-first iterative-deepening: an optimal admissable tree search (2077 cites)
 % https://www.iis.sinica.edu.tw/~tshsu/tcg/2012/slides/slide3.pdf
-% NOTE: FIND CITATIONS FOR THE FOLLOWING:
-% "Many methods have been used in the past to speed up A*. Iterative Deepening A* (IDA*) uses no storage and uses a depth-first, iterative-deepening search of the net"
+% "No need to worry about a good cut-off depth as in DFS." - slide 22
+% "Good for a tournament situation where each move needs to bemade in a limited amount of time." - slide 22
+% "A heuristic search is a search algorithm that uses information about: The initial state, operators on finding the states adjacent to a state, a test function whether a goal is reached, and heuristics to pick the next state to explore." - slide 27
+% "A “good” heuristic search algorithm: - States that are no  likely leading to the goals will not be explored further..A state is cut or pruned. States are explored in an order that are according to their likelihood of leading to the goals -> good move ordering."
+% "[A*] consumes a lot of memory to record the set of visited nodes" - slide 30
+% "IDA∗ does not need to use a priority queue as in the case ofA∗. IDA∗ is optimal in terms of solution cost, time, and space over the class of admissible best-first searches on a tree." - slide 36
+% "Cost function is the knowledge used in searching." - slide 36
 @article{korf1985depth,
   title={Depth-first iterative-deepening: An optimal admissible tree search},
   author={Korf, Richard E},
@@ -484,6 +497,7 @@
 }
 
 % Fringe Search: Beating A* at Pathfinding on Game Maps (92 cites)
+% NOTE: This paper is about efficiency of pathfinding algorithms. Will read another time.
 % http://www.ru.is/faculty/yngvi/pdf/BjornssonEHS05.pdf
 @article{bjornsson2005fringe,
   title={Fringe Search: Beating A* at Pathfinding on Game Maps.},
@@ -496,8 +510,7 @@
 
 % Games get serious (46 cites)
 % https://journals.sagepub.com/doi/full/10.2968/062004010
-% NOTE: FIND CITATIONS FOR THE FOLLOWING:
-% "Commercial games were a $9 billion (US) industry in 1999, and the rapid rate of growth has not abated."
+% NOTE: No useful citations other than references to the growth of the games industry with examples
 @article{schollmeyer2006games,
   title={Games get serious},
   author={Schollmeyer, Josh},
@@ -526,9 +539,13 @@
 
 % Human-level AI's killer application: Interactive computer games (551 cites)
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.384.9845&rep=rep1&type=pdf
-% NOTE: FIND CITATIONS FOR THE FOLLOWING:
-% "Clearly, these problems must be resolved if we are to realize John Laird's vision of creating 'human-level AI' in these characters."
-% "Often  require NPCs to perform a wide range of functions and to integrate capabilities that include sensing the environment, reasoning about its spatial layout, planning and executing actions, as well as communicating and coordinating with other NPCs  or players."
+% "Human-level AI can expand the types of experiences people have playing computer games by introducing synthetic intelligent characters with their own goals, knowledge, and capabilities. Human-level AI can also recreate the experience of playing with and against humans without a network connection." - p16
+% "Our hypothesis is that populating these games with realistic, human-level characters will lead to fun, challenging games with great game play." - p16
+% "Synthetic human-level characters are playing an increasingly important role in many genres of computer games and have the potential to lead to completely new genres." - p17
+% "Thus, most, if not all, of the current techniques that are used for controlling game AIs (such as big Cfunctions or finite-state machines) will not scale up" - p17
+% "These agents don’t necessarily have to be human level in their intelligence, as long as they have a façade of intelligence supported by great personality." - p17
+% "Building  human-level  enemies  for  these games requires solving many general AI problems and integrating the solutions into coherent systems. The enemies must be autonomous. They must interact with complex dynamic environments, which requires reactive behavior, integrated  planning, and common sense reasoning. As they advance, they will also need models of high-level vision that have the same strengths and weaknesses as humans." - p22
+% "There are many other applications of AI tobuilding intelligent enemies. Because of the extended geography of the environment, they must navigate and use path planning, spatial reasoning, and temporal reasoning." - p22
 @article{laird2001human,
   title={Human-level AI's killer application: Interactive computer games},
   author={Laird, John and VanLent, Michael},
@@ -540,6 +557,7 @@
 }
 
 % Heuristics: Intelligent search strategies for computer problem solving (4162 cites)
+% NOTE: This book can be found on SHU's library gateway.
 % NOTE: FIND CITATION FOR THE FOLLOWING:
 % "On a grid, A* can been shown to explore a search space that is proportional to D2, where D is the distance to a goal state."
 @article{pearl1984heuristics,
@@ -551,8 +569,10 @@
 
 % Near optimal hierarchical path-finding (505 cites)
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.479.4675&rep=rep1&type=pdf
-% NOTE: FIND CITATIONS FOR THE FOLLOWING:
-% "A much faster A*-based search algorithm giving nearly solutions named HPA*"
+% "The industry standard is to use A* or iterative-deepening A*, IDA*. A* is generally faster, but IDA* uses less memory." - p2
+% "Quadtrees have been proposed as a way of doing hierarchical map decomposition. This method partitions a map into square blocks of different izes so that a block contains either only walkable cells or only blocked cells. [..] An action in this abstracted framework is to travel between the centers of two adjacent blocks. Since the agent always go to the middle of a box, this method produces sub-optimal solutions" - p6
+% "In Framed quadtrees, the border of a block is augmented with cells at the highest resolution. An action crosses a block between any two border cells. Since this representation permits many angles of direction, the solution quality improves significantly. On the other hand, framed quadtrees use more memory than quadtrees." - p6
+% "The method adapts to dynamically changing environments. The hierarchy can be extended to several abstraction levels, making it scalable for large problem spaces. We tested our program using maps extracted from a real game, obtaining near-optimal solutions significantly faster than low-level A*." - p19
 @article{botea2004near,
   title={Near optimal hierarchical path-finding},
   author={Botea, Adi and M{\"u}ller, Martin and Schaeffer, Jonathan},
@@ -566,8 +586,7 @@
 
 % Three states and a plan: the AI of FEAR (228 cites)
 % http://alumni.media.mit.edu/~jorkin/gdc2006_orkin_jeff_fear.pdf
-% NOTE: FIND CITATIONS FOR THE FOLLOWING:
-% "If the audience of the Game Developers Conference were to be polled on the most common A.I techniques applied to games, one of the top answers would be Finite State Machines (FSMs)"
+% "If the audience of the Game Developers Conference were to be polled on the most common A.I techniques applied to games, one of the top answers would be Finite State Machines (FSMs)" - p1
 @inproceedings{orkin2006three,
   title={Three states and a plan: the AI of FEAR},
   author={Orkin, Jeff},
