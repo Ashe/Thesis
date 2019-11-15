@@ -263,6 +263,37 @@
 % AI for Games (910 cites)
 % http://www.matt-versaggi.com/mit_open_courseware/GameAI/ArtificialIntelligenceforGamesSecondEdition.pdf
 % NOTE: THIS BOOK IS HUGE AND NEEDS A DEDICATED READING SESSION TO DIGEST EVERYTHING RELEVANT
+% "Artificial intelligence is about making computers able to perform the thinking tasks that humans and animals are capable of" - p4
+% "Some decisions may require movement AI to carry them out. A melee (hand-to-hand) attack action will require the character to get close to its victim" - p10
+% "Creating good AI is all about matching the right behaviors to the right algorithms." - p19
+% "A heuristic is a rule of thumb, an approximate solution that might work in many situations but is unlikely to work in all." - p23
+% "First, we must have some kind of infrastructure in two categories: a general mechanism formanaging AI behaviors (deciding which behavior gets to run when, and so on) and a world-interfacing system for getting information into the AI. Every AI algorithm created needs to honor these mechanisms." - p32
+% "All movement algorithms have this same basic form. They take geometric data about their own state and the state of the world, and they come up with a geometric output representing themovement they would like to make." - p40
+% "But pathfinding can also be placed in the driving seat, making decisions about where to moveas well as how to get there." - p197
+% "The vast majority of games use pathfinding solutions based on an algorithm called A*." - p197
+% "It doesn’t seem to make sense to have negative costs. [..] Mathematical graph theory does allow negative weights, however, and they have direct applications in some practical problems. These problems are entirely outside of normal game development" - p202
+% "The principle problem with Dijkstra is that it searches the entire graph indiscriminately for the shortest possible route. This is useful if we’re trying to find the shortest path to every possible node (the problem that Dijkstra was designed for), but wasteful for point-to-point pathfinding." - p214
+% "Pathfinding in games is synonymous with the A* algorithm. A* is simple to implement, is very efficient, and has lots of scope for optimization" - p215
+% "A* implementations completely rely on the fact that they can theoretically produce non-optimal results. Fortunately, this can be controlled using the heuristic function. Depending onthe choice of heuristic function, we can guarantee optimal results, or we can deliberately allow sub-optimal results to give us faster execution." - p219
+% [A* Pseudo code] - p220
+% "The biggest factor in determining the performance of A* is the performance of its keydata structures: the pathfinding list, the graph, and the heuristic." - p228
+% "If the heuristic underestimates in all possible cases, then the result that A* produces will be the best path possible." - p231
+% "If the heuristic is too high, so that it overestimates the actual path length, A* may not return thebest path. A* will tend to generate a path with fewer nodes in it, even if the connections betweennodes are more costly." - p232
+% "The only surefire way to get a decent heuristic is to visualize the fill of your algorithm." - p236
+% "A* with a zero heuristic is the pathfinding version of Dijkstra." - p237
+% "Often, the cost function is a blend of many different concerns, and there can be different cost functions for different characters in a game. A reconnaissance squad, for example,may be interested in visibility and speed. A heavy artillery weapon would be more interested in terrain difficulty. This is called tactical pathfinding" - p251
+% "In many applications there may be more than one possible node in the graph that is a goal." - p272
+% "Rather than checking if a node is the goal, we need to check if the node is a goal. This has implications for the design of the heuristic: the heuristic needs to accurately report the distanceto the nearest goal. To do that it needs to understand which goal will eventually be chosen." - p272
+% "It is rare for game AI to use multiple goals at a great distance from one another. Usually, some kind of decision making process decides which alarm point to go to, and the pathfinding simply finds a route." - p272
+% "The pathfinding system doesn’t understand what its graph represents. Itis simply trying to find the best route in terms of the graph" - p277
+% "Decision trees are fast, easily implemented, and simple to understand. They are the simplest decision making technique" - p295
+% "State machines are the technique most often used for this kind of decision making and, along with scripting, make up the vast majority of decision making systems used incurrent games." - p309
+% "In a state machine, only transitions from the current state are considered, so notevery action can be reached." - p310
+% "State machines don’t provide a simple way of combining these tests together to make more complex queries. If we need to transition based on the condition that the enemy is far away AND health is low, then we need some way of combining triggers together." - p313
+% "We can combine the two approaches by replacing transitions from a state with a decision tree. The leaves of the tree, rather than being actions as before, are transitions to new states." - p331
+% "[Behavior trees] strength comesfrom their ability to interleave these concerns in a way that is easy to understand and easy for non-programmers to create. Despite their growing ubiquity, however, there are things that are difficult to do well in behavior trees, and they aren’t always a good solution for decision making." - p334
+% [How behavior trees work] - p335
+% "Behavior trees implement a very simple form of planning, sometimes called reactive planning. Selectors allow the character to try things, and fall back to other behaviors if they fail. This isn’t avery sophisticated form of planning: the only way characters can think ahead is if you manually add the correct conditions to their behavior tree. Nevertheless, even this rudimentary planningcan give a good boost to the believability of your characters." - p340
 % "Although we want data to pass between behavior trees, we don’t want to break their elegantand consistent API. We certainly don’t want to pass data into tasks as parameters to their run method. This would mean that each task needs to know what arguments its child tasks take and how to find these data." - p361
 % "The most sensible approach is to decouple the data that behaviors need from the tasks them-selves. We will do this by using an external data store for all the data that the behavior tree needs. We’ll call this data store a blackboard." - p361
 % "This simple approach to communication is fine in the absence of a richer data-exchange mechanism but should probably not be used if you are going to give your behavior tree tasks access to a full blackboard" - p365
