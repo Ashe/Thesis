@@ -262,7 +262,6 @@
 
 % AI for Games (910 cites)
 % http://www.matt-versaggi.com/mit_open_courseware/GameAI/ArtificialIntelligenceforGamesSecondEdition.pdf
-% NOTE: THIS BOOK IS HUGE AND NEEDS A DEDICATED READING SESSION TO DIGEST EVERYTHING RELEVANT
 % "Artificial intelligence is about making computers able to perform the thinking tasks that humans and animals are capable of" - p4
 % "Some decisions may require movement AI to carry them out. A melee (hand-to-hand) attack action will require the character to get close to its victim" - p10
 % "Creating good AI is all about matching the right behaviors to the right algorithms." - p19
@@ -489,6 +488,15 @@
 
 % Artificial Intelligence: A modern approach (38072 cites)
 % NOTE: This book can be found on SHU's library gateway.
+% "A solution is an action sequence, so search algorithms work by considering various possible action sequences. The possible action sequences starting at the initial state form a search tree with the initial state at the root; the branches are actions and the nodes correspond to states in the state space of the problem." - p77
+% "we need to consider taking various actions. We do this by expanding the current state; that is, applying each legal action to the current state, thereby generating a new set of states." - p77
+% "Search algorithms require a data structure to keep track of the search tree that is being constructed. For each node n of the tree, we have a structure that contains four components: • n.STATE: the state in the state space to which the node corresponds; • n.PARENT: the node in the search tree that generated this node; • n.ACTION: the action that was applied to the parent to generate the node; • n.PATH-COST: the cost, traditionally denoted by g(n), of the path from the initial state to the node, as indicated by the parent pointers." - p80
+% "We can evaluate an algorithm’s performance in four ways: • Completeness: Is the algorithm guaranteed to find a solution when there is one? • Optimality: Does the strategy find the optimal solution, as defined in section 1.1? • Time complexity: How long does it take to find a solution? • Space complexity: How much memory is needed to perform the search?" - p82
+% "Complexity is expressed in terms of three quantities: b, the branching factor or maximum number of successors of any node; d, the depth of the shallowest goal node (i.e., the number of steps along the path from the root); and m, the maximum length of any path in the state space." - p82
+% "In general, exponential-complexity search problems cannot be solved by uninformed methods for any but the smallest instances." - p85
+% "The general approach we consider is called best-first search. Best-first search is an instance of the general TREE-SEARCH or GRAPH-SEARCH algorithm in which a node is selected for expansion based on an evaluation function, f(n). The evaluation function is construed as a cost estimate, so the node with the lowest evaluation is expanded first." - p94
+% "The most widely known form of best-first search is called A∗ search (pronounced “A-star search”). It evaluates nodes by combining g(n), the cost to reach the node, and h(n), the cost to get from the node to the goal: f(n) = g(n) + h(n) ." - p95
+% "A learning algorithm can be used to construct a function h(n) that can (with luck) predict solution costs for other states that arise during search." - p109
 @book{russell2016artificial,
   title={Artificial intelligence: a modern approach},
   author={Russell, Stuart J and Norvig, Peter},
@@ -589,8 +597,7 @@
 
 % Heuristics: Intelligent search strategies for computer problem solving (4162 cites)
 % NOTE: This book can be found on SHU's library gateway.
-% NOTE: FIND CITATION FOR THE FOLLOWING:
-% "On a grid, A* can been shown to explore a search space that is proportional to D2, where D is the distance to a goal state."
+% "Heuristics are criteria, methods or principles for deciding which among several alternative courses of action promises to be the most effective in order to achieve some goal" - p3
 @article{pearl1984heuristics,
   title={Heuristics: intelligent search strategies for computer problem solving},
   author={Pearl, Judea},
