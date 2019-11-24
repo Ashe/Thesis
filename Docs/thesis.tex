@@ -34,6 +34,29 @@ In this paper, the mechanisms of a typical pathfinding algorithm are examined an
 
 \section{Literature Review}
 
-\clearpage
+Games are good for the economy. Graphics used to be the sales feature of games (Grid based pathfinding). Now, AI is more of a focus (AI in computer games) (Human-level AI's killer application: Interactive computer games). Its not just about making enemies.
+
+Decision trees are the simplest way to implement AI but are basic.
+
+FSMs are one of the most common ways of implementing AI (Three states and a plan: the AI of FEAR (228 cites), but they also don't provide a simple way of combining these tests together to make more complex queries.
+
+Behaviour trees are an improvement over FSMs.
+
+Current techniques do not scale up (Human-level AI's killer application: Interactive computer games)
+
+A solution is an action sequence, so search algorithms work by considering various possible action sequences (Artificial Intelligence: A modern approach). These pathfinding algorithms can search for a solution for traveling from A to B, but could potentially do more with the redefinition of what an action is. In theory, you could apply 'best first' to game interactions in a scenario.
+
+Normally, pathfinding takes a backseat when it comes to decision making and just generates the requested path. However, since pathfinding algorithms are just search algorithms being applied to graphs, there's no restriction that these nodes and edges have to correspond to locations and distances.
+
+Dijkstra's algorithm is a simple pathfinding algorithm that finds the shortest route to every node in the graph. It's an uninformed algorithm.
+
+AStar is the defacto algorithm for pathfinding. Its actually a family of algorithms where the heuristic dictates how it functions. AStar with no heuristic is dijkstras, and could also be used to become a best-first, breadth first and depth-first.
+
+Changing how A* evaluates actions and applies a heuristic will allow it to operate differently. A good heuristic will allow the algorithm to discard 'bad moves' (Depth-first iterative-deepening: an optimal admissable tree search).
+
+A* becomes inefficient on bigger maps and lots of techniques have been created to adjust to these problems. Having lots of edges per node could make A* very inefficient.
+
+This paper will investigate the effects of different cost and heuristic functions when changing the types involved with A* to see how agents perform.
+
 \printbibliography
 \end{document}
