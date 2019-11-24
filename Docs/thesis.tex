@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass[10pt, twocolumn]{article}
 \usepackage[margin=1.5in]{geometry}
 \usepackage{listings}
 \usepackage[style=apa,backend=biber, language=english]{biblatex}
@@ -6,24 +6,31 @@
 \addbibresource{sources.bib}
 \setlength{\parindent}{0ex}
 \setlength{\parskip}{1.5ex}
-\fontsize{10}{13}
+\font\titlefont=cmr10 at 18pt
 
 \lstset{language=C++}
 
 \begin{document}
 
-\title{Is A* a viable substitute for decision-making algorithms?}
+\title{\titlefont The path to the right decision: An investigation into using heuristic pathfinding algorithms for decision making}
 \author{Ashley Smith}
 \date{\today}
 \maketitle
 
+\renewcommand\abstractname{\textbf{Abstract}}
 \begin{abstract}
-Abstract goes here
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras justo velit, vestibulum sit amet turpis in, interdum rhoncus magna. Proin pulvinar posuere iaculis. Duis vulputate tristique arcu, id pretium ante blandit ut. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam augue tellus, mattis quis consequat id, facilisis eu lectus. Vivamus euismod non quam sed condimentum. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus vitae consequat nisi. Morbi vulputate tellus ut nibh vulputate, vitae blandit ex faucibus.
 \end{abstract}
 
-\clearpage
+\section{Introduction}
 
-\section{Introdution}
+As video games have evolved, so too have strategies used to design and implement artificial intelligence (AI) into the characters and logic necessary for the player's enjoyment. The requirements for game AI are not the same as academic AI; the characters involved simply need to interact with the environment in a manner which makes the game fun to play. One common requirement for game AI is for the characters to be able to traverse the areas of the game in a way which meets the player's expectations logically and efficiently - a task known as pathfinding.
+
+Typically, the pathfinding side of AI is separate from the decision making side. Some algorithm will perceive the world and come to a conclusion about what to do and then pass this information on to the pathfinding algorithm in charge of navigating to the desired area. This means that the pathfinding algorithm doesn't do any 'thinking' and instead just generates a path from one point to another. The path is generated after a decision has already been made, and so any information gathered that could otherwise be useful to the decision-maker is lost.
+
+Without knowing the path or any specific details about points of interests along said path beforehand, a decision-making process could easily make mistakes that could be considered wrong or 'glitchy' by both players and developers. Similarly, factoring in environmental details like these into the decision runs the risk of overcomplicating the process and making it harder to manage and maintain, or repeating calculations made in the following pathfinding process.
+
+In this paper, the mechanisms of a typical pathfinding algorithm are examined and re-engineered, through the substitution of input and output types, with the aim of bringing decision-making and pathfinding closer together.
 
 \section{Literature Review}
 
