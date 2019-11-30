@@ -681,3 +681,102 @@
   url = {https://www.unrealengine.com/en-US/},
   urldate = {2019-11-30}
 }
+
+% Applying Goal-Oriented Action Planning to Games
+% http://alumni.media.mit.edu/~jorkin/GOAP_draft_AIWisdom2_2003.pdf
+% " Goal-Oriented Action Planning (GOAP) is a decision-making architecture that takes the next step, and allows characters to decide not only what to do, but how to do it. " - p1
+% "A goal is any condition that an agent wants to satisfy. " - p1
+% "The plan is simply the name for a sequence of actions. A plan that satisfies a goal refers to the valid sequence of actions that will take a character from some starting state to some state that satisfies the goal." - p2
+% "An action is a single, atomic step within a plan that makes a character do something." - p2
+% "A GOAP system does not replace the need for a finite-state machine (FSM) [Fu03], but greatly simplifies the required FSM. A plan is a sequence of actions, where each action represents a state transition. By separating the state transition logic from the states themselves, the underlying FSM can be much simpler." - p2
+% "A character generates a plan in real-time by supplying some goal to satisfy to a system called a planner. The planner searches the space of actions for a sequence that will take the character from his starting state to his goal state. This process is referred to as formulating a plan. " - p3
+% " Characters in the game can exhibit more varied, complex, and interesting behaviors using GOAP. The code behind the behaviors is more structured, re-usable, and maintainable." - p4
+% "GOAP offers a much more elegant structure that better accommodates change. The addition of design requirements is handled by adding actions, and preconditions to related actions. This is more intuitive, and touches less code than revisiting every goal." - p5
+% "Furthermore, GOAP provides the guarantee of valid plans. Hand-coded embedded plans can contain mistakes." - p5
+% "Though many game developers think of A* as a pathfinding algorithm, it is actually a general-purpose search algorithm. " - p6
+% "The A* algorithm requires the calculation of the cost of a node, and the heuristic distance from a node to the goal. Nodes in the planner’s search represent states of the world, with edges representing actions between them. The cost of a node can be calculated as the sum of the costs of the actions that take the world to the state represented by the node. The cost of each action may vary, where lower cost actions are more preferable. The heuristic distance can be calculated as the sum of the unsatisfied properties of the goal state." - p7
+% "A regressive search is more efficient and intuitive. " - p7
+% "With each new game released, the bar is set higher for AI behavior. As expectations for the complexity of character behavior rises, we need to look toward more structured, formalized solutions to creating scalable, maintainable, and re-usable decision-making systems. Goal-oriented action planning is one such solution. By letting go of the reins and allowing games to formulate plans at runtime, we are handing over key decisions to those who are in the best position to make them; the characters themselves." - p11
+@article{orkin2003applying,
+  title={Applying goal-oriented action planning to games},
+  author={Orkin, Jeff},
+  journal={AI game programming wisdom},
+  volume={2},
+  pages={217--228},
+  year={2003}
+}
+
+% AI Game programming wisdom (71 cites)
+% "Finite-state machines are simple, rule-based systems in which a finite number of "states" are connected in  a directed  graph by "transitions" between  states. The finite-state machine occupies exactly one state at any moment." - 6
+% "Production rule systems are essentially lists of "if-then" statements, with various conflict res- olution mechanisms available in  the event that more than  one rule is  satisfied simultaneously." - p6
+% "Decision trees are similar to complex conditionals in "if-then" statements. DTs make a decision based on a set of inputs by starting at the root of the tree and, at each node, selecting a child  node based on the value of one input. - p6
+% "Search methods are concerned with discovering a sequence of actions or states within a graph that satisfy some goal-either reaching a specified "goal state" or simply maximizing some value based on the reachable states." - p6
+% "Planning systems and scheduling systems are an extension of search methods that emphasize the subproblem of finding the best (simplest) sequence of actions that one can perform to achieve a particular result over time, given an initial state of the world and a precise definition of the consequences of each possible action. " - p6
+% "[Genetic algorithms] attempt to imi- - tate the process of evolution directly, performing selection and interbreeding with randomized crossover and  mutation operations on populations of programs, algorithms, or sets of parameters. " - p7
+% "Neural networks are a class of machine learning techniques based on the archi- tecture of neural interconnections in animal brains and nervous systems. " - p7
+% "Fuzzy logic uses real-valued numbers  to represent degrees of  membership  in  a number  of sets-as opposed to the Boolean (true or false) values of traditional logic. " -p7
+% "Ironically, it is  the simplest techniques-finite-state machines, decision trees, and production  rule systems-that have most often proven their worth. Faced with  tight schedules and minimal resources, the game A1 community has  eagerly embraced rules-based systems as the easiest type of A1 to create, understand, and debug." - p7
+% "Its surprisingly easy to develop an AI that will consistently trounce the player without breaking a sweat. This is  "intelligentn from that AI's per- spective, but it's not what our customers bought the game for." - p9
+% We cannot develop great game AI without addressing all of the problems that each AI agent faces within the game." -  p11
+% "For AI to reach its  full  potential,  game design must evolve beyond  its  all-too- common obsession with designer-controlled  narrative and linear gameplay. It's not about the story: it's about the gameplay. " - p13
+@article{tozour2002evolution,
+  title={The evolution of game AI},
+  author={Tozour, Paul},
+  journal={AI game programming wisdom},
+  volume={1},
+  pages={3--15},
+  year={2002}
+}
+
+% The illusion of intelligence (85 cites)
+% "Human players can be both predictable and unpredictable. In some cases, this  can  happen within  the same game. In other cases, a human player might be unpredictable across multiple game sessions, but pre- dictable within a single game. " - p17
+% "You should strive to provide as many  surprises as you  can. Players will notice an A1 that performs an admirable job of playing the game, but they will talk about an A1 that surprises them." - p17
+% "We  could  separate our game audience into two groups. First is  the player who just wants to win easily. The second group is  the player who wants to win half the time and lose half the time. They usually want the battle to appear nearly hopeless until the end when they turn the tide of battle and prove their superiority." - p18
+@article{scott2002illusion,
+  title={The illusion of intelligence},
+  author={Scott, Bob},
+  journal={AI game programming wisdom},
+  volume={1},
+  pages={16--20},
+  year={2002}
+}
+
+% Generic A* pathfinding (32 cites)
+% "A good path- finding engine can be used for many more purposes than just moving units around the world." - p114
+% "Templates are essential to making the A* machine reusable and fast. Certainly, you can gain reusability by using base  classes and virtual functions, but this architecture achieves reusability and great speed by using templates. " - p177
+% "Reuse that A*. Instead  of writing  a pathfinding  engine, write  a generic A* engine. This way it  can be  used for much more than just pathfinding. It would be a shame to not take advantage of the months or years of optimization work. " - p120
+% "Templatize your engine. Use templates to get speed and reusability  Don't be intimidated by templates,  they are amazing tools. Check your compiler to see how it well it deals with templates." - p120
+% "Customize goal classes. Use different types of goal classes. The goal classes should be extremely specific to the current task. " - p121
+@article{higgins2002generic,
+  title={Generic A* pathfinding},
+  author={Higgins, Dan},
+  journal={AI Game Programming Wisdom},
+  pages={114--121},
+  year={2002},
+  publisher={Charles River Media, Inc., Massachusetts}
+}
+
+% Pathfinding design architecture (35 cites)
+% "Quick paths are designed to get a unit moving. When a player gives a unit an order, he expects the unit  to respond  quickly rather than sit and think for a while. " - p123
+@article{higgins2002pathfinding,
+  title={Pathfinding design architecture},
+  author={Higgins, Dan},
+  journal={AI Game Programming Wisdom},
+  pages={122--132},
+  year={2002},
+  publisher={Charles River Media, Inc., Massachusetts}
+}
+
+% An economic approach to goal directed reasoning
+% "Sometimes,  a goal is too  complicated to address directly-the goal "win the game" is  a good example-and it is  necessary to decompose the goal into smaller sub- goals that are, ideally,  easier to  attempt. It is  most useful when  the  union of these subgoals completely describes the goal, but  that is  an unlikely case in  many games, because of unpredictability." - p403
+% "An opportunity cost is what you must give up in order to perform an action. For exam- ple, in Chess, the opportunity cost of moving one of your pieces is  not being able to move any of your other pieces, An opportunity cost is  incurred whenever an action is performed that cannot be performed in parallel with all other actions; hence, oppor- tunity costs are linked to choice. " - p405
+% "When implementing your pathfinding system,  allow for  your node weighting  to accept a dynamic utility heuristic that works in conjunction with your cost heuristic. Such a system can allow you to chain pathfinding subgoals so that, for example, you can take full advantage of changes in terrain desirability, you can  stage attacks from 
+multiple locations, and you can create complex pathfinding plans that require multi- ple steps" - p410
+@article{harmon2002economic,
+  title={An economic approach to goal-directed reasoning in an RTS},
+  author={Harmon, Vernon},
+  journal={AI Game Programming Wisdom},
+  pages={402--410},
+  year={2002},
+  publisher={Charles River Media, Inc., Massachusetts}
+}
