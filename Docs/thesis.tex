@@ -8,7 +8,15 @@
 \setlength{\parskip}{1.5ex}
 \font\titlefont=cmr10 at 18pt
 
-\lstset{language=C++}
+\lstset{
+  frame=tb, % draw a frame at the top and bottom of the code block
+  tabsize=4, % tab space width
+  showstringspaces=false, % don't mark spaces in strings
+  numbers=left, % display line numbers on the left
+  commentstyle=\color{green}, % comment color
+  keywordstyle=\color{blue}, % keyword color
+  stringstyle=\color{red} % string color
+}
 
 \begin{document}
 
@@ -25,13 +33,23 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras justo velit, vesti
 \clearpage
 \section{Introduction (3-4 pages)}
 
+\subsubsection{Video games and artificial intelligence}
+
 Games are good for the global economy. \citeauthor{Newzoo} reports that in October 2019 the global games market was worth \$148 billion with mobile games accounting for 46\% of that. In order to remain competetive in the growing and changing market, developers are pushed to make bigger, better and more complex games. Blow (\citeyear{blow2004game}) describes how the evolution of the technologies available allowed for a greater number of elements to be simulated in the game world at the same time, which in turn could increase a game's overall potential worth. Video games are just as much about their design as they are about their programming, and the entry barrier to creating good looking and well executed games has been lifted with the establishment of engines like Unity (\cite{Unity}) and Unreal (\cite{Unreal}) to the point where even non-programmers can get involved using textual or visual scripting.
 
 For many years, making a good game has been about improving graphics to be higher quality and more realistic (\cite{yap2002grid}; \cite{blow2004game}). However, it is becoming clear that graphics aren't everything and that good physics systems or competent AI (Artificial Intelligence) can improve the end-user's experience just as much as graphics if not more (\cite{blow2004game}). When referring to AI in a games context, there is a significant difference between the approaches used to create academic AI and the AI used in games. The average game AI simulates a decision making process where the actions to be taken are as believable and fun as possible in the game's context whereas the objective of an academic AI is typically to achieve a level of intelligence or autonomy that enables the AI to optimally excel at a given task (\cite{nareyek2004ai}, p.60). It's not difficult to make a simply AI that always wins against the player, but player's wouldn't enjoy a game they couldn't win (\cite{tozour2002evolution}), and so the distinction between the objectives of these approaches is very important.
 
+\subsubsection{The need for game AI}
+
 AI has multiple uses within a games context but the majority of use cases employ AI to control the characters featured in a level of the game. \citeauthor{laird2001human} (\citeyear{laird2001human}, p.16) said that whether these characters are replacements for opposing players (nicknamed 'Bots') or used to create NPCs (Non Player Characters) to act as companions and plot devices in a role-playing or narrative context, "human-level AI can expand the types of experiences people have playing computer games". \citeauthor{laird2001human} (\citeyear{laird2001human}, p.16) also hypothesised that utilising such an AI is a good step towards the development of enjoyable and challenging gameplay, and potentially to "completely new genres" (\cite{laird2001human}, p.17). While "customers value great AI" (\cite{nareyek2004ai}, p.60), the fact that marketing material cannot advertise enjoyable game AI as easily as appealing graphics means that, in comparison to graphics or physics, AI rarely gets the same time or resource investment it needs to improve (\cite{nareyek2004ai}, p.60).
 
 When developing game AI, it is very important to choose a suitable approach that fulfills the requirements of the game. Academic AI can be made using algorithms inspired by biology such as neural networks or genetic algorithms and trained through iteratation or with datasets. Genetic algorithms simulate natural selection and evolution using data to immitate gene crossover and mutation (\cite{tozour2002evolution}). Similarly, neural networks simulate neuron patterns in the brain to map inputs to outputs (\cite{tozour2002evolution}). These approaches aren't used in game AI due to the requirements necessary to train, tune and test the AI, moreover, the AI would need to be tailored to play a given game in order to take advantage of game specific requirements (\cite{nareyek2004ai}, p.64). Instead, game AI developers embrace simpler, non-learning algorithms due to them being easier to understand, implement and debug (\cite{tozour2002evolution}, p.7).
+
+\subsubsection{AI development}
+
+The most basic forms of AI used in games take the form of a series of if-then statements and are known as a 'production rule systems' (\cite{tozour2002evolution}). The AI is divided into two parts: the first being the ruleset that the AI has to follow and the second is the execution of the response to said rules. The result is a very basic AI that is not only limited to what actions it can take but also when it can take them. AI created in this way is perfectly suited to simple games with a small number of scenarios that the programmer can check for and respond to by hand. Additionally, games where there are a lot of agents needing to make decisions simultaneously would also benefit from a basic AI.
+
+Decision trees are another way to create AI that have applications for games. Building on the same fundamentals as production rule systems, decision trees accept a series of inputs such as the game environment and ask questions in the same if-then style (\cite{tozour2002evolution}). Decision trees are branching structures containing nodes, where each node represents a test condition that leads either a sub-tree or a leaf, and the leaves are dead-end nodes that represent an action the AI should take (\cite{nareyek2004ai}, p.62). Traversal of a decision tree begins at the root node, where each conditional statement selects which child node to investigate next (\cite{nareyek2004ai}). This process repeats until a leaf node is reached containing the action the AI should take. This process is very easy to understand and implement (\cite{millington2019ai}, p.295), and the branching structure makes visualisation of the process more intuitive than the basic list used in a production rule system. Because of this, many consider decision trees to be one of, if not the simplest techiques to making AI (\cite{millington2019ai}, p.295; \cite{tozour2002evolution}, p.7).
 
 END
 
