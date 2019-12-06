@@ -1,5 +1,6 @@
-\documentclass[10pt]{article}
+\documentclass[11pt, a4paper]{article}
 \usepackage[left=40mm, right=20mm, top=20mm, bottom=20mm, includefoot]{geometry}
+\usepackage{setspace}
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage[style=apa,backend=biber, language=english]{biblatex}
@@ -19,22 +20,28 @@
   stringstyle=\color{red} % string color
 }
 
+\linespread{1.5}
 \begin{document}
 
 \title{\titlefont The path to the right decision: An investigation into using heuristic pathfinding algorithms for decision making}
 \author{Ashley Smith}
 \date{\today}
 \maketitle
+\thispagestyle{empty}
 
 \renewcommand\abstractname{\textbf{Abstract}}
 \begin{abstract}
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras justo velit, vestibulum sit amet turpis in, interdum rhoncus magna. Proin pulvinar posuere iaculis. Duis vulputate tristique arcu, id pretium ante blandit ut. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam augue tellus, mattis quis consequat id, facilisis eu lectus. Vivamus euismod non quam sed condimentum. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus vitae consequat nisi. Morbi vulputate tellus ut nibh vulputate, vitae blandit ex faucibus.
 \end{abstract}
 
-\clearpage
+\cleardoublepage
+\setcounter{page}{1}
+\pagenumbering{roman}
 \tableofcontents
 
-\clearpage
+\cleardoublepage
+\pagenumbering{arabic}
+\setcounter{page}{1}
 \section{Introduction}
 
 \subsubsection{Video games and artificial intelligence}
