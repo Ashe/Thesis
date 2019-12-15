@@ -106,7 +106,7 @@ On the other hand, \citeauthor{graham2003pathfinding} (\citeyear{graham2003pathf
 
 \emph{CRITICAL: A* DIAGRAM}
 
-\subsubsection{Processing a character's perception of the game world ready for AI}
+\subsubsection{Processing a character's perception of the game world}
 
 These approaches need a way to digest information about the character and its environment that is relevant to the decision making process, and selecting this information is just as important as the form it is delivered in (\cite{cui2011based}, p.126). This extraction of world data can vary in difficulty (\cite{diller2004behavior}, p.3) and is done for both performance and gameplay needs. All game AI solutions need the world to be re-interpreted to be better suited for both decision making (\cite{buro2004call}, p.2) and pathfinding (\cite{diller2004behavior}, p.3). Particular geometry of the map may need to be interpreted as vantage points, choke points or safe spots; particular formations of enemy units may need to be not only counted but also assessed for tactical strengths, whether engaging the units head-on is better than running away to a better location, and finally, the interpretation of time such as whether there is enough time to navigate to what would otherwise be a better location for fighting the enemy (\cite{buro2004call}). An AI would then take this abstraction of the world, combine it with the character's data and then consider what the character should be doing --- if the character is in an 'attacking' state and the player is nearby then the decision would involve getting into a position and hitting or shooting at the player. 
 
