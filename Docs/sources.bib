@@ -508,6 +508,17 @@
   publisher={Malaysia; Pearson Education Limited,}
 }
 
+% Optimal and efficient path planning for partially known environments (1600 cites)
+% http://web.mit.edu/16.412j/www/html/papers/original_dstar_icra94.pdf
+@incollection{stentz1997optimal,
+  title={Optimal and efficient path planning for partially known environments},
+  author={Stentz, Anthony},
+  booktitle={Intelligent Unmanned Ground Vehicles},
+  pages={203--220},
+  year={1997},
+  publisher={Springer}
+}
+
 % Map based Strategies for Robot Navigation in Unknown Environments (57 cites)
 % https://www.aaai.org/Papers/Symposia/Spring/1996/SS-96-04/SS96-04-017.pdf
 % "The problem with this approach is strictly computational: replanning is an expensive operation. If the robot's prior map information is sparse or inaccurate, then too much time will be spent replanning in Step 2 for the approach to be viable. The D * algorithm (Dynamic A *) [Stentz, 94J was developed to solve this computational problem. D* produces an optimal traverse by using incremental graph theory techniques to dramatically reduce the time required to replan. For environments with a large number of states, D* is capable of replanning hundreds of times faster than straight-forward, brute-force replanning algorithms." - p110
@@ -520,14 +531,7 @@
 }
 
 % Depth-first iterative-deepening: an optimal admissable tree search (2077 cites)
-% https://www.iis.sinica.edu.tw/~tshsu/tcg/2012/slides/slide3.pdf
-% "No need to worry about a good cut-off depth as in DFS." - slide 22
-% "Good for a tournament situation where each move needs to bemade in a limited amount of time." - slide 22
-% "A heuristic search is a search algorithm that uses information about: The initial state, operators on finding the states adjacent to a state, a test function whether a goal is reached, and heuristics to pick the next state to explore." - slide 27
-% "A “good” heuristic search algorithm: - States that are no  likely leading to the goals will not be explored further..A state is cut or pruned. States are explored in an order that are according to their likelihood of leading to the goals -> good move ordering."
-% "[A*] consumes a lot of memory to record the set of visited nodes" - slide 30
-% "IDA∗ does not need to use a priority queue as in the case ofA∗. IDA∗ is optimal in terms of solution cost, time, and space over the class of admissible best-first searches on a tree." - slide 36
-% "Cost function is the knowledge used in searching." - slide 36
+% https://cse.sc.edu/~mgv/csce580f09/gradPres/korf_IDAStar_1985.pdf
 @article{korf1985depth,
   title={Depth-first iterative-deepening: An optimal admissible tree search},
   author={Korf, Richard E},
@@ -814,6 +818,18 @@ multiple locations, and you can create complex pathfinding plans that require mu
   number={SLAC-PUB-1549-REV. 2},
   pages={209--226},
   year={1976}
+}
+
+% Optimal and efficient path planning for partially known environments (1600 cites)
+% http://web.mit.edu/16.412j/www/html/papers/original_dstar_icra94.pdf
+% "The name of the algorithm, D*, was chosen because itresembles A* [8], except that it isdynamic in the sensethat arc cost parameters can change during the problem-solving process." - p2
+@incollection{stentz1997optimal,
+  title={Optimal and efficient path planning for partially known environments},
+  author={Stentz, Anthony},
+  booktitle={Intelligent Unmanned Ground Vehicles},
+  pages={203--220},
+  year={1997},
+  publisher={Springer}
 }
 
 % METHODOLOGY SOURCES
