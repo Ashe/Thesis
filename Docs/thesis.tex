@@ -192,19 +192,11 @@ To research game AI, a game environment needs to be created so that the AI's int
 
 SDL (Simple DirectMedia Layer, \cite{SDL}) and SFML (Simple Fast Multimedia Library, \cite{SFML}) are two libraries that could be considered a good compromise between low level graphics API usage and full-featured commercial engines. Both SDL and SFML implement essentials like opening a window, rendering graphics and responding to input without introducing unnecessary functionality. Programming a full game using these frameworks requires greater technical knowledge and effort than using a traditional game engine, but for the purposes of this research, fewer game systems are necessary and so using SDL and SFML is more acceptable. SDL is used as a starting point for game engines just as much as it is used for standalone games; when paired with a graphics API like OpenGL, SDL facilitates the creation of the game's window and input handling while providing basic rendering functionality with the expectation that the developer will use the graphics API to draw their game. 
 
-SFML on the other hand is more of a wrapper for OpenGL specifically, and contains an assortment of useful predefined classes to be used when rendering 2D graphics game. SFML is much larger when compared to SDL because of this, but for a basic game it would be nonsensical to reimplement low level graphical functionality just to get objects appearing in the game's window. With all things considered, SFML seems to be an intelligent choice for this experiment --- it provides a suitable amount of basic and additional functionality for building a simple 2D game without requiring the installation of a game engine.
+SFML on the other hand is more of a wrapper for OpenGL specifically, and contains an assortment of useful predefined classes to be used when rendering 2D graphics game. SFML is much larger when compared to SDL because of this, but for a basic game it would be nonsensical to reimplement low level graphical components just to get objects appearing in the game's window. With all things considered, SFML seems to be an intelligent choice for this experiment --- it provides a suitable amount of basic and additional functionality for building a simple 2D game without requiring the installation of a game engine.
+
+Finally, one additional feature this research will need is the tooling to fully create and observe the testing environment. Dear ImGui (Immediate mode GUI, \cite{Imgui}) is a library that makes interfaces easy to implement; a level editor, entity inspector and debugging tool will help observe the AI as well as design the situations it will be placed in. Nuklear \parencite{Nuklear} is an alternative to Imgui, but it focuses more on creating high quality interfaces for use in both games and tools, and so it can be customised in a greatly in both appearance and functionality. Since ImGui concentrates on being quick and simple and isn't intended to be used to create a polished interface, it is framework of choice for interfaces for this research.
 
 END
-
-- Tools: 
-  - SDL vs SFML:
-    - Both of these implement rendering not much difference
-    - This project focuses on the implementation of A* and so the framework for making the actual game doesn't matter so much. I used SFML because the defined classes for sprites are nicer to work with than SDL and because the library has more functionality less work needs to be done in getting a basic game rendering
-  - Imgui
-    - Easy to implement
-    - Allows for debugging and analysing the algorithm
-    - Can be used to make level making / editing
-    - Used in many games
 
 - Research methodologies: Qualitative (yes) vs quantitative
   - Why case studies?
