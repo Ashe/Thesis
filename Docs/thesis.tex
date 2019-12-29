@@ -196,21 +196,26 @@ SFML on the other hand is more of a wrapper for OpenGL specifically, and contain
 
 Finally, one additional feature this research will need is the tooling to fully create and observe the testing environment. Dear ImGui (Immediate mode GUI, \cite{Imgui}) is a library that makes interfaces easy to implement; a level editor, entity inspector and debugging tool will help observe the AI as well as design the situations it will be placed in. Nuklear \parencite{Nuklear} is an alternative to Imgui, but it focuses more on creating high quality interfaces for use in both games and tools, and so it can be customised in a greatly in both appearance and functionality. Since ImGui concentrates on being quick and simple and isn't intended to be used to create a polished interface, it is framework of choice for interfaces for this research.
 
-END
+\subsubsection{Research methodologies}
 
-- Research methodologies: Qualitative (yes) vs quantitative
-  - Why case studies?
-    - Researcher studies subjects in natural environment rather than isolating variables
-    - Caters to both qualitative and quantitative
-  - How to case study:
-    - Define objectives of case study
-    - Define the case itself and the research questions
-      - Draw up a table of possible cases and the questions to be asked to explore them
-    - Determine what shouldn't be done \parencite[546]{baxter2008qualitative}
-      - Keeps study in scope
-    - What will be studied
-    - How will data be recorded
-    - How will this answer the question
+\citeauthor{millington2019ai} \parencite*[236]{millington2019ai} said that the only way to compare the effects of heuristic functions is to visualise the algorithm, and so the nature of this research is going to contain qualitative data from observation and inspection. There might be some quantitative aspects to this research, such as comparing the amount of wins or the amount of turns taken to win for each approach, but such values on their own have no meaning in the context of a video game when the level of difficulty, intelligence and randomness can directly influence them. These values may be useful for determining overall efficacy, but the majority of the data is going to need to be qualitative so that these values have context. This research seeks to answer to the following questions:
+
+\begin{itemize}
+\item How plausible is it to use A* in a decision making process for game AI?
+\item How does the inclusion of pathfinding affect the AI's decision making capabilities?
+\item How does changing the components used in A*'s fundamental formula affect the output of the algorithm?
+\item How easy is it to externally influence the AI's decisions, and how can aspects like difficulty be injected into the AI's decision making process?
+\end{itemize}
+
+These questions require careful study of the game AI and its actions, and so based on these questions \citeauthor{baxter2008qualitative} \parencite*[545]{baxter2008qualitative} suggest that performing case studies will be the most effective research method for this investigation. In order to perform a successful case study, \citeauthor{baxter2008qualitative} \parencite*[546]{baxter2008qualitative} also suggest to "bind" the case by explicitly stating what will and won't be studied in the case. This research is about the capabilities and the behaviour of a game AI created with A*, and so following information will \emph{not} be studied in order to keep the study in the same scope:
+
+\begin{itemize}
+\item \textbf{The speed of execution:} Unless significantly slow to the point where the game AI is rendered impractical, the time it takes for the algorithm to finish processing will not be recorded.
+\end{itemize}
+
+There are multiple types of case studies. This research will be studying the resulting game AI produced by multiple approaches to identify differences and similarities between them, which is the type of case study \citeauthor{yin2003k} \parencite*{yin2003k} describes as a "multiple-case" study, or alternatively known as a "collective" case study \parencite{stake1995art}. Other types of case studies \citeauthor{yin2003k} \parencite*{yin2003k} mentions, such as explanatory and descriptive case studies, involve just a single case study that typically involves real life which isn't applicable to this study. Moreover, while you can include embedded units within a single case study to consider things outside of the selected case \parencite[550]{baxter2008qualitative}, it is more beneficial for this investigation to consider multiple cases in just as much detail and then consider them collectively \parencite[555]{baxter2008qualitative}. This means that a more reliable and robust understanding can be gathered of the overall case \parencite[550]{baxter2008qualitative}.
+
+Each case in this collective study is going to involve altering part of the AI's programming and placing the resulting AI into various scenarios and seeing how it performs. Changing the heuristic function to prefer certain actions or changing the AI's interpretation of a goal are examples of such alterations, whereas the scenarios come in the form of both symmetrical and asymmetrical in-game maps featuring distinct unit and obstacle layouts. Each AI will then be observed in play against itself and other AIs on numerous maps, where each map can be modified for further exploration on a case by case basis. Descriptions of notable events and significant benefits, drawbacks and details will be recorded. Conducting the studies in this way will give an insight to the diversity of the different behaviours that can be achieved of making an AI this way, while also validating how functional each AI is in the context of a video game.
 
 \section {Design, Development and Evaluation}
 
