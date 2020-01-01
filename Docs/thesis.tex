@@ -138,6 +138,7 @@ There is a large amount of actions a character can take at any given moment \par
 GOAP essentially takes the idea of having state machines to encapsulate behaviours and replaces the hand-programming the conditions and connections of state transitions with a pathfinding process with the aim being the decoupling of states and their transitions \parencite[2]{orkin2003applying}. The pathfinding process uses each node to represent a state and the edges between each node as the actions that lead to those states \parencite[7]{orkin2003applying} When GOAP is used, a goal is given for the character to achieve, which drives the AI to play the game rather than idly remain inactive, and what is returned is the sequence of actions that will satisfy the goal \parencite[1]{orkin2003applying}. An action is a representation of one thing the character will do to change the world in some way, like opening a door or picking up a weapon \parencite{orkin2003applying}; some actions have preconditions that require the execution of another action prior to it \parencite[5]{orkin2003applying}. A* will then find the sequence of actions, the plan, that satisfies the character's goal while minimising an arbitrary $cost$ value --- \citeauthor{orkin2003applying} \parencite*[4-5]{orkin2003applying} suggests that this process creates interesting character AI that can adapt to change while also having a code structure that is reusable, maintainable and "elegant".
 
 \begin{figure}[h]
+  \centering
   \includegraphics[width=\linewidth]{img/goap_figure_1.png}
   \caption{An example of GOAP \parencite[3]{orkin2003applying}}
   \label{fig:goap}
@@ -279,6 +280,16 @@ This requirement is important to both this investigation and for answering any o
 Each game AI is going to be competing against other AIs in addition to the trivial controllers discussed above, meaning that unless a researcher sets up a human versus AI round, a round will be entirely autonomous with the possibility of instantaneously concluding. If the result of a round is surprising or if the AI needs to be studied further, it is vital that the history of events that took place can be explored and revisited. When combined with the requirements listed above, the researcher should also be able to intervene and switch a team controller into a human controller and resume play from any moment in time and see how the outcome of the round changes. Browsing the history of actions will be the most effective way of observing every part of an AI's turn and will be invaluable for understanding the AI's decision making process.
 
 \end{itemize}
+
+\subsubsection{Designing the program's foundations}
+The first requirement listed in section \ref{subsubsec:requirements} is to create an interactive window that supports 2D graphics. Figure \ref{fig:foundationsUML} illustrates an overview of the program. Details such as the A* algorithm will be introduced later; this section purely covers the foundations of the testing environment.
+
+\begin{figure}[h]
+  \centering
+  
+  \caption{TODO: A UML diagram detailing the infrastructure of the testing environment}
+  \label{fig:foundationsUML}
+\end{figure}
 
 END
 
