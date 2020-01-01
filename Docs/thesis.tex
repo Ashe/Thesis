@@ -139,7 +139,7 @@ GOAP essentially takes the idea of having state machines to encapsulate behaviou
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\linewidth]{img/goap_figure_1.png}
+  \includegraphics[width=\linewidth]{img/goap.png}
   \caption{An example of GOAP \parencite[3]{orkin2003applying}}
   \label{fig:goap}
 \end{figure}
@@ -253,9 +253,6 @@ In order to investigate the effects of combining the pathfinding and decision ma
 \item \textbf{A program that renders 2D graphics and handles mouse clicks:}
 This is a fundamental requirement of any video game as stated in section \ref{subsubsec:toolAndFrameworkSelections}. Making a game in 2D as opposed to making it text-based allows for a better variety of genres and mechanics and makes the game more visual. 3D graphics would allow for an even greater variety of gameplay, but aren't necessary for simple games like the one featured in this investigation.
 
-\item \textbf{A generic implementation of the A* algorithm:}
-A* is critical to the research questions listed in section \ref{subsubsec:researchMethodologies} and is also a common core component in most games. Generically implementing A* means using technologies such as C++ templates to write multi-purpose code --- each component of A* discussed in section \ref{subsubsec:aStarAlgorithm} needs to be equipped to handle multiple types used for different purposes. This implementation of A* needs to use templates for the types of the $states$, $actions$ and $costs$, while also accepting the following functions as arguments: the function for receiving nodes ($states$) connected to a given node; the function that checks whether a node is considered a goal; the heuristic function for finding $h(n)$; the edge weighing function used to find $g(n)$; the function for applying an $action$ to a $state$; and finally a $cost$ comparison function used to compare $f(n)$, the fitness of a given node. This would allow A* to be used for not only standard pathfinding but also in the game AI's decision making process.
-
 \item \textbf{A turn-based game with strategic depth:}
 A game AI needs an environment to interact with, which means building some sort of game. Sections \ref{subsubsec:videoGamesAndAI} and \ref{subsubsec:theNeedForGameAI} describe how game AI is used as an in-game device for offering the player more choices for interaction, implementing difficulty and making the game more enjoyable. There isn't a restriction on the game needing to be turn-based, but it makes it easier to implement the ability to rewind the AI's turn easier, therefore making it easier to observe the AI's behaviour. Turn-based gameplay also acts as a limit for the AI; in a real-time game, pathfinding algorithms are typically run repeatedly so that the AI can regenerate the path to account for changes in the environment. In this simple turn-based game, no external factors will change the map or the status of any units during the AI's turn and the algorithm only need to generate a single plan.
 
@@ -273,6 +270,9 @@ While the focus of this research is for an AI to play, there are several benefit
 \item \textbf{Implementation of trivial team controllers:}
 This requirement is about providing more ways to test the AI. It would be time-consuming to have a human play full-length matches against every variation of an AI, but on the other hand it would be difficult to learn from watching two AIs compete without some sort of base for comparison. To satisfy this requirement, two new team controllers should be added: one that simply ends their turn without doing anything, and another that selects moves randomly. The first team controller would be useful in testing an AI's intelligence and difficulty by having one team do nothing consistently, creating a way to compare the AI variations in a quantitative way, such as by counting the amount of actions required for the AI to win. The second team controller acts as a trivial opponent --- by doing things randomly, this controller will mostly waste its turns while having the potential to perform actions that would be disadvantageous to the AI. This controller will produce demonstratory previews of the AI's overall behaviour, giving an insight into the AI's responses to random samples of gameplay.
 
+\item \textbf{A generic implementation of the A* algorithm:}
+A* is critical to the research questions listed in section \ref{subsubsec:researchMethodologies} and is also a common core component in most games. Generically implementing A* means using technologies such as C++ templates to write multi-purpose code --- each component of A* discussed in section \ref{subsubsec:aStarAlgorithm} needs to be equipped to handle multiple types used for different purposes. This implementation of A* needs to use templates for the types of the $states$, $actions$ and $costs$, while also accepting the following functions as arguments: the function for receiving nodes ($states$) connected to a given node; the function that checks whether a node is considered a goal; the heuristic function for finding $h(n)$; the edge weighing function used to find $g(n)$; the function for applying an $action$ to a $state$; and finally a $cost$ comparison function used to compare $f(n)$, the fitness of a given node. This would allow A* to be used for not only standard pathfinding but also in the game AI's decision making process.
+
 \item \textbf{Implementation team controllers for each variation of AI made with the A* algorithm:}
 This requirement is important to both this investigation and for answering any of the research questions in section \ref{subsubsec:researchMethodologies}. Each team controller is expected to use the the A* algorithm in a different way so that when introduced to a scenario they can be played against and studied. Instancing a controller for each variation allows for a direct comparison between AIs in a single round. It is important to remember that strength is not equivalent to suitability and that an AI consistently winning does not prove anything. However, comparing the range of strengths between possible variations of AI will be used to draw conclusions with regards to the third and fourth research questions in particular. The most important observations to be made in AI versus AI rounds are the differences in tactics deployed and whether these tactics can be traced back to their implementation of A*.
 
@@ -281,15 +281,16 @@ Each game AI is going to be competing against other AIs in addition to the trivi
 
 \end{itemize}
 
-\subsubsection{Designing the program's foundations}
-The first requirement listed in section \ref{subsubsec:requirements} is to create an interactive window that supports 2D graphics. Figure \ref{fig:foundationsUML} illustrates an overview of the program. Details such as the A* algorithm will be introduced later; this section purely covers the foundations of the testing environment.
+\subsubsection{Designing the program's basic structure}
 
-\begin{figure}[h]
+\begin{figure}[!h]
   \centering
-  
-  \caption{TODO: A UML diagram detailing the infrastructure of the testing environment}
+  \includegraphics[width=\linewidth]{img/app_overview.png}
+  \caption{A UML diagram detailing the infrastructure of the testing environment}
   \label{fig:foundationsUML}
 \end{figure}
+
+The first requirement listed in section \ref{subsubsec:requirements} is to create an interactive window that supports 2D graphics. Figure \ref{fig:foundationsUML} illustrates an overview of the program; the \emph{App} class manages the window and handles the main loop of processing input and rendering the screen. The \emph{Scene} class can be inherited to introduce different functionality to the testing environment and will be used to encompass the strategy game and its logic.
 
 END
 
