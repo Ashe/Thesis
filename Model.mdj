@@ -15856,18 +15856,18 @@
 																"$ref": "AAAAAAFvbCLI2GBpnzU="
 															},
 															"font": "Arial;15;0",
-															"left": 113,
+															"left": 106,
 															"top": 50,
-															"width": 101,
+															"width": 108,
 															"height": 30,
 															"text": "Continue the game",
 															"wordWrap": true
 														}
 													],
 													"font": "Arial;15;0",
-													"left": 103,
+													"left": 96,
 													"top": 40,
-													"width": 121,
+													"width": 128,
 													"height": 50,
 													"nameLabel": {
 														"$ref": "AAAAAAFvbCLI2GBqcb4="
@@ -15890,7 +15890,7 @@
 																"$ref": "AAAAAAFvbCq4CWCggjc="
 															},
 															"font": "Arial;15;0",
-															"left": 77,
+															"left": 74,
 															"top": 698,
 															"width": 173,
 															"height": 30,
@@ -15899,7 +15899,7 @@
 														}
 													],
 													"font": "Arial;15;0",
-													"left": 67,
+													"left": 64,
 													"top": 688,
 													"width": 193,
 													"height": 50,
@@ -15992,18 +15992,18 @@
 																"$ref": "AAAAAAFvbDLAumD6L+w="
 															},
 															"font": "Arial;15;0",
-															"left": 104,
+															"left": 101,
 															"top": 314,
-															"width": 120,
+															"width": 123,
 															"height": 45,
 															"text": "Get the controller responsible for the current team",
 															"wordWrap": true
 														}
 													],
 													"font": "Arial;15;0",
-													"left": 59,
+													"left": 56,
 													"top": 304,
-													"width": 210,
+													"width": 213,
 													"height": 65,
 													"nameLabel": {
 														"$ref": "AAAAAAFvbDLAumD7bQ4="
@@ -16060,7 +16060,7 @@
 																"$ref": "AAAAAAFvbDTiImE+b3E="
 															},
 															"font": "Arial;15;0",
-															"left": 129,
+															"left": 121,
 															"top": 610,
 															"width": 72,
 															"height": 45,
@@ -16069,7 +16069,7 @@
 														}
 													],
 													"font": "Arial;15;0",
-													"left": 96,
+													"left": 88,
 													"top": 600,
 													"width": 138,
 													"height": 65,
@@ -16094,18 +16094,18 @@
 																"$ref": "AAAAAAFvbD1meWIeRWI="
 															},
 															"font": "Arial;15;0",
-															"left": 103,
+															"left": 101,
 															"top": 522,
-															"width": 121,
+															"width": 122,
 															"height": 45,
 															"text": "Retrieve a stack of actions from controller",
 															"wordWrap": true
 														}
 													],
 													"font": "Arial;15;0",
-													"left": 59,
+													"left": 56,
 													"top": 512,
-													"width": 209,
+													"width": 212,
 													"height": 65,
 													"nameLabel": {
 														"$ref": "AAAAAAFvbD1memIfEU0="
@@ -16707,7 +16707,7 @@
 														"$ref": "AAAAAAFvbC8AeGDe5Ys="
 													},
 													"lineStyle": 2,
-													"points": "360:768;360:632;233:632",
+													"points": "360:768;360:632;225:632",
 													"nameLabel": {
 														"$ref": "AAAAAAFvbFEt4GXSuIc="
 													}
@@ -16923,7 +16923,7 @@
 														"$ref": "AAAAAAFvbFT3hWZPAbs="
 													},
 													"lineStyle": 2,
-													"points": "160:928;160:944;48:944;48:64;103:64",
+													"points": "160:928;160:944;48:944;48:64;96:64",
 													"nameLabel": {
 														"$ref": "AAAAAAFvbF4bRmcmrvI="
 													}
