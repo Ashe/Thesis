@@ -282,6 +282,7 @@ Each game AI is going to be competing against other AIs in addition to the trivi
 \end{itemize}
 
 \subsubsection{Designing the program's basic structure}
+\label{subsubsec:designingProgram}
 
 \begin{figure}[!h]
   \centering
@@ -293,7 +294,28 @@ Each game AI is going to be competing against other AIs in addition to the trivi
 The first requirement listed in section \ref{subsubsec:requirements} is to create an interactive window that supports 2D graphics. Figure \ref{fig:foundationsUML} illustrates an overview of the program; the \emph{App} class manages the window and handles the main loop of processing input and rendering the screen. The \emph{Scene} class can be inherited to introduce different functionality to the testing environment and will be used to encompass the strategy game and its logic.
 
 \subsubsection{Designing the strategy game}
-The second requirement in section \ref{subsubsec:requirements} is to build a sample video game for the AI to play. Figure \ref{fig:strategyGameUML} shows \emph{TODO: Explain figure}
+\label{subsubsec:designingStrategyGame}
+
+The second requirement in section \ref{subsubsec:requirements} is to build a simple, turn-based strategy game for the AI to play. The rules of this game are simple: each player controls a squad of units with the aim being to eliminate all enemy units while maintaining at least one surviving unit. During their turn, a player can select one of their units and then move and attack with it. A player has a set amount of MP and AP (movement and action points) per turn, and can distribute them between each of their units. Each unit drains a different amount of MP per tile when moving and a different amount of AP when attacking as shown in table \ref{table:unitOverview}, meaning that some can move further and some can eliminate more units during a single turn. A unit can only attack another unit when it has enough AP and the target is in range and `in line of sight' where no other units or obstacles can be in between the attacker and their target.
+
+\begin{table}[!h]
+  \centering
+  \begin{tabular}{ | l | p{6cm} | c | c | c |}
+    \hline
+    \textbf{Unit} & \textbf{Description} & \textbf{MP cost} & \textbf{AP cost} & \textbf{Range} \\ \hline
+    Melee & Fast and close-range unit & 1 & 1 & 1 \\ \hline
+    Blaster & Standard mid-range unit & 2 & 1 & 3 \\ \hline
+    Sniper & Standard long-range unit & 2 & 2 & 10 \\ \hline
+    Laser & Slowest unit with the longest range & 3 & 3 & 25 \\ 
+    \hline
+  \end{tabular}
+  \caption{The traits each unit possesses in the game}
+  \label{table:unitOverview}
+\end{table}
+
+Resource management and positioning are the two key elements that make this game strategic. A player will have to distribute MP between their units to keep them out of the enemy's range and line of sight while also positioning their units to attack the enemy from a safe location. This isn't always going to be possible, and therefore the constraints of the MP and AP system mean that sacrifices have to be made each turn in order to win. This game will be suitable for answering the first and second research questions listed in section \ref{subsubsec:researchMethodologies} because the MP and AP systems can be directly linked to the cost of moving and attacking, allowing the A* algorithm to decide to move and attack units based on both positional and game-specific data.
+
+Figure \ref{fig:strategyGameUML} shows the strategy game's structure and how the main \emph{Game} class is derived from the \emph{Scene} so that it can use functions such as \emph{update} and \emph{render} to integrate back to the core program in section \ref{subsubsec:designingProgram}. There are several important things about this design that should be explained further, one being the \emph{Game} class contains a lot of static functions such as \emph{readMap} and \emph{takeAction}, these functions are pure and do not rely on the current state of the game which is why they accept the data they operate on as a parameter rather than taking it from the instance of \emph{Game}. These functions are easier to reason about and can be safely used in any context without the state of the game being touched --- this allows A* to make use of these functions to create, operate on and evaluate states of the game without officially doing anything.
 
 \begin{figure}[!h]
   \centering
@@ -301,6 +323,8 @@ The second requirement in section \ref{subsubsec:requirements} is to build a sam
   \caption{A UML diagram showing the implementation of the strategy game}
   \label{fig:strategyGameUML}
 \end{figure}
+
+The actual state of the game is contained in the class \emph{GameState}. This is done for two reasons, the first reason being that these states can be collected and revisited as needed for the final requirement of section \ref{subsubsec:requirements}. The map, the currently playing team, the turn number and number of resources remaining are all contained within the \emph{GameState} itself and not in \emph{Game}; the game then uses the selected \emph{GameState's} contents to visualise the current state of the game on screen, making the viewing and overwriting of previous states as easy as manipulating this collection. The second reason is that the A* algorithm will process each \emph{GameState} as a node in the decision making process and the \emph{Actions} the players take will transform one state into a new, separate state to then be reconsidered for new \emph{Actions}. The \emph{GameState} class should represent what the AI's state and its perception of the game and be derived from the current state of the game, but because players have a complete set of information about the current state of the game, the \emph{GameState} class serves as both the AI's current state as well as the actual state of the game.
 
 END
 
