@@ -15893,8 +15893,8 @@
 															"left": 74,
 															"top": 698,
 															"width": 173,
-															"height": 30,
-															"text": "Attempt to apply the Action to the current state",
+															"height": 45,
+															"text": "Attempt to create a new state with the action and add to collection",
 															"wordWrap": true
 														}
 													],
@@ -15902,7 +15902,7 @@
 													"left": 64,
 													"top": 688,
 													"width": 193,
-													"height": 50,
+													"height": 65,
 													"nameLabel": {
 														"$ref": "AAAAAAFvbCq4CmChTH0="
 													}
@@ -16597,7 +16597,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"left": 174,
-															"top": 745,
+															"top": 753,
 															"height": 13,
 															"alpha": 1.5707963267948966,
 															"distance": 15,
@@ -16615,7 +16615,7 @@
 														"$ref": "AAAAAAFvbCq4CWCggjc="
 													},
 													"lineStyle": 2,
-													"points": "160:737;160:768",
+													"points": "160:752;160:768",
 													"nameLabel": {
 														"$ref": "AAAAAAFvbFEFZGW/IC0="
 													}
@@ -17056,7 +17056,7 @@
 											"_parent": {
 												"$ref": "AAAAAAFvbBtKaF/Tt30="
 											},
-											"name": "Attempt to apply the Action to the current state",
+											"name": "Attempt to create a new state with the action and add to collection",
 											"ownedElements": [
 												{
 													"_type": "FCFlow",

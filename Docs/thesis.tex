@@ -324,10 +324,9 @@ Figure \ref{fig:strategyGameUML} shows the strategy game's structure and how the
   \label{fig:strategyGameUML}
 \end{figure}
 
-The actual state of the game is contained in the class \emph{GameState}. This is done for two reasons, the first reason being that these states can be collected and revisited as needed for the final requirement of section \ref{subsubsec:requirements}. The map, the currently playing team, the turn number and number of resources remaining are all contained within the \emph{GameState} itself and not in \emph{Game}; the game then uses the selected \emph{GameState's} contents to visualise the current state of the game on screen, making the viewing and overwriting of previous states as easy as manipulating this collection. The second reason is that the A* algorithm will process each \emph{GameState} as a node in the decision making process and the \emph{Actions} the players take will transform one state into a new, separate state to then be reconsidered for new \emph{Actions}. The \emph{GameState} class should represent what the AI's state and its perception of the game and be derived from the current state of the game, but because players have a complete set of information about the current state of the game, the \emph{GameState} class serves as both the AI's current state as well as the actual state of the game.
+The actual state of the game is contained in the class \emph{GameState}. This is done for two reasons, the first reason being that these states can be collected and revisited as needed for the final requirement of section \ref{subsubsec:requirements}. The map, the currently playing team, the turn number and number of resources remaining are all contained within the \emph{GameState} itself and not in \emph{Game}; the game then uses the selected \emph{GameState's} contents to visualise the current state of the game on screen, making the viewing and overwriting of previous states as easy as viewing and manipulating this collection. The second reason is that the A* algorithm will process each \emph{GameState} as a node in the decision making process and the \emph{Actions} the players take will transform one state into a new, separate state to then be reconsidered for new \emph{Actions}. The \emph{GameState} class should represent what the AI's state and its perception of the game and be derived from the current state of the game, but because players have a complete set of information about the current state of the game, the \emph{GameState} class serves as both the AI's current state as well as the actual state of the game.
 
-\subsubsection{Designing the game loop}
-\label{subsubsec:designingGameLoop}
+Figure \ref{fig:gameLoop} shows a flowchart of how a turn will be played out and will be introduced in the function \emph{continueGame} in the \emph{Game} class shown figure \ref{fig:strategyGameUML}. All controllers will return a stack of actions for the game loop to unwind and attempt to perform; this approach limits controllers to legitimate methods for working with \emph{GameStates} and that \emph{Game} can validate the decisions a controller makes and accept only those that are legal. The requirement of allowing a human to intervene section from section \ref{subsubsec:requirements} is also considered --- execution is will be interrupted during a human controller's turn and will resume when their turn ends. This process recursively fetches controllers' decisions and updates the collection of states until the game has concluded.
 
 \begin{figure}[!h]
   \centering
@@ -336,15 +335,10 @@ The actual state of the game is contained in the class \emph{GameState}. This is
   \label{fig:gameLoop}
 \end{figure}
 
-END
-
-- Set out requirements and make it clear how these are derived from previous chapters
-
-- Detail design with diagrams, program flow, UML, class headers, interface mock-ups
-  - Mention how each requirement is implemented
-
 \subsection {Development (14--15 pages when combined with design)}
 \label{subsec:development}
+
+END
 
 - Go through commit history and summarise main narrative (key milestones and changes). Can always place the rest as a (referenced) appendix.
 
