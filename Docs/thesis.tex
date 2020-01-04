@@ -313,9 +313,9 @@ The second requirement in section \ref{subsubsec:requirements} is to build a sim
   \label{table:unitOverview}
 \end{table}
 
-Resource management and positioning are the two key elements that make this game strategic. A player will have to distribute MP between their units to keep them out of the enemy's range and line of sight while also positioning their units to attack the enemy from a safe location. This isn't always going to be possible, and therefore the constraints of the MP and AP system mean that sacrifices have to be made each turn in order to win. This game will be suitable for answering the first and second research questions listed in section \ref{subsubsec:researchMethodologies} because the MP and AP systems can be directly linked to the cost of moving and attacking, allowing the A* algorithm to decide to move and attack units based on both positional and game-specific data.
+Resource management and positioning are the two key elements that make this game strategic. A player will have to distribute MP between their units to keep them out of the enemy's range and line of sight while also positioning their units to attack the enemy from a safe location. This isn't always going to be possible, and therefore the constraints of the MP and AP mechanics mean that sacrifices have to be made each turn in order to win. This game will be suitable for answering the first and second research questions listed in section \ref{subsubsec:researchMethodologies} because moving and attacking can be directly linked to MP and AP costs allowing the A* algorithm to decide to move and attack units based on both positional and game-specific data.
 
-Figure \ref{fig:strategyGameUML} shows the strategy game's structure and how the main \emph{Game} class is derived from the \emph{Scene} so that it can use functions such as \emph{update} and \emph{render} to integrate back to the core program in section \ref{subsubsec:designingProgram}. There are several important things about this design that should be explained further, one being the \emph{Game} class contains a lot of static functions such as \emph{readMap} and \emph{takeAction}, these functions are pure and do not rely on the current state of the game which is why they accept the data they operate on as a parameter rather than taking it from the instance of \emph{Game}. These functions are easier to reason about and can be safely used in any context without the state of the game being touched --- this allows A* to make use of these functions to create, operate on and evaluate states of the game without officially doing anything.
+Figure \ref{fig:strategyGameUML} shows the strategy game's structure and how the main \emph{Game} class is derived from the \emph{Scene} so that it can use functions such as \emph{update} and \emph{render} to integrate back to the core program in section \ref{subsubsec:designingProgram}. There are several important things about this design that should be explained further, one being the \emph{Game} class contains a lot of static functions such as \emph{readMap} and \emph{takeAction}, these functions are pure and do not rely on the current state of the game which is why they accept the data they operate on as a parameter rather than taking it from the instance of \emph{Game}. These functions are easier to reason about and can be safely used in any context without the state of \emph{Game} being touched --- this allows A* to make use of these functions to create, operate on and evaluate states of the game without making destructive changes.
 
 \begin{figure}[!h]
   \centering
@@ -326,14 +326,41 @@ Figure \ref{fig:strategyGameUML} shows the strategy game's structure and how the
 
 The actual state of the game is contained in the class \emph{GameState}. This is done for two reasons, the first reason being that these states can be collected and revisited as needed for the final requirement of section \ref{subsubsec:requirements}. The map, the currently playing team, the turn number and number of resources remaining are all contained within the \emph{GameState} itself and not in \emph{Game}; the game then uses the selected \emph{GameState's} contents to visualise the current state of the game on screen, making the viewing and overwriting of previous states as easy as viewing and manipulating this collection. The second reason is that the A* algorithm will process each \emph{GameState} as a node in the decision making process and the \emph{Actions} the players take will transform one state into a new, separate state to then be reconsidered for new \emph{Actions}. The \emph{GameState} class should represent what the AI's state and its perception of the game and be derived from the current state of the game, but because players have a complete set of information about the current state of the game, the \emph{GameState} class serves as both the AI's current state as well as the actual state of the game.
 
-Figure \ref{fig:gameLoop} shows a flowchart of how a turn will be played out and will be introduced in the function \emph{continueGame} in the \emph{Game} class shown figure \ref{fig:strategyGameUML}. All controllers will return a stack of actions for the game loop to unwind and attempt to perform; this approach limits controllers to legitimate methods for working with \emph{GameStates} and that \emph{Game} can validate the decisions a controller makes and accept only those that are legal. The requirement of allowing a human to intervene section from section \ref{subsubsec:requirements} is also considered --- execution is will be interrupted during a human controller's turn and will resume when their turn ends. This process recursively fetches controllers' decisions and updates the collection of states until the game has concluded.
-
 \begin{figure}[!h]
   \centering
   \includegraphics[width=12cm]{img/game_loop.png}
   \caption{A flowchart showing how a turn is executed}
   \label{fig:gameLoop}
 \end{figure}
+
+Figure \ref{fig:gameLoop} shows a flowchart of how a turn will be played out and will be introduced in the function \emph{continueGame} in the \emph{Game} class shown figure \ref{fig:strategyGameUML}. All controllers will return a stack of actions for the game loop to unwind and attempt to perform; this approach limits controllers to legitimate methods for working with \emph{GameStates} and that \emph{Game} can validate the decisions a controller makes and accept only those that are legal. The requirement of allowing a human to intervene section from section \ref{subsubsec:requirements} is also considered --- execution is will be interrupted during a human controller's turn and will resume when their turn ends. This process recursively fetches controllers' decisions and updates the collection of states until the game has concluded.
+
+\subsubsection{Designing tools for investigation}
+\label{subsubsec:designingToolsForInvestigation}
+
+The requirements of a map editor and some way of browsing through the collection of states will be satisfied by using ImGui \parencite{Imgui} as stated in section \ref{subsubsec:toolAndFrameworkSelections}. Both the editor and state browser will be contained in their own windows so that the map editor can be hidden when not needed, however the state browser will always be on display because of how important it is for observation of the AIs.
+
+\begin{figure}[!h]
+  \centering
+  \caption{TODO: A draft of the design for the map editor}
+  \label{fig:mapEditor}
+\end{figure}
+
+Figure \ref{fig:mapEditor} shows the four main parts to the map editor that are explained below:
+\begin{itemize}
+  \item \textbf{Saving and loading:} This can be implemented with a text input for entering the name of a file combined with two buttons for handling saving and loading respectively. 
+  \item \textbf{Creating and deleting objects:} As shown in figure \ref{fig:strategyGameUML}, an \emph{Object} is just an enum that can represent nothing, a wall or a unit. When paired with a \emph{Team} (represented as an integer value), a controller will then be assigned to that unit. This means that this part of the editor needs a drop-down box to select an \emph{Object} and a number entry for specifying the \emph{Team}. When the map editor window is open, left clicking and right clicking on the map will create and destroy objects.
+  \item \textbf{Recreating maps:} Resizing and resetting the map which can be achieved with a number entries for specifying the width and height and a button that recreates the map when clicked. 
+  \item \textbf{Changing AP and MP:} Since changing the MP and AP requires the creation of a new \emph{GameState}, the only way to change these values is to push a duplicate of the current state with the new resources. This can be also be done after a new map has been generated before saving to set the MP and AP allocated per turn.
+\end{itemize}
+
+\begin{figure}[!h]
+  \centering
+  \caption{TODO: A draft of the design for the state browser}
+  \label{fig:stateBrowser}
+\end{figure}
+
+For the state browser, a simple scroll bar will suffice as a way of searching the collection --- the variable \emph{currentState} in \emph{Game} as shown in figure \ref{fig:strategyGameUML} is an index referring to which state in the collection \emph{states} to render on screen, so a scroll bar representing a range of values from zero to the size of \emph{states} creates an easy way of examine all states of the game. This window should also display information about the state, such as the amount of MP and AP as well as the number of members in each team.
 
 \subsection {Development (14--15 pages when combined with design)}
 \label{subsec:development}
