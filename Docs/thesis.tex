@@ -5,6 +5,7 @@
 \usepackage[english]{babel}
 \usepackage[autostyle]{csquotes}
 \usepackage{listings}
+\usepackage{array}
 \usepackage[style=apa,backend=biber, language=english]{biblatex}
 \PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
 
@@ -342,7 +343,8 @@ The requirements of a map editor and some way of browsing through the collection
 
 \begin{figure}[!h]
   \centering
-  \caption{TODO: A draft of the design for the map editor}
+  \includegraphics[width=10cm]{img/map_editor.png}
+  \caption{A draft of the design for the map editor window}
   \label{fig:mapEditor}
 \end{figure}
 
@@ -350,17 +352,40 @@ Figure \ref{fig:mapEditor} shows the four main parts to the map editor that are 
 \begin{itemize}
   \item \textbf{Saving and loading:} This can be implemented with a text input for entering the name of a file combined with two buttons for handling saving and loading respectively. 
   \item \textbf{Creating and deleting objects:} As shown in figure \ref{fig:strategyGameUML}, an \emph{Object} is just an enum that can represent nothing, a wall or a unit. When paired with a \emph{Team} (represented as an integer value), a controller will then be assigned to that unit. This means that this part of the editor needs a drop-down box to select an \emph{Object} and a number entry for specifying the \emph{Team}. When the map editor window is open, left clicking and right clicking on the map will create and destroy objects.
-  \item \textbf{Recreating maps:} Resizing and resetting the map which can be achieved with a number entries for specifying the width and height and a button that recreates the map when clicked. 
+  \item \textbf{Recreating maps:} This can be achieved with a number entries for specifying the width and height and a button that recreates the map when clicked. 
   \item \textbf{Changing AP and MP:} Since changing the MP and AP requires the creation of a new \emph{GameState}, the only way to change these values is to push a duplicate of the current state with the new resources. This can be also be done after a new map has been generated before saving to set the MP and AP allocated per turn.
 \end{itemize}
 
 \begin{figure}[!h]
   \centering
-  \caption{TODO: A draft of the design for the state browser}
+  \includegraphics[width=10cm]{img/state_browser.png}
+  \caption{A draft of the design for the state browser}
   \label{fig:stateBrowser}
 \end{figure}
 
-For the state browser, a simple scroll bar will suffice as a way of searching the collection --- the variable \emph{currentState} in \emph{Game} as shown in figure \ref{fig:strategyGameUML} is an index referring to which state in the collection \emph{states} to render on screen, so a scroll bar representing a range of values from zero to the size of \emph{states} creates an easy way of examine all states of the game. This window should also display information about the state, such as the amount of MP and AP as well as the number of members in each team.
+Figure \ref{fig:stateBrowser} shows how the state browser window should look. A simple scroll bar will suffice as a way of searching the collection --- the variable \emph{currentState} in \emph{Game} as shown in figure \ref{fig:strategyGameUML} is an index referring to which state in the collection \emph{states} to render on screen, so a scroll bar representing a range of values from zero to the size of \emph{states} creates an easy way of examine all states of the game. This window also displays information about the state, such as the amount of MP and AP as well as the number of members in each team. It makes sense to also include the ability to change the controller for each team since each team is already being displayed, this will allow the alteration of which algorithm is controlling which team at any given moment. Finally, the ability to reset and continue the game, clearing the state collection and starting the process illustrated in figure \ref{fig:gameLoop} respectively, will be introduced with the `reset game' and `continue game' buttons that can be seen at the bottom of the window. 
+
+\subsubsection{Designing the process of investigation}
+\label{subsubsec:designingInvestigation process}
+
+\begin{table}[!h]
+  \centering
+  \hyphenpenalty=10000
+  \begin{tabular}{ | m{2.5cm} | m{4cm} | m{6cm} |}
+    \hline
+    \textbf{Component} & \textbf{Description} & \textbf{Exemplary Changes} \\ \hline
+    Goal function & Decide whether a given \emph{GameState} should be considered a goal & Making ending the turn or eliminating at least one enemy a goal to satisfy \\ \hline
+    \emph{Cost} implementation & Represent and store the cost of performing an \emph{Action} & Separate the \emph{Cost} type into a set of different elements using various traits and aspects of \emph{Actions} \\ \hline
+    Weighing function & Generate the suitable \emph{Cost} value for a given \emph{Action} & Changing how \emph{Actions} are valued to see how the AI's preferences affect behaviour \\ \hline
+    \emph{Heuristic} function & Determine an order in which \emph{GameStates} are explored & Don't guide it (by using Dijkstra's algorithm) or try different ways of estimating the \emph{Cost} of satisfying the goal \\ \hline
+    \emph{Cost} comparison function & Determine which \emph{Cost} is preferable to another & Experiment with multiplying and ignoring elements of \emph{Cost} as an alternative way of changing the AI's preferences \\
+    \hline
+  \end{tabular}
+  \caption{The components of the A* algorithm and some examples of how they can be changed}
+  \label{table:designingAStarVariations}
+\end{table}
+
+With the majority of the requirements in section \ref{subsubsec:requirements} designed, the only one unsatisfied is the actual implementation of the A* algorithm --- this will be programmed generically and be tuned for each use case during experimentation, with each variation of the algorithm being derived from interesting parts of previous iterations. The components of A* each variation is going to change is listed in table \ref{table:designingAStarVariations}; the changes made will be decided based on the studies of the other variations. For example, if a flaw in one variation's approach can be determined based on its observed behaviour, the next iteration might be adapted in an attempt to improve on the current approach.
 
 \subsection {Development (14--15 pages when combined with design)}
 \label{subsec:development}
