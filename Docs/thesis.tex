@@ -1,4 +1,4 @@
-\documentclass[11pt, a4paper]{article}
+\documentclass[11pt, a4paper]{report}
 \usepackage[left=40mm, right=20mm, top=20mm, bottom=20mm, includefoot]{geometry}
 \usepackage{setspace}
 \usepackage{graphicx}
@@ -48,28 +48,33 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras justo velit, vesti
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
-\section{Introduction}
+\chapter{Introduction}
+\label{chapter:introduction}
+
+\newcommand\invisiblesection[1]{%
+  \refstepcounter{section}%
+  \addcontentsline{toc}{section}{\protect\numberline{\thesection}#1}%
+  \sectionmark{#1}}
+
+\invisiblesection{Introduction}
 \label{sec:introduction}
 
-\subsection{Introduction}
-\label{subsec:introduction}
-
-\subsubsection{Video games and artificial intelligence}
-\label{subsubsec:videoGamesAndAI}
+\subsection{Video games and artificial intelligence}
+\label{subsec:videoGamesAndAI}
 
 Games are good for the global economy. \citeauthor{Newzoo} \parencite*{Newzoo} reports that in October 2019 the global games market was worth \$148 billion. In order to remain competitive, developers are pushed to make bigger, better and more complex games. The evolution of the technologies available has allowed for a greater number of elements to be simulated in the game world which could potentially increase a game's worth \parencite{blow2004game}. The entry barrier to creating these good-looking and well executed games has been lifted with the establishment of engines like Unity \parencite{Unity} and Unreal \parencite{Unreal} to the point where even non-programmers can get involved using textual or visual scripting.
 
 For many years, only the game's graphics were considered important \parencites{yap2002grid, blow2004game}, however, good physics systems or competent AI (Artificial Intelligence) are now recognised as a way of improving the end-user's experience just as much \parencite{blow2004game}. Game AI is different from the normal, academic AI as it simulates behaviour and aims to be believable and fun, whereas an academic AI aims to achieve a level of intelligence or autonomy to excel at a given task \parencite[60]{nareyek2004ai}.
 
-\subsubsection{The need for game AI}
-\label{subsubsec:theNeedForGameAI}
+\subsection{The need for game AI}
+\label{subsec:theNeedForGameAI}
 
 AI has multiple uses within a games context but the majority of use cases employ AI to control the characters featured in a level of the game. \citeauthor{laird2001human} \parencite*[16]{laird2001human} said that whether these characters are replacements for opposing players or characters that act as companions, villains and plot devices, "human-level AI can expand the types of experiences people have playing computer games". Using AI opens up the opportunity for increasing the difficulty of the game, and could be perceived as the kind of challenges that make games fun \parencite[2]{buro2004call}. \citeauthor{laird2001human} \parencite*[16]{laird2001human} also hypothesised that utilising such an AI is a good step towards the development of enjoyable and challenging gameplay, and potentially to "completely new genres" \parencite[17]{laird2001human}.
 
  "Customers value great AI" \parencite[60]{nareyek2004ai} and so it's important to choose a suitable approach that fulfils the expectations of the player thus the requirements of the game \parencite[19]{millington2019ai}. Academic AI can be made using algorithms inspired by biology such as neural networks or genetic algorithms and trained through iteration or with datasets. These approaches aren't used in game AI because of the high requirements to train the AI to interact with a specific game \parencite[64]{nareyek2004ai}, moreover, it is easy to train the AI to play too strongly ruin the game \parencite[13]{tozour2002evolution}. Instead, game AI developers embrace simpler, non-learning algorithms due to them being easier to understand, implement and debug \parencite[7]{tozour2002evolution}.
 
-\subsubsection{Approaches to game AI development}
-\label{subsubsec:approachesToGameAIDevelopment}
+\subsection{Approaches to game AI development}
+\label{subsec:approachesToGameAIDevelopment}
 
 The most basic forms of AI used in games take the form of a series of if-then statements and are known as `production rule systems' \parencite{tozour2002evolution}. These statements are organised in a list and the AI uses the behaviour of the rules that evaluate to $true$. The result is a very basic AI that is not only limited to what actions it can take but also when it can take them. Similarly, decision trees combine the same if-then style with branching structures to create game AI \parencite[62]{nareyek2004ai}, and the tree and subtrees are recursively traversed until a leaf node is found with the desired behaviour. This process is very easy to understand and implement \parencite[295]{millington2019ai}, and the branching structure makes visualisation of the process more intuitive than the basic list used in a production rule system. Because of this, many consider decision trees to be one of, if not the simplest techniques to making AI  (\cite[295]{millington2019ai}; \cite[7]{tozour2002evolution}).
 
@@ -83,8 +88,8 @@ The need for more flexibility in game AI has lead to the creation adaptation of 
 
 \emph{TODO: BEHAVIOUR TREE DIAGRAM}
 
-\subsubsection{The relationship of pathfinding and game AI}
-\label{subsubsec:theRelationshipOfPathfindingAndGameAI}
+\subsection{The relationship of pathfinding and game AI}
+\label{subsec:theRelationshipOfPathfindingAndGameAI}
 
 One common requirement for game AI is for the characters to be able to traverse the areas of the game in a way which meets the player's expectations logically and efficiently --- a task known as pathfinding. Regardless of what an AI decides to do, a pathfinding mechanic needs to be in place to allow the AI to navigate to where it needs to go, manoeuvring around obstacles while still taking a sensible route \parencite[60]{graham2003pathfinding}. For most games, the algorithm of choice is A* as it is the de-facto standard pathfinding algorithm (\cite[197]{millington2019ai}; \cite[2]{botea2004near}; \cite[64]{nareyek2004ai}; \cite[73]{leigh2007using}).
 
@@ -94,11 +99,11 @@ With the pathfinding process taking place after the decision has been made, the 
 
 Pathfinding algorithms are actually general purpose search algorithms applied to a spatial context (\cite[125]{cui2011based}; \cite[6]{orkin2003applying}; \cite[46]{yap2002grid}); there is no such restriction that these algorithms should be limited to pathfinding when in a games context. \citeauthor{millington2019ai} \parencite*[197]{millington2019ai} said that "pathfinding can also be placed in the driving seat, making decisions about where to move as well as how to get there". With search algorithms having the flexibility of being able to traverse graphs of nodes representing any kind of data, it's no stretch to imagine the A* search algorithm being applied to a graph containing the same tests and actions found in decision and behaviour trees in order to generate a `path' of actions rather than a path of spatial data \parencite[114]{higgins2002generic}. This is paper aims to investigate and re-engineer A* to make decisions rather than paths in a game context.
 
-\subsection{Literature Review}
-\label{subsec:literatureReview}
+\section{Literature Review}
+\label{sec:literatureReview}
 
-\subsubsection{Dijkstra's algorithm: A graph and tree search algorithm}
-\label{subsubsec:dijkstrasAlgorithm}
+\subsection{Dijkstra's algorithm: A graph and tree search algorithm}
+\label{subsec:dijkstrasAlgorithm}
 
 A search algorithm is a recursive method designed to find a match for a piece of data within a collection such as an array, graph or tree \parencite{friedman1976algorithm}. A piece of data is provided and the search algorithm typically returns whether it is present and it's location. \citeauthor{dijkstra1959note}'s algorithm \parencite*{dijkstra1959note} is a search algorithm that operates on trees and graphs (which are then interpreted as trees). The algorithm calculates the shortest difference from any node on the graph to any other node, and can be terminated early to avoid unnecessary computation if a destination is provided and found.
 
@@ -106,8 +111,8 @@ Dijkstra's algorithm works through the recursive summation and comparison of dis
 
 \emph{TODO: DIJKSTRA'S ALGORITHM DIAGRAM}
 
-\subsubsection{A* algorithm: A heuristic best-first search algorithm}
-\label{subsubsec:aStarAlgorithm}
+\subsection{A* algorithm: A heuristic best-first search algorithm}
+\label{subsec:aStarAlgorithm}
 
 A* is an improvement of Dijkstra's algorithm in this regard \parencite[101]{hart1968formal} --- while it doesn't stray far from how Dijkstra's algorithm works in the sense that it operates using a tentative distance value and it keeps track of the nodes that have and haven't been visited, it does extend the algorithm using what's known as a heuristic approach \parencite[126]{cui2011based}. "Heuristics are criteria, methods or principles for deciding which among several alternative courses of action promises to be the most effective in order to achieve some goal" \parencite[3]{pearl1984heuristics}. This means that in a pathfinding situation, a heuristic function could estimate the distance to the goal, by ignoring walls and measuring in a straight line, to direct the algorithm in the right direction and avoid evaluating routes that travel in the wrong direction to make the process more efficient \parencite[127]{cui2011based}. Heuristics enable A* to perform a best-first search \parencite[46]{yap2002grid}, as the heuristic now has the power to select which node is the best to evaluate and prioritise over the others \parencite[94]{russell2016artificial}.
 
@@ -119,8 +124,8 @@ On the other hand, \citeauthor{graham2003pathfinding} \parencite*[68]{graham2003
 
 \emph{TODO: CRITICAL: A* DIAGRAM}
 
-\subsubsection{Processing a character's perception of the game world}
-\label{subsubsec:processingACharactersPerception}
+\subsection{Processing a character's perception of the game world}
+\label{subsec:processingACharactersPerception}
 
 These approaches need a way to digest information about the character and its environment that is relevant to the decision making process, and selecting this information is just as important as the form it is delivered in \parencite[126]{cui2011based}. This extraction of world data can vary in difficulty \parencite[3]{diller2004behavior} and is done for both performance and gameplay needs. All game AI solutions need the world to be re-interpreted to be better suited for both decision making \parencite[2]{buro2004call} and pathfinding \parencite[3]{diller2004behavior}. Particular geometry of the map may need to be interpreted as vantage points, choke points or safe spots; particular formations of enemy units may need to be not only counted but also assessed for tactical strengths, whether engaging the units head-on is better than running away to a better location, and finally, the interpretation of time such as whether there is enough time to navigate to what would otherwise be a better location for fighting the enemy \parencite{buro2004call}. An AI would then take this abstraction of the world, combine it with the character's data and then consider what the character should be doing --- if the character is in an `attacking' state and the player is nearby then the decision would involve getting into a position and hitting or shooting at the player. 
 
@@ -132,8 +137,8 @@ A* can suffer from performance problems when used with many agents at once, or w
 
 There is a large amount of actions a character can take at any given moment \parencite[62]{nareyek2004ai} and so applying a search algorithm to such a large set of tasks will make the process a lot slower than traditional methods if left unchecked. Hierarchical pathfinding essentially creates more nodes to expand in the short term to reduce the total number of nodes expanded in the long term and gain a net increase in performance. If hierarchical pathfinding reduces the amount of destinations, by collecting connections between the nodes in a given area, and simplifies navigation to and from this area then this technique can also be applied to the character's state so long as these connections can be aggregated using other metrics other than purely relying on their proximities to each other. One such way of grouping  could be separating `attacking' actions from `defending' actions so that character's deciding to play defensively can eliminate one route of evaluation rather than multiple. Splitting gameplay elements like this can get complicated --- if a certain unit in a strategy game can attack from a longer range, would attacking the enemy from a distance be a defensive manoeuvre or an offensive one, and how easy is this to change on a per-unit basis \parencite{weber2011building}?
 
-\subsubsection{Making decisions with A* using GOAP}
-\label{subsubsec:makingDecisionsWithAStarUsingGOAP}
+\subsection{Making decisions with A* using GOAP}
+\label{subsec:makingDecisionsWithAStarUsingGOAP}
 
 \citeauthor{orkin2003applying} \parencite*[11]{orkin2003applying} expressed that expectations of AI are growing with the release of every new game and that "we need to look toward more structured, formalized solutions to creating scalable, maintainable and re-usable decision making systems". Techniques used to create the Game AI featured in most games do not contain the scalability \citeauthor{orkin2003applying} envisions \parencite[17]{laird2001human}, however, \citeauthor{higgins2002generic} \parencite*[117]{higgins2002generic} declares that a pathfinding engine can be created generically, especially if a templated language is used, to give the code even more reusability. Implementing A* in this way would allow it to be used for both regular pathfinding and anything else that could requires searching \parencite[120]{higgins2002generic}. With A* being efficient and optimisable \parencite[215]{millington2019ai}, reusing A* for game AI has the potential to bring the benefits it usually brings to pathfinding to AI while being adaptable enough to scale up and meet expectations.
 
@@ -154,8 +159,8 @@ Another problem of GOAP is that the high-level nature of the approach may not al
 
 This isn't specific to GOAP as it applies to every AI approach where the generation of these locations isn't part of the AI. Is the character's AI deciding where to go, or just deciding that it has to go somewhere? In order for "Goto Cover" to act in a similar way to the "Goto Point" action, a goal or action precondition would either have to require the character to be out of line-of-sight, or be using one of the designated cover spots --- this is how F.E.A.R \parencite*{FEAR} approached it \parencite[12]{orkin2006three}. The former would require calculating the closest position that allows the escape of line-of-sight. The latter of these would require set locations to be marked as points of interest and then A* would be employed to find which cover spot would be the quickest to navigate to. Both of these would have their own problems, and wrapping the entire pathfinding process as a single action would mean that the information from the pathfinding request would not be used in the decision making at all. Without utilising the AI's ability to create an impression of thought, the information given to these actions could be poorly chosen and "may be perceived as a lack of intelligence by a human player" \parencite[63]{graham2003pathfinding}.
 
-\subsubsection{Defining the notion of cost in the context of game AI}
-\label{subsubsec:definingTheNotionOfCost}
+\subsection{Defining the notion of cost in the context of game AI}
+\label{subsec:definingTheNotionOfCost}
 
 $Cost$, sometimes referred to as weight, is a term that will continue to be used when talking about A* as it is the the metric that governs the searching process \parencite[60]{graham2003pathfinding}. $Cost$ doesn't have to be a numeric value, as long as it can be compared and combined correctly with other $cost$ values, however, one numeric restriction of cost is that it cannot, or rather should not, be negative. The method A* uses to determine if a route should be expanded before another is if its $cost$ value is lower --- when only positive values are added together it is assumed that there isn't a way for a $cost$ to decrease in value. While in mathematics it is entirely possible and valid for these values to be negative, the problems that make this necessary are not applicable to games \parencite[202]{millington2019ai}.
 
@@ -167,7 +172,8 @@ Some decisions are more troublesome to weigh than others. With the constraint of
 
 GOAP uses a simple "action cost" system to prioritise which tasks to carry out first \parencite[11]{orkin2006three}. Using an integer or floating point value is ideal for the type of $cost$ as it can be added and compared with other values trivially. However, GOAP's method of creating unique characters is to assign different actions to make them act differently \parencite[8]{orkin2006three} as opposed to having them evaluate situations differently as \citeauthor{millington2019ai} \parencite*{millington2019ai} suggested. Giving characters different actions will implicitly change how they prioritise the same situation as they will be given new routes to explore, and for most games this might be the best idea. It could be a good idea to split the $cost$ type into a set of values to give actions different values. Throwing a grenade and shooting a pistol could be considered equivalent in difficulty to perform, but typically grenades have more firepower in exchange for there being less available; reducing these actions to a single value could be difficult depending on the approach, but splitting the value into a set would allow the programmers to keep track of firepower and usage penalties separately. When needed for comparison, this set would evaluate to the sum of it's parts --- but certain characters or situations could choose to adjust or completely omit parts of the $cost$ so that actions are perceived in different ways depending on how a character views a certain cost. For a fast character, the $cost$ to move might be halved and the $cost$ of being exposed doubled in order to give the impression of an agile and hard-to-hit character.
 
-\subsubsection{Generation, selection and application of goal state nodes}
+\subsection{Generation, selection and application of goal state nodes}
+\label{subsec:generationSelectionAndApplicationOfStateNodes}
 
 When the game world has been processed, the actions a character can perform have been laid out and the methods of evaluating courses of action have been provided, the only things remaining that A* needs to function are the start and goal node states for the actual decision. The starting state is trivial as it is simply the current state of the character and world; the goal state node requires more consideration than that though. In standard pathfinding, the output is the shortest path from the starting node to the goal node, if such a path exists \parencite[61]{nareyek2004ai}. For game AI though, the goal needs to represent how the character or world should be --- or rather the objective outcome of the decision making process. This objective can be difficult to ascertain as a goal node could represent anything; what seems to be a simple goal such `win the game' becomes a rigorous series of tests to both calculate the $cost$ reaching the goal than another \parencite[403]{harmon2002economic}. On the other hand, objectives that are too small or disconnected may not combine correctly to form this over-arching goal of winning the game. A balance is needed, whether that means the objective is to chase the player or defend an area, the objective needs to be focused on winning without being vague.
 
@@ -175,18 +181,18 @@ While \citeauthor{orkin2003applying} \parencite*{orkin2003applying} talks about 
 
 Another talking point regarding goals is the amount of designated goal state nodes in the graph. There is typically only a single goal in standard pathfinding, but it is possible, maybe even advantageous, for some games to contain multiple goal nodes in a graph \parencite[272]{millington2019ai}. Instead of checking for a match with a certain location (or state, when developing AI), a method that checks whether a given node meets the requirements of being classified as a goal could be used instead; the heuristic would also need revision as it would need to calculate the heuristic $cost$ to reach the 'nearest' goal rather than just the single, given goal \parencite[272]{millington2019ai}. Having multiple goals and goal types \parencite[121]{higgins2002generic} would grant the ability for the AI to re-route to a different goal if it's easier and therefore accomplish the same task in multiple different ways without creating generic goals; this has its drawbacks though, one being the need for a more intricate and potentially confusing implementation and design of the AI needs, the other being the creation of balancing difficulties to ensure goals are prioritised as expected.
 
-\subsubsection{Summary}
-\label{subsubsec:litReviewSummary}
+\subsection{Summary}
+\label{subsec:litReviewSummary}
 
 Search algorithms such as A* are generic, maintainable and versatile and are therefore theoretically suitable replacements for FSMs and behaviour trees for implementing game AI. While GOAP does use A* for part of it's decision making process, it isn't a complete solution and still separates decision making from the pathfinding process. This is acceptable and valid as GOAP is for generating a sequence of actions whereas pathfinding is strictly for navigating the map in order to perform these actions. Unfortunately, some information found during pathfinding that could be considered useful for decision making is lost unless explicitly communicated --- a decision might request to navigate to some location, but the path generated might be longer than expected and a different course of action could have been more appropriate. Without replanning, GOAP's disconnect between these systems could result in the wrong decisions being made.
 
 In this paper, the mechanisms of the A* search algorithm are examined and re-engineered, through the substitution of input and output types, to investigate the modularity and adaptability of an AI that uses search algorithms to make decisions while actively involving pathfinding in the process as opposed to keeping these systems separate. Several approaches to defining goals and heuristic methods will be used to visualise the effects they have on a squad-controlling game AI. The aim of using this approach is to bring decision-making and pathfinding closer together and therefore simplifying the overarching process of perceiving, deciding and interacting in the game world.
 
-\subsection{Methods and Methodologies}
-\label{subsec:methodsAndMethodologies}
+\section{Methods and Methodologies}
+\label{sec:methodsAndMethodologies}
 
-\subsubsection{Algorithm selection}
-\label{subsubsec:algorithmSelection}
+\subsection{Algorithm selection}
+\label{subsec:algorithmSelection}
 
 As discussed, this paper will be using A* as the pathfinding and decision making algorithm of choice. A* is already used in many games for pathfinding mechanics \parencite[197]{millington2019ai} and so it could be inferred that any developers intending to implement game AI using a search algorithm would prefer to reuse the A* algorithm specifically. A* is more of a family of algorithms rather than just one \parencite[107]{hart1968formal} --- implementing A* naturally grants access to using \citeauthor{dijkstra1959note}'s algorithm \parencite*{dijkstra1959note} when given a constant heuristic \parencite[10]{lester2005pathfinding}. Similarly, providing different heuristic functions allows the adjustment of the effectiveness and efficiency of A*'s output \parencite[107]{hart1968formal}.
 
@@ -198,8 +204,8 @@ D* (Dynamic A*) is an adaptation of A* that operates under the assumption that t
 
 These adaptations could be used instead of A*, however every extension of A* comes with its own benefits and drawbacks. Only the game AI developer knows which search algorithm is most relevant for their use case, therefore for the purposes of this investigation only the standard A* algorithm implementation will be used as it is the most commonly used algorithm and will be applicable to most games.
 
-\subsubsection{Language selection}
-\label{subsubsec:languageSelection}
+\subsection{Language selection}
+\label{subsec:languageSelection}
 
 For a lot of developers, the choice of programming language comes from the requirements of their chosen game engine. Unity \parencite{Unity} uses C\# or JavaScript, Unreal \parencite{Unreal} uses C++, and some engines implement their own language, one example being Godot \parencite{Godot}. Godot gives developers a choice between C++, C\#, languages that have bindings written to Godot's GDNative module, and finally their own language called GDScript which writes like Python. Most engines take advantage of C++'s performance even if they don't use it as a scripting language --- Unreal, Unity and Godot all use C++ as part of their engine. 
 
@@ -207,8 +213,8 @@ Unity \parencite{Unity} and Unreal \parencite{Unreal} are both popular, so natur
 
 A* could also be implemented with C\#, but C\#'s generics do not grant the same freedoms that C++'s templates do. C\# is a higher level language, so elements such as memory management are either hidden or contained in abstractions in an effort to make these things simpler. The abstractions of high level languages can be reasonable and advantageous for some developers and games, but with pathfinding being a vital element to a lot of games and is therefore commonly built into game engines it could be said that features of a low level language like memory management or C++ templates are more applicable for implementing pathfinding algorithms. It is for this reason that C++ is to be used for the purposes of this research.
 
-\subsubsection{Tool and framework selections}
-\label{subsubsec:toolAndFrameworkSelections}
+\subsection{Tool and framework selections}
+\label{subsec:toolAndFrameworkSelections}
 
 To research game AI, a game environment needs to be created so that the AI's interactions can be observed. This requires making some sort of video game and so an appropriate tool needs to be chosen. Established game engines are viable candidates as they trivialise the process of programming the necessities for a standard video game: opening a window, loading resources, rendering the environment and handling input. Even though a simple text adventure can be programmed with very basic programming knowledge, creating and visualising the choices for the AI to make would be time consuming and hard to debug. A library like the Open Graphics Library, or OpenGL \parencite{OpenGL}, allows 2D and 3D graphics to be used in a video game and would make visualisation of the AI and environment easier. Alternatively, using an established engine introduces technology such as debugging along with the basic functionality --- this technology could be considered redundant use in research as simply running the project would require the installation of a relatively large piece of software.
 
@@ -218,8 +224,8 @@ SFML on the other hand is more of a wrapper for OpenGL specifically, and contain
 
 Finally, one additional feature this research will need is the tooling to fully create and observe the testing environment. Dear ImGui (Immediate mode GUI, \cite{Imgui}) is a library that makes interfaces easy to implement; a level editor, entity inspector and debugging tool will help observe the AI as well as design the situations it will be placed in. Nuklear \parencite{Nuklear} is an alternative to Imgui, but it focuses more on creating high quality interfaces for use in both games and tools, and so it can be customised in a greatly in both appearance and functionality. Since ImGui concentrates on being quick and simple and isn't intended to be used to create a polished interface, it is framework of choice for interfaces for this research.
 
-\subsubsection{Research methodologies}
-\label{subsubsec:researchMethodologies}
+\subsection{Research methodologies}
+\label{subsec:researchMethodologies}
 
 \citeauthor{millington2019ai} \parencite*[236]{millington2019ai} said that the only way to compare the effects of heuristic functions is to visualise the algorithm, and so the nature of this research is going to contain qualitative data from observation and inspection. There might be some quantitative aspects to this research, such as comparing the amount of wins or the amount of turns taken to win for each approach, but such values on their own have no meaning in the context of a video game when the level of difficulty, intelligence and randomness can directly influence them. These values may be useful for determining overall efficacy, but the majority of the data is going to need to be qualitative so that these values have context. This research seeks to answer to the following questions:
 
@@ -241,8 +247,8 @@ There are multiple types of case studies. This research will be studying the res
 
 Each case in this collective study is going to involve altering part of the AI's programming and placing the resulting AI into various scenarios and seeing how it performs. Changing the heuristic function to prefer certain actions or changing the AI's interpretation of a goal are examples of such alterations, whereas the scenarios come in the form of both symmetrical and asymmetrical in-game maps featuring distinct unit and obstacle layouts. Each AI will then be observed in play against itself and other AIs on numerous maps, where each map can be modified for further exploration on a case by case basis. Descriptions of notable events and significant benefits, drawbacks and details will be recorded. Conducting the studies in this way will give an insight to the diversity of the different behaviours that can be achieved of making an AI this way, while also validating how functional each AI is in the context of a video game.
 
-\subsubsection{Software development methodology}
-\label{subsubsec:softwareDevelopmentMethodology}
+\subsection{Software development methodology}
+\label{subsec:softwareDevelopmentMethodology}
 
 To build the testing environment necessary for testing this experimental approach to making game AI, a software methodology needs to be adopted to keep things on track. There are multiple methodologies to choose from, each catering to different situations and having their own benefits and drawbacks:
 
@@ -260,14 +266,14 @@ To build the testing environment necessary for testing this experimental approac
 
 This investigation requires the development of both an experimental AI and a game to observe its behaviour in, therefore it is hard to be certain about whether an approach will produce the right results, so a waterfall approach will not be used. The requirements and other elements of the testing environment may also change as new realisations are made, and so with this in mind, an agile approach will be used so that any unforeseen obstacles can be dealt with.
 
-\section {Design, Development and Evaluation}
-\label{sec:designDevelopmentAndEvaluation}
+\chapter{Design, Development and Evaluation}
+\label{chapter:designDevelopmentAndEvaluation}
 
-\subsection{Design (14--15 pages when combined with development)}
-\label{subsec:design}
+\section{Design (14--15 pages when combined with development)}
+\label{sec:design}
 
-\subsubsection{Requirements}
-\label{subsubsec:requirements}
+\subsection{Requirements}
+\label{subsec:requirements}
 
 In order to investigate the effects of combining the pathfinding and decision making processes, a set of requirements need to be satisfied by the testing environment. These requirements are designed to facilitate: the development and usage of a basic 2D application, the creation of the game AI variations and the scenarios they will be placed into, and finally the observation of the AI's behaviour in these scenarios. A testing environment would be considered adequate if it contains the following:
 
@@ -304,8 +310,8 @@ Each game AI is going to be competing against other AIs in addition to the trivi
 
 \end{itemize}
 
-\subsubsection{Designing the program's basic structure}
-\label{subsubsec:designingProgram}
+\subsection{Designing the program's basic structure}
+\label{subsec:designingProgram}
 
 \begin{figure}[!h]
   \centering
@@ -316,8 +322,8 @@ Each game AI is going to be competing against other AIs in addition to the trivi
 
 The first requirement listed in section \ref{subsubsec:requirements} is to create an interactive window that supports 2D graphics. Figure \ref{fig:foundationsUML} illustrates an overview of the program; the \emph{App} class manages the window and handles the main loop of processing input and rendering the screen. The \emph{Scene} class can be inherited to introduce different functionality to the testing environment and will be used to encompass the strategy game and its logic.
 
-\subsubsection{Designing the strategy game}
-\label{subsubsec:designingStrategyGame}
+\subsection{Designing the strategy game}
+\label{subsec:designingStrategyGame}
 
 The second requirement in section \ref{subsubsec:requirements} is to build a simple, turn-based strategy game for the AI to play. The rules of this game are simple: each player controls a squad of units with the aim being to eliminate all enemy units while maintaining at least one surviving unit. During their turn, a player can select one of their units and then move and attack with it. A player has a set amount of MP and AP (movement and action points) per turn, and can distribute them between each of their units. Each unit drains a different amount of MP per tile when moving and a different amount of AP when attacking as shown in table \ref{table:unitOverview}, meaning that some can move further and some can eliminate more units during a single turn. A unit can only attack another unit when it has enough AP and the target is in range and `in line of sight' where no other units or obstacles can be in between the attacker and their target.
 
@@ -358,8 +364,8 @@ The actual state of the game is contained in the class \emph{GameState}. This is
 
 Figure \ref{fig:gameLoop} shows a flowchart of how a turn will be played out and will be introduced in the function \emph{continueGame} in the \emph{Game} class shown figure \ref{fig:strategyGameUML}. All controllers will return a stack of actions for the game loop to unwind and attempt to perform; this approach limits controllers to legitimate methods for working with \emph{GameStates} and that \emph{Game} can validate the decisions a controller makes and accept only those that are legal. The requirement of allowing a human to intervene section from section \ref{subsubsec:requirements} is also considered --- execution is will be interrupted during a human controller's turn and will resume when their turn ends. This process recursively fetches controllers' decisions and updates the collection of states until the game has concluded.
 
-\subsubsection{Designing tools for investigation}
-\label{subsubsec:designingToolsForInvestigation}
+\subsection{Designing tools for investigation}
+\label{subsec:designingToolsForInvestigation}
 
 The requirements of a map editor and some way of browsing through the collection of states will be satisfied by using ImGui \parencite{Imgui} as stated in section \ref{subsubsec:toolAndFrameworkSelections}. Both the editor and state browser will be contained in their own windows so that the map editor can be hidden when not needed, however the state browser will always be on display because of how important it is for observation of the AIs.
 
@@ -387,8 +393,8 @@ Figure \ref{fig:mapEditor} shows the four main parts to the map editor that are 
 
 Figure \ref{fig:stateBrowser} shows how the state browser window should look. A simple scroll bar will suffice as a way of searching the collection --- the variable \emph{currentState} in \emph{Game} as shown in figure \ref{fig:strategyGameUML} is an index referring to which state in the collection \emph{states} to render on screen, so a scroll bar representing a range of values from zero to the size of \emph{states} creates an easy way of examine all states of the game. This window also displays information about the state, such as the amount of MP and AP as well as the number of members in each team. It makes sense to also include the ability to change the controller for each team since each team is already being displayed, this will allow the alteration of which algorithm is controlling which team at any given moment. Finally, the ability to reset and continue the game, clearing the state collection and starting the process illustrated in figure \ref{fig:gameLoop} respectively, will be introduced with the `reset game' and `continue game' buttons that can be seen at the bottom of the window. 
 
-\subsubsection{Designing the process of investigation}
-\label{subsubsec:designingInvestigation process}
+\subsection{Designing the process of investigation}
+\label{subsec:designingInvestigation process}
 
 \begin{table}[!h]
   \centering
@@ -409,15 +415,15 @@ Figure \ref{fig:stateBrowser} shows how the state browser window should look. A 
 
 With the majority of the requirements in section \ref{subsubsec:requirements} designed, the only one unsatisfied is the actual implementation of the A* algorithm --- this will be programmed generically and be tuned for each use case during experimentation, with each variation of the algorithm being derived from interesting parts of previous iterations. The components of A* each variation is going to change is listed in table \ref{table:designingAStarVariations}; the changes made will be decided based on the studies of the other variations. For example, if a flaw in one variation's approach can be determined based on its observed behaviour, the next iteration might be adapted in an attempt to improve on the current approach.
 
-\subsection {Development (14--15 pages when combined with design)}
-\label{subsec:development}
+\section {Development (14--15 pages when combined with design)}
+\label{sec:development}
 
 END
 
 - Go through commit history and summarise main narrative (key milestones and changes). Can always place the rest as a (referenced) appendix.
 
-\subsection {Results and Evaluation (11--12 pages including critical review)}
-\label{subsec:resultsAndEvaluation}
+\section {Results and Evaluation (11--12 pages including critical review)}
+\label{sec:resultsAndEvaluation}
 
 - This area can be further subdivided
 
@@ -432,11 +438,11 @@ END
       - Was the criteria faulty? If so, explain how knowledge of the problem domain has changed
     - How does what I did prove the criteria?
 
-\section {Conclusions}
-\label{sec:conclusions}
+\chapter {Conclusions}
+\label{chapter:conclusions}
 
-\subsection {Conclusions and Critical Review}
-\label{subsec:conclusionsAndCriticalReview}
+\section {Conclusions and Critical Review}
+\label{sec:conclusionsAndCriticalReview}
 
 - Compulsory chapter
 - (2--3 pages)
@@ -449,8 +455,8 @@ END
 - 'Step away' from the project and assess learning experience
   - If I had to do it again and I knew at the beginning what I know now, what would be different?
 
-\subsection{Conclusions and recommendations}
-\label{subsec:conclusionsAndRecommendations}
+\section{Conclusions and recommendations}
+\label{sec:conclusionsAndRecommendations}
 
 - This section should briefly summarise:
   - The project objectives
