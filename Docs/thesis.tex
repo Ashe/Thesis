@@ -238,6 +238,25 @@ There are multiple types of case studies. This research will be studying the res
 
 Each case in this collective study is going to involve altering part of the AI's programming and placing the resulting AI into various scenarios and seeing how it performs. Changing the heuristic function to prefer certain actions or changing the AI's interpretation of a goal are examples of such alterations, whereas the scenarios come in the form of both symmetrical and asymmetrical in-game maps featuring distinct unit and obstacle layouts. Each AI will then be observed in play against itself and other AIs on numerous maps, where each map can be modified for further exploration on a case by case basis. Descriptions of notable events and significant benefits, drawbacks and details will be recorded. Conducting the studies in this way will give an insight to the diversity of the different behaviours that can be achieved of making an AI this way, while also validating how functional each AI is in the context of a video game.
 
+\subsubsection{Software development methodology}
+\label{subsubsec:softwareDevelopmentMethodology}
+
+To build the testing environment necessary for testing this experimental approach to making game AI, a software methodology needs to be adopted to keep things on track. There are multiple methodologies to choose from, each catering to different situations and having their own benefits and drawbacks:
+
+\begin{description}
+
+  \item[Waterfall:] Teams adopting the traditional waterfall method follow a rigid structure from planning to operations. Each step needs to be fully completed before moving on --- \citeauthor{royce1987managing} \parencite*[330]{royce1987managing} shows that a waterfall process is flawed when revisiting previous steps is required to finish the process. The waterfall methodology is easy to understand, but lacks the flexibility of other methodologies.
+   
+  \item[Rapid Application Development:] \emph{TODO: GET BOOK FROM LIBRARY AND CITE THIS} \parencite{martin1991rapid}. Mention how it aims to be lightweight and improve on waterfall.
+   
+  \item[DevOps:] The DevOps methodology focuses on the deployment of software, not the development. DevOps encourages short and continuous releases for software with each release being planned, programmed and built based on the feedback from the previous \parencite{bass2015devops}. This research isn't releasing anything to an external party and therefore does not benefit from the DevOps methodology, however, one thing to note is that "DevOps emphasizes the relationship of DevOps practices to agile practices" \parencite[15]{bass2015devops}, meaning that it is common for teams using DevOps to also use agile methods during development.
+
+  \item[Agile:] According to The Agile Manifesto \parencite[2]{fowler2001agile}, agile methods embrace responding to change as opposed to how waterfall's planning process is there to avoid changes. Agile also places emphasis on people, whether they are developers or clients, collaborating on a regular basis to review and deliver parts of a project during development \parencite[3]{fowler2001agile}. There are frameworks like SCRUM \parencite[1]{fowler2001agile} that embody these same values, but being agile is about the team's recognition of these values and commitment to following them --- any approach can be agile as long as these values are remembered.
+
+\end{description}
+
+This investigation requires the development of both an experimental AI and a game to observe its behaviour in, therefore it is hard to be certain about whether an approach will produce the right results, so a waterfall approach will not be used. The requirements and other elements of the testing environment may also change as new realisations are made, and so with this in mind, an agile approach will be used so that any unforeseen obstacles can be dealt with.
+
 \section {Design, Development and Evaluation}
 \label{sec:designDevelopmentAndEvaluation}
 
