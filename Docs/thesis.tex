@@ -51,6 +51,9 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras justo velit, vesti
 \section{Introduction}
 \label{sec:introduction}
 
+\subsection{Introduction}
+\label{subsec:introduction}
+
 \subsubsection{Video games and artificial intelligence}
 \label{subsubsec:videoGamesAndAI}
 
@@ -396,7 +399,7 @@ Figure \ref{fig:stateBrowser} shows how the state browser window should look. A 
     Goal function & Decide whether a given \emph{GameState} should be considered a goal & Making ending the turn or eliminating at least one enemy a goal to satisfy \\ \hline
     \emph{Cost} implementation & Represent and store the cost of performing an \emph{Action} & Separate the \emph{Cost} type into a set of different elements using various traits and aspects of \emph{Actions} \\ \hline
     Weighing function & Generate the suitable \emph{Cost} value for a given \emph{Action} & Changing how \emph{Actions} are valued to see how the AI's preferences affect behaviour \\ \hline
-    \emph{Heuristic} function & Determine an order in which \emph{GameStates} are explored & Don't guide it (by using Dijkstra's algorithm) or try different ways of estimating the \emph{Cost} of satisfying the goal \\ \hline
+    \emph{Heuristic} function & Determine an order in which \emph{GameStates} are explored & Don't guide it (therefore using Dijkstra's algorithm) or try different ways of estimating the \emph{Cost} of satisfying the goal \\ \hline
     \emph{Cost} comparison function & Determine which \emph{Cost} is preferable to another & Experiment with multiplying and ignoring elements of \emph{Cost} as an alternative way of changing the AI's preferences \\
     \hline
   \end{tabular}
