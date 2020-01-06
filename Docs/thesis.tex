@@ -320,7 +320,7 @@ Each game AI is going to be competing against other AIs in addition to the trivi
   \label{fig:foundationsUML}
 \end{figure}
 
-The first requirement listed in section \ref{subsec:requirements} is to create an interactive window that supports 2D graphics. Figure \ref{fig:foundationsUML} illustrates an overview of the program; the \emph{App} class manages the window and handles the main loop of processing input and rendering the screen. The \emph{Scene} class can be inherited to introduce different functionality to the testing environment and will be used to encompass the strategy game and its logic.
+The first requirement listed in section \ref{subsec:requirements} is to create an interactive window that supports 2D graphics. Figure \ref{fig:foundationsUML} illustrates an overview of the program; the \emph{App} class manages the window and handles the main loop of processing input and rendering the screen. The \emph{Scene} class can be inherited to introduce different functionality to the testing environment and will be used to encompass the game and its logic; since \emph{App} is entirely static, the game will have easy access to any of the game's variables or any data that has been loaded. \emph{Resources} acts as a manager and will store fonts, textures, scenes and eventually game-related data like maps. The enumeration \emph{Status} is used to determine what state the game is in --- the app is initialised with a title with \emph{initialise}, where it can then be given the first \emph{Scene} to use for when the game enters the main loop with \emph{start}. The \emph{start} function will then run continuously until the program is closed or until a \emph{Scene} calls \emph{quit} function on game, starting the process of releasing resources and performing any \emph{Scene}-related functionality before terminating the main loop closing the application.
 
 \subsection{Designing the strategy game}
 \label{subsec:designingStrategyGame}
@@ -415,14 +415,33 @@ Figure \ref{fig:stateBrowser} shows how the state browser window should look. A 
 
 With the majority of the requirements in section \ref{subsec:requirements} designed, the only one unsatisfied is the actual implementation of the A* algorithm --- this will be programmed generically and be tuned for each use case during experimentation, with each variation of the algorithm being derived from interesting parts of previous iterations. The components of A* each variation is going to change is listed in table \ref{table:designingAStarVariations}; the changes made will be decided based on the studies of the other variations. For example, if a flaw in one variation's approach can be determined based on its observed behaviour, the next iteration might be adapted in an attempt to improve on the current approach.
 
-\section {Development (14--15 pages when combined with design)}
+\section{Development (14--15 pages when combined with design)}
 \label{sec:development}
 
-END
+\subsection[Creating the foundations]{Milestone 1 --- Creating the foundations}
+\label{subsec:creatingTheFoundations}
+
+The first focus of development was to render 2D graphics, handle input, and to implement the \emph{Scene} class to allow for each self-containing sandbox to be integrated. Starting with \emph{main.cpp} and \emph{App.h}, there needs to be a way for the application to be set up and for the main loop to be started. Following figure \ref{fig:foundationsUML}, the main loop is implemented in the function \emph{start}, so \emph{initialise} needs to request for \emph{Resources} to \emph{load} everything in the asset directory. The \emph{initialise} function also opens the window and grants access for ImGui to render in that window. ImGui comes with a demo feature, so the \emph{Console} class was also introduced so that error and debug messages can be displayed on-screen without needing a separate terminal.
+
+Next was the \emph{start} function which keeps the application in a loop until it needs to close. From this loop, \emph{deltatime} will be calculated and given to \emph{update}, which doesn't do much other than store the location of the mouse cursor each frame for easy access. After \emph{update}, any input detected by SFML gets polled and passed to the \emph{handleEvent} function where it is decided which class should receive the event --- if the user has clicked on an ImGui window, all text input should be given to ImGui so that they don't accidentally interact with games in the application. Finally, the \emph{render} function is called which is responsible for clearing the screen, telling ImGui to render, and displaying that has been drawn onto the screen. A master debug menu will be displayed when \emph{App}'s \emph{debug} flag is set to $true$. This menu will show various, generic information about the application such as the frames per second and the cursor location. Additionally, it is through this menu that \emph{Scenes} can be swapped to and their scene-specific debug windows can be shown and hidden.
+
+After the application successfully looped, all that was needed was to implement the \emph{Scene} class and to call functions \emph{showScene}, \emph{hideScene}, \emph{onUpdate}, \emph{onEvent} and \emph{onRender} on \emph{App}'s current \emph{Scene} from their \emph{App} counterparts. The function \emph{switchScene} is introduced to \emph{App} so that the beginning, showing and hiding of \emph{Scenes} can be done automatically; this function accepts a string and will query \emph{Resources} for a pointer to the relevant \emph{Scene}. \emph{Scenes} can also implement \emph{addDebugMenuEntries} and \emph{addDebugDetails} to add functionality to the debugging interface mentioned above. In order to test that the \emph{App} can be started, switched to a \emph{Scene}, and interacted with, the welcome \emph{Scene} shown in figure \ref{fig:welcomeScene} was made which featured a white circle that followed a mouse and an ImGui window specific to the \emph{Scene}.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=\linewidth]{img/welcome_scene.png}
+  \caption{A screenshot of the welcome scene}
+  \label{fig:welcomeScene}
+\end{figure}
+
+\subsection[Creating the initial game]{Milestone 2 --- Creating the initial game}
+\label{Creating the initial game}
+
+\textbf{END}
 
 - Go through commit history and summarise main narrative (key milestones and changes). Can always place the rest as a (referenced) appendix.
 
-\section {Results and Evaluation (11--12 pages including critical review)}
+\section{Results and Evaluation (11--12 pages including critical review)}
 \label{sec:resultsAndEvaluation}
 
 - This area can be further subdivided
@@ -438,10 +457,10 @@ END
       - Was the criteria faulty? If so, explain how knowledge of the problem domain has changed
     - How does what I did prove the criteria?
 
-\chapter {Conclusions}
+\chapter{Conclusions}
 \label{chapter:conclusions}
 
-\section {Conclusions and Critical Review}
+\section{Conclusions and Critical Review}
 \label{sec:conclusionsAndCriticalReview}
 
 - Compulsory chapter
