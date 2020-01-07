@@ -4,9 +4,11 @@
 \usepackage{graphicx}
 \usepackage[english]{babel}
 \usepackage[autostyle]{csquotes}
+\usepackage{xcolor}
 \usepackage{listings}
 \usepackage{array}
-\usepackage[style=apa,backend=biber, language=english]{biblatex}
+\usepackage[toc, title, page]{appendix}
+\usepackage[style=apa, backend=biber, language=english]{biblatex}
 \PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
 
 \addbibresource{sources.bib}
@@ -20,7 +22,10 @@
   tabsize=4, % tab space width
   showstringspaces=false, % don't mark spaces in strings
   numbers=left, % display line numbers on the left
-  commentstyle=\color{green}, % comment color
+  basicstyle=\linespread{0.85}\selectfont,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+  commentstyle=\color{olive}, % comment color
   keywordstyle=\color{blue}, % keyword color
   stringstyle=\color{red} % string color
 }
@@ -434,8 +439,21 @@ After the application successfully looped, all that was needed was to implement 
   \label{fig:welcomeScene}
 \end{figure}
 
-\subsection[Creating the initial game]{Milestone 2 --- Creating the initial game}
-\label{Creating the initial game}
+\subsection[Implementing and allowing A* to play a game]{Milestone 2 --- Implementing and allowing A* to play a game}
+\label{subsec:implementingAndAllowingAStarToPlay}
+
+Before the A* algorithm can be implemented for experimentation, there needs to be something in place for it to operate on and process. Since this project is being developed in an agile way,  It was decided that a small, well understood and easily programmable game would be used to get an initial understanding of the requirements of this approach to game AI. Tic-tac-toe fit this criteria well and served as a way of gauging the plausibility of creating an AI using A*. This game would also make use of a \emph{Controller} class so that trivial and complex AI as well as humans can play the game, meaning that the implementation of A* could easily be tested against a human as it was being built. The human \emph{Controller} was created first so that the rules of tic-tac-toe could be tested before an AI was inserted. The trivial team \emph{Controllers} mentioned in section \ref{subsec:requirements} came next: one which ends it's turn immediately and another that chooses randomly from all available actions until it's turn is over. 
+
+Since the tic-tac-toe allows the testing of mechanics and tooling, it is logical to build the game in the same way as the final game, and so the tic-tac-toe game will make use of a \emph{GameState} class so that turns can be undone and replayed. A simplified \emph{GameState} viewer has been created with ImGui so that it can be tested as well --- if appropriate, parts of this tool can be reused later to save time when developing the final version of the game. Figure \ref{fig:ticTacToeGame} shows the tic-tac-toe game with fully functioning human \emph{Controllers} and \emph{GameState} viewer.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=\linewidth]{img/tictactoe_game.png}
+  \caption{A screenshot of the tic-tac-toe game}
+  \label{fig:ticTacToeGame}
+\end{figure}
+
+The only thing left was to actually create A* in a generic way and to create the final game. The generic implementation of A* is shown in appendix \ref{appendix:genericAStarImplementation} --- the algorithm remains the same as the standard A* except the types of the nodes, edges and the costs they evaluate to were replaced with the C++ templates \emph{S}, \emph{A} and \emph{C} respectively. Doing this meant that the algorithm had further requirements, as there was no longer any way to calculate the distance between two instances of \emph{S}, or any way of expanding nodes. Function pointers, or alternatively a functor could be used, solve this by requiring this functionality being passed in when the algorithm is used. For instance, if used for pathfinding, this algorithm would be given a function that would find adjacent tiles or waypoints to a given node so that nodes can be expanded properly in addition to a function that can measure the distance between these nodes for comparison.
 
 \textbf{END}
 
@@ -486,8 +504,30 @@ After the application successfully looped, all that was needed was to implement 
   - Usefulness of the findings
   - Worth of learning experience
 
+\cleardoublepage
 \printbibliography[
   heading=bibintoc,
   title={Bibliography}
 ]
+
+\cleardoublepage
+\begin{appendices}
+\makeatletter
+\addtocontents{toc}{%
+  \begingroup
+  \let\protect\l@chapter\protect\l@section
+  \let\protect\l@section\protect\l@subsection
+}
+\makeatother
+
+\chapter{Generic A* implementation}
+
+\label{appendix:genericAStarImplementation}
+\linespread{0.8}
+\lstinputlisting[language=C++, firstline=65, lastline=260]{../src/Controller/AStar/AStar.h}
+\linespread{1.5}
+
+\addtocontents{toc}{\endgroup}
+\end{appendices}
+
 \end{document}
