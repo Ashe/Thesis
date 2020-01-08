@@ -423,7 +423,7 @@ With the majority of the requirements in section \ref{subsec:requirements} desig
 \section{Development (14--15 pages when combined with design)}
 \label{sec:development}
 
-\subsection[Creating the foundations]{Milestone 1 --- Creating the foundations}
+\subsection[Creating the application's foundations]{Milestone 1 --- Creating the application's foundations}
 \label{subsec:creatingTheFoundations}
 
 The first focus of development was to render 2D graphics, handle input, and to implement the \emph{Scene} class to allow for each self-containing sandbox to be integrated. Starting with \emph{main.cpp} and \emph{App.h}, there needs to be a way for the application to be set up and for the main loop to be started. Following figure \ref{fig:foundationsUML}, the main loop is implemented in the function \emph{start}, so \emph{initialise} needs to request for \emph{Resources} to \emph{load} everything in the asset directory. The \emph{initialise} function also opens the window and grants access for ImGui to render in that window. ImGui comes with a demo feature, so the \emph{Console} class was also introduced so that error and debug messages can be displayed on-screen without needing a separate terminal.
@@ -456,7 +456,34 @@ It is logical to build the tic-tac-toe game in the same way as the final game so
 \subsection[Implementing and allowing A* to play a game]{Milestone 3 --- Implementing and allowing A* to play a game}
 \label{subsec:implementingAndAllowingAStarToPlay}
 
-With the simple game built in section \ref{subsec:buildingASampleGame}, it was time to re-engineer the A* algorithm to operate on non-spatial data and play tic-tac-toe. This generic implementation of A* is shown in appendix \ref{appendix:genericAStarImplementation} --- the algorithm remains the same as the standard A* with a one exception: the types of the nodes, edges and the costs they evaluate to were replaced with the C++ templates \emph{S}, \emph{A} and \emph{C} respectively. Doing this meant that the algorithm had further requirements, as there was no longer any way to calculate the distance between two instances of \emph{S}, or any way of expanding nodes. Function pointers, or alternatively a functor could be used, solve this by requiring this functionality being passed in when the algorithm is used. For instance, if used for pathfinding, this algorithm would be given a function that would find adjacent tiles or waypoints to a given node so that nodes can be expanded properly in addition to a function that can measure the distance between these nodes for comparison.
+With the simple game built in section \ref{subsec:buildingASampleGame}, it was time to re-engineer the A* algorithm to operate on non-spatial data and play tic-tac-toe. This generic implementation of A* is shown in appendix \ref{appendix:genericAStarImplementation} --- the algorithm remains the same as the standard A* with a one exception: the types of the nodes, edges and the costs they evaluate to were replaced with the C++ templates \emph{S}, \emph{A} and \emph{C} respectively. Doing this meant that the algorithm had further requirements, as there was no longer any way to calculate the distance between two instances of \emph{S}, or any way of expanding nodes. Function pointers, or alternatively a functor could be used, solve this by requiring this functionality being passed in when the algorithm is used. For instance, if used for pathfinding, this algorithm would be given a function that would find adjacent tiles or waypoints to a given node so that nodes can be expanded properly. The types and functions supplied for the AI to play tic-tac-toe are listed below:
+
+\begin{itemize}
+  \item \textbf{States:} represented by the tic-tac-toe \emph{GameState} class.
+  \item \textbf{Actions:} locations of marks, represented by a pair of integers (the \emph{sf::Vector2i} class).
+  \item \textbf{Costs:} represented by an integer value that acts as a penalty for illogical moves.
+  \item \textbf{Goal nodes:} every action was valid as long as a mark was placed on an empty space, therefore the AI wasn't directed towards a specific goal but rather to just make a move.
+  \item \textbf{Node expansion:} took a \emph{GameState} and finds empty spaces for marks to go to return a collection of actions and the \emph{GameStates} they led to.
+  \item \textbf{Cost comparison:} costs were represented as an integer, so finding the lesser value was trivial and the standard $<$ operator was used.
+  \item \textbf{Heuristic function:} no heuristic was supplied --- $h(n)$ returned the same value and therefore A* turned into Dijkstra's algorithm for this test.
+  \item \textbf{Weighing function:} Penalties were applied in accordance to how inappropriate a move was. Moves which didn't finish possible game-winning rows of three are heavily penalised to ensure that the AI would win when it can. Similarly, moves which didn't block two marks in a row owned by the opponent were severely penalised to incentivise blocking the opponent's obvious attempts of winning. Other than that, the penalty of a move would depend on how many `near-wins' are created for the AI and how many are left unchecked by the opponent. This is an arbitrary function and will be scrutinised during the actual experiment.
+\end{itemize}
+
+While the AI did play the game successfully, it didn't prove whether game AI using A* was actually plausible. Each turn in a game of tic-tac-toe consists of exactly one move, and so the A* algorithm was creating a sequence containing a single action --- it compared all possible moves and chose the option that was penalised the least by the weighing function. From this, more requirements for the experiment could be identified; a game where the AI can do multiple actions per turn would provide results with greater detail and would be a more realistic use case. The requirements in section \ref{subsec:requirements} and the design of the game in section \ref{subsec:designingStrategyGame} were changed to reflect this realisation. Additionally, since this game is going to feature a lot more states than tic-tac-toe and the only way of revisiting previous states was to click the arrow buttons shown in figure \ref{fig:ticTacToeGame}, the design of the state viewer in section \ref{subsec:designingToolsForInvestigation} was changed to include a scrollbar for faster browsing of states.
+
+\subsection[Building the final game]{Milestone 4 --- Building the final game}
+\label{subsec:buildingTheFinalGame}
+
+After programming and testing the A* algorithm, the final piece before the case studies could be started was the game itself. The game designed in section \ref{subsec:designingStrategyGame} was built from the ground up to support both human and non-human players; visuals on the screen ensured that information such as sight lines and the resources remaining was properly communicated regardless of state. Units were represented by letters and their colour shows which team they are on. Additionally, the generic implementation of A* was used for standard pathfinding, so that players didn't have to move their units step by step. Figure \ref{fig:strategyGame} shows the finished game in action from a human player's perspective, showcasing the pathfinding of the melee unit in conjunction with the resource cost for performing the manoeuvre.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=\linewidth]{img/strategy_game.png}
+  \caption{A screenshot of the strategy game showing a turn in progress}
+  \label{fig:strategyGame}
+\end{figure}
+
+The state viewer and information window created in section \ref{subsec:buildingASampleGame} was adjusted to show details about the new game, as well as being expanded to handle multiple teams playing a single game. Finally, the map editor as well as the ability to save and load maps were introduced. Overall, development went smoothly --- having the tic-tac-toe and strategy games share similar approaches using \emph{GameStates} and a variety of static functions meant that development was a matter of adapting and expanding previously written functions to suit the new game. With the human and trivial controllers properly set up to play the game, the case study could finally begin.
 
 \textbf{END}
 
