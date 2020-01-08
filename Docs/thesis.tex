@@ -274,7 +274,7 @@ This investigation requires the development of both an experimental AI and a gam
 \chapter{Design, Development and Evaluation}
 \label{chapter:designDevelopmentAndEvaluation}
 
-\section{Design (14--15 pages when combined with development)}
+\section{Design}
 \label{sec:design}
 
 \subsection{Requirements}
@@ -420,7 +420,7 @@ Figure \ref{fig:stateBrowser} shows how the state browser window should look. A 
 
 With the majority of the requirements in section \ref{subsec:requirements} designed, the only one unsatisfied is the actual implementation of the A* algorithm --- this will be programmed generically and be tuned for each use case during experimentation, with each variation of the algorithm being derived from interesting parts of previous iterations. The components of A* each variation is going to change is listed in table \ref{table:designingAStarVariations}; the changes made will be decided based on the studies of the other variations. For example, if a flaw in one variation's approach can be determined based on its observed behaviour, the next iteration might be adapted in an attempt to improve on the current approach.
 
-\section{Development (14--15 pages when combined with design)}
+\section{Development}
 \label{sec:development}
 
 \subsection[Creating the application's foundations]{Milestone 1 --- Creating the application's foundations}
@@ -459,13 +459,13 @@ It is logical to build the tic-tac-toe game in the same way as the final game so
 With the simple game built in section \ref{subsec:buildingASampleGame}, it was time to re-engineer the A* algorithm to operate on non-spatial data and play tic-tac-toe. This generic implementation of A* is shown in appendix \ref{appendix:genericAStarImplementation} --- the algorithm remains the same as the standard A* with a one exception: the types of the nodes, edges and the costs they evaluate to were replaced with the C++ templates \emph{S}, \emph{A} and \emph{C} respectively. Doing this meant that the algorithm had further requirements, as there was no longer any way to calculate the distance between two instances of \emph{S}, or any way of expanding nodes. Function pointers, or alternatively a functor could be used, solve this by requiring this functionality being passed in when the algorithm is used. For instance, if used for pathfinding, this algorithm would be given a function that would find adjacent tiles or waypoints to a given node so that nodes can be expanded properly. The types and functions supplied for the AI to play tic-tac-toe are listed below:
 
 \begin{itemize}
-  \item \textbf{States:} represented by the tic-tac-toe \emph{GameState} class.
-  \item \textbf{Actions:} locations of marks, represented by a pair of integers (the \emph{sf::Vector2i} class).
-  \item \textbf{Costs:} represented by an integer value that acts as a penalty for illogical moves.
-  \item \textbf{Goal nodes:} every action was valid as long as a mark was placed on an empty space, therefore the AI wasn't directed towards a specific goal but rather to just make a move.
-  \item \textbf{Node expansion:} took a \emph{GameState} and finds empty spaces for marks to go to return a collection of actions and the \emph{GameStates} they led to.
-  \item \textbf{Cost comparison:} costs were represented as an integer, so finding the lesser value was trivial and the standard $<$ operator was used.
-  \item \textbf{Heuristic function:} no heuristic was supplied --- $h(n)$ returned the same value and therefore A* turned into Dijkstra's algorithm for this test.
+  \item \textbf{States:} The states of the game are represented by the tic-tac-toe \emph{GameState} class.
+  \item \textbf{Actions:} A move is made by placing a mark in the grid, so an action is just a location represented by a pair of integers (the \emph{sf::Vector2i} class).
+  \item \textbf{Costs:} An integer value represents the penalties for making illogical moves.
+  \item \textbf{Goal nodes:} Every action was valid as long as a mark was placed on an empty space, therefore the AI wasn't directed towards a specific goal but rather to just make a move.
+  \item \textbf{Node expansion:} Took a \emph{GameState} and finds empty spaces for marks to go to return a collection of actions and the \emph{GameStates} they led to.
+  \item \textbf{Cost comparison:} Costs were represented as an integer, so finding the lesser value was trivial and the standard $<$ operator was used.
+  \item \textbf{Heuristic function:} No heuristic was supplied --- $h(n)$ returned the same value and therefore A* turned into Dijkstra's algorithm for this test.
   \item \textbf{Weighing function:} Penalties were applied in accordance to how inappropriate a move was. Moves which didn't finish possible game-winning rows of three are heavily penalised to ensure that the AI would win when it can. Similarly, moves which didn't block two marks in a row owned by the opponent were severely penalised to incentivise blocking the opponent's obvious attempts of winning. Other than that, the penalty of a move would depend on how many `near-wins' are created for the AI and how many are left unchecked by the opponent. This is an arbitrary function and will be scrutinised during the actual experiment.
 \end{itemize}
 
@@ -485,12 +485,34 @@ After programming and testing the A* algorithm, the final piece before the case 
 
 The state viewer and information window created in section \ref{subsec:buildingASampleGame} was adjusted to show details about the new game, as well as being expanded to handle multiple teams playing a single game. Finally, the map editor as well as the ability to save and load maps were introduced. Overall, development went smoothly --- having the tic-tac-toe and strategy games share similar approaches using \emph{GameStates} and a variety of static functions meant that development was a matter of adapting and expanding previously written functions to suit the new game. With the human and trivial controllers properly set up to play the game, the case study could finally begin.
 
-\textbf{END}
-
-- Go through commit history and summarise main narrative (key milestones and changes). Can always place the rest as a (referenced) appendix.
-
 \section{Results and Evaluation (11--12 pages including critical review)}
 \label{sec:resultsAndEvaluation}
+
+\subsection{Case study one}
+\label{subsec:caseStudyOne}
+
+\subsubsection{Configuration}
+
+\begin{itemize}
+  \item \textbf{Goal:} A \emph{GameState} is considered a goal node when the currently playing team changes, meaning that the previous \emph{Action} was the ending of the current turn and give control to the next team.
+  \item \textbf{Cost:} Represented by a set of integer values representing different penalties: enemies remaining, allies lost and allies at risk. The aim is to make the AI select actions that eliminate opposing units without exposing allies. Friendly fire is also an option and actions that kill an allied unit are given penalties. Summing \emph{Cost} values is achieved by adding the components together, resulting in a \emph{Cost} value containing totals for each penalty.
+  \item \textbf{Cost comparison:} A \emph{Personality} class has been introduced which contains floating point values as multipliers for the elements of \emph{Cost}. When comparing two \emph{Cost} instances, their values are manipulated by a \emph{Personality} before being summed into one value, it is these totals that are then used in comparisons.
+  \item \textbf{Heuristic function:} Nothing useful given --- only a \emph{Cost} value containing zero for each penalty is given.
+  \item \textbf{Weighing function:} Each element of \emph{Cost} is found through comparison of \emph{GameStates}. Constant arbitrary values are used to create the penalties; for example, 10 points are added to the `enemies remaining' penalty total. Since ending the turn doesn't require or change anything, ending the turn isn't penalised. 
+\end{itemize}
+
+This approach is very similar to the way the AI in tic-tac-toe compared different moves. No goal or heuristic was provided, so the AI relied entirely on the comparison of the \emph{Costs} for performing \emph{Actions}. The notion of a \emph{Personality} was introduced to tweak the AI's values; perhaps it is desired for the AI to not care about killing friendly units if it means winning. Ending the turn doesn't award any penalties because the \emph{Cost} of the \emph{Action} sequence comes from what the AI does, and since ending the turn does nothing to the game there's no reason to add a penalty for it.
+
+\subsubsection{Observations}
+
+The AI displayed no behaviour regardless of which map was selected. It ended its turn straight away much like one of the trivial controllers. This reinforces how poor tic-tac-toe was for experimentation; the lack of depth meant that this flaw remained unexposed. As discussed in \ref{subsec:definingTheNotionOfCost}, A* uses non-negative cost values so that higher-costed action sequences can be deferred. With every move being penalised on some scale, performing two \emph{Actions} in a row will typically cost more than performing a single \emph{Action} even if the resulting \emph{GameState} is more favourable. Since there wasn't a non-zero \emph{Cost} for ending the turn, there wasn't a combination of \emph{Actions} that was preferable to doing nothing. 
+
+This case illustrates one flaw of developing game AI in this way: there must be extra consideration for possibly numerous areas of the AI in order to ensure that the behaviour is within expected parameters. Further cases need some way of deferring the ending of the turn.
+
+\subsection{Case study two}
+\label{subsec:caseStudyTwo}
+
+\textbf{END}
 
 - This area can be further subdivided
 
@@ -504,6 +526,7 @@ The state viewer and information window created in section \ref{subsec:buildingA
     - If a criteria has been failed, assess why it did not happen 
       - Was the criteria faulty? If so, explain how knowledge of the problem domain has changed
     - How does what I did prove the criteria?
+
 
 \chapter{Conclusions}
 \label{chapter:conclusions}
