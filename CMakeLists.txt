@@ -61,7 +61,11 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
   src/Scenes/Strategy/Map.cpp
   src/Scenes/Strategy/Objects.h
   src/Scenes/Strategy/Action.h
-  src/Scenes/Strategy/Cost.h
+
+  # Case studies
+  src/Scenes/Strategy/AI/Common.h
+  src/Scenes/Strategy/AI/CaseOne/CaseOne.h
+  src/Scenes/Strategy/AI/CaseOne/CaseOne.cpp
 
   # Development
   src/Console.h

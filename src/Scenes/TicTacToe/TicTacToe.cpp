@@ -492,6 +492,12 @@ TicTacToe::Game::continueGame() {
     return;
   }
 
+  // If it's an idle controller,end turn
+  else if (controller == Controller::Type::Idle) {
+    Console::log("[Error] Idle controller cannot function in tic-tac-toe");
+    return;
+  }
+
   // If its a random, invoke RandomController::Type::decide
   else if (controller == Controller::Type::Random) {
     attempt = Controller::Random::decide<GameState, Move> (

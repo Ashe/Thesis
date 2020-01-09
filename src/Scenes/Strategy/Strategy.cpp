@@ -2,6 +2,7 @@
 // A strategy game for testing AI
 
 #include "Strategy.h"
+#include "AI/CaseOne/CaseOne.h"
 
 ///////////////////////////////////////////
 // SCENE FUNCTIONS:
@@ -629,29 +630,13 @@ Strategy::Game::addDebugDetails() {
         ImGui::Text("%s", Controller::typeToString(controller).c_str());
 
         // AStar
-        if (controller >= Controller::Type::AStarOne) {
+        if (controller >= Controller::Type::AStarOne 
+            && aiFunctor_ != nullptr) {
           ImGui::Text("States processed: %u", 
-              controllerAStar_.getStatesProcessed());
+              aiFunctor_->getStatesProcessed());
+          ImGui::Text("Open states remaining: %u", 
+              aiFunctor_->getOpenStatesRemaining());
           ImGui::Spacing();
-          const auto& actionAndCost = controllerAStar_.getCurrentAction();
-          ImGui::Columns(2);
-          ImGui::Text("%s (%d, %d)",
-              actionToString(actionAndCost.first),
-              actionAndCost.first.location.x,
-              actionAndCost.first.location.y);
-          ImGui::NextColumn();
-          ImGui::Text("Cost: %u",
-              actionAndCost.second.value);
-          ImGui::Columns(1);
-          ImGui::Text("Open states remaining: %lu", 
-              controllerAStar_.getRemaining().size());
-          Cost totalCost = minimumCost;
-          const auto& fScores = controllerAStar_.getFScores();
-          for (const auto& kvp : fScores) {
-            totalCost = totalCost + kvp.second;
-          }
-          ImGui::Text("Average cost: %f", 
-              (float)totalCost.value / fScores.size());
         }
       }
       else {
@@ -663,328 +648,11 @@ Strategy::Game::addDebugDetails() {
 }
 
 ///////////////////////////////////////////
-// PURE FUNCTIONS:
+// PUBLIC PURE FUNCTIONS:
+// - Useful in case studies
 // - Functions without side effects
 // - Used to transform or read game states
 ///////////////////////////////////////////
-
-// Estimate the Cost of completing a turn from the current State 
-Strategy::Cost 
-Strategy::Game::heuristic(const GameState& state) {
-  return minimumCost;
-}
-
-// Evaluate how good an action is going to be
-Strategy::Cost 
-Strategy::Game::weighAction(
-    const GameState& start,
-    const GameState& from, 
-    const GameState& to,
-    const Action& action) {
-
-  // Prepare to calculate a cost
-  Cost cost = minimumCost;
-
-  // This function will evaluate if the chosen action is cost-free or not,
-  // free-cost actions are method we will funnel AStar's path
-  // The questions posed should be designed in order of ease to achieve
-  // The penalty for failing the question should be relative to the satisfaction
-  const auto& team = start.currentTeam;
-  
-  // There is no penalty in switching characters
-  if (action.tag == Action::Tag::SelectUnit || 
-      action.tag == Action::Tag::CancelSelection) {
-    cost.value = Cost::Penalty::characterChoice;
-  }
-
-  // Are we killing an enemy with an attack?
-  // - Apply a penalty for hitting nothing OR hitting an ally
-  else if (action.tag == Action::Tag::Attack) {
-    const auto& object = readMap(from.map, action.location);
-    if (isUnit(object.second)) {
-      if (object.first == team) {
-         cost.value = Cost::Penalty::friendlyFire;
-      }
-    }
-
-    // Check what non-unit objects are being shot
-    else {
-
-      // Are we shooting something worthwhile?
-      // - Penalise shooting nothing
-      if (object.second == Object::Nothing) {
-        cost.value = Cost::Penalty::missShot;
-      }
-
-      // If we're shooting a wall
-      else if (object.second == Object::Wall) {
-
-        // Are we prioritising the killing of enemies over walls
-        // - Penalise shooting walls when there are enemies to shoot
-        const auto& previousInSight = getUnitsInSight(from.map, from.selection);
-        if (!previousInSight.empty()) {
-          cost.value = Cost::Penalty::notEngagingEnemy;
-        }
-        else {
-
-          // Does the destroyed wall expose enemies?
-          // - Penalise the destruction of walls that don't reveal enemies
-          const auto& inSight = getUnitsInSight(to.map, to.selection);
-          if (inSight.empty()) {
-            cost.value = Cost::Penalty::poorTargetingPriority;
-          }
-        }
-      }
-    }
-  }
-
-  // Multiple questions to do with movement:
-  else if (action.tag == Action::Tag::MoveUnit) {
-
-    // If there's only one enemy with LoS:
-    // Get information on sightlines
-    const auto& unit = readMap(from.map, from.selection);
-    const auto& unitRange = getUnitRange(unit.second);
-
-    // Gather data on the selection's situation
-    const auto& enemiesInSight = getUnitsInSight(from.map, from.selection);
-    std::vector<std::tuple<Coord, unsigned int, Object, Range>> enemies;
-
-    // Check to see if the selection is in range of enemies
-    for (unsigned int i = 0; i < enemiesInSight.size(); ++i) {
-      const auto& enemyAndDistance = enemiesInSight[i];
-      const auto& object = readMap(from.map, enemyAndDistance.first);
-      const auto& enemyRange = getUnitRange(object.second);
-
-      // If the enemy is in range of the current unit, remember
-      if (enemyAndDistance.second <= unitRange) {
-        enemies.push_back(std::make_tuple(
-            enemyAndDistance.first,
-            enemyAndDistance.second,
-            object.second, 
-            enemyRange));
-      }
-    }
-
-    // Get the number of allies and enemies
-    unsigned int allyCount = 0;
-    unsigned int enemyCount = 0;
-    for (const auto& kvp : from.teams) {
-      if (kvp.first != team) {
-        enemyCount += kvp.second;
-      }
-      else {
-        allyCount = kvp.second;
-      }
-    }
-
-    // Count enemies that are a threat
-    unsigned int previousThreats = 0;
-    unsigned int currentThreats = 0;
-    const auto& newSights = getUnitsInSight(to.map, to.selection);
-    for (const auto& e : enemiesInSight) {
-      const auto& enemy = readMap(from.map, e.first);
-      if (getUnitRange(enemy.second) >= e.second) {
-        previousThreats += 1;
-      }
-    }
-    for (const auto& e : newSights) {
-      const auto& enemy = readMap(to.map, e.first);
-      if (getUnitRange(enemy.second) >= e.second) {
-        currentThreats += 1;
-      }
-    }
-
-    // If the number of allies is less than 75% of the enemy count, run away
-    // otherwise, try to attack
-    float percentageOfAllies = 1.f;
-    if (enemyCount > 0) {
-      percentageOfAllies = (float)allyCount / (float)enemyCount;
-    }
-
-    // Go on defense if numbers are low
-    const bool defenseMode = percentageOfAllies < 0.75f;
-
-    // Try to move in close to enemies, get in range to attack
-    if (!defenseMode) {
-
-      // If there are enemy units in sight initially
-      if (!enemiesInSight.empty()) {
-
-        // Get closest enemy in the previous state
-        auto previousClosestEnemy = enemiesInSight.front();
-        for (const auto& e : enemiesInSight) {
-          if (e.second < previousClosestEnemy.second) {
-            previousClosestEnemy = e;
-          }
-        }
-
-        // Get closest enemy in the current state
-        auto currentClosestEnemy = std::make_pair(Coord(-1, -1), UINT_MAX);
-        for (const auto& e : newSights) {
-          if (e.second < currentClosestEnemy.second) {
-            currentClosestEnemy = e;
-          }
-        }
-
-        // If there WAS an enemy in the range of the current unit
-        if (previousClosestEnemy.second <= unitRange) {
-          
-          // If there's still an enemy in range
-          if (!newSights.empty() && currentClosestEnemy.second <= unitRange) {
-
-            // Penalise for wasting MP on getting closer than necessary
-            if (currentClosestEnemy.second < previousClosestEnemy.second) {
-              cost.value = Cost::Penalty::unnecessaryRisk;
-            }
-          }
-
-          // Is there STILL an enemy in the range of the current unit?
-          // - Penalise if there's no longer an attackable enemy
-          else {
-            cost.value = Cost::Penalty::notEngagingEnemy;
-          }
-        }
-
-        // If there wasn't en enemy in range before
-        else {
-
-          // Only applies if there are actually enemies in sight now
-          if (!newSights.empty()) {
-          
-            // Are we moving closer to an enemy unit?
-            // - Penalise making the distance to the enemy larger
-            if (currentClosestEnemy.second >= previousClosestEnemy.second) {
-              cost.value = Cost::Penalty::notEngagingEnemy;
-            }
-          }
-        }
-      }
-
-      // If there's no enemies in sight initially
-      else {
-
-        // If this move means that there's no enemies in sight
-        // DO NOT penalise, as it means we can attack
-        if (!newSights.empty()) {
-          //return minimumCost;
-        }
-
-        // If there's still no enemies in sight, penalise moving away
-        else {
-
-          // Simply penalise moving away from enemies
-          float previousAverageDistanceToEnemies = 0.f;
-          for (const auto& e : from.map.field) {
-            const auto& pos = indexToCoord(from.map, e.first);
-            auto comps = sf::Vector2f(
-              abs((int)from.selection.x - (int)pos.x),
-              abs((int)from.selection.y - (int)pos.y));
-            comps.x *= comps.x;
-            comps.y *= comps.y;
-            const auto dist = sqrt(comps.x + comps.y);
-            previousAverageDistanceToEnemies += dist;
-          }
-
-          float currentAverageDistanceToEnemies = 0.f;
-          for (const auto& e : to.map.field) {
-            const auto& pos = indexToCoord(to.map, e.first);
-            auto comps = sf::Vector2f(
-              abs((int)to.selection.x - (int)pos.x),
-              abs((int)to.selection.y - (int)pos.y));
-            comps.x *= comps.x;
-            comps.y *= comps.y;
-            const auto dist = sqrt(comps.x + comps.y);
-            currentAverageDistanceToEnemies += dist;
-          }
-
-          // Are we moving closer to the enemy to try and get in LoS?
-          // - Penalise making the average distance to the enemy larger
-          if (currentAverageDistanceToEnemies >=
-              previousAverageDistanceToEnemies) {
-            cost.value = Cost::Penalty::notEngagingEnemy;
-          }
-        }
-      }
-    }
-
-    // Move away from enemies, get out of range / line of sight
-    else {
-
-      // Are we safe from enemies we cannot kill this turn?
-      // - Penalise making the number of threats greater from movement
-      if (previousThreats == 0) {
-        if (currentThreats > 1) {
-          cost.value = Cost::Penalty::exposedToEnemy;
-        }
-      }
-
-      // Are we still in a position to attack after repositioning?
-      // - Penalise losing the target or running into more enemies
-      else if (previousThreats == 1) {
-        if (currentThreats == 0) {
-          cost.value = Cost::Penalty::notEngagingEnemy;
-        }
-        else if(currentThreats >= previousThreats) {
-          cost.value = Cost::Penalty::exposedToEnemy;
-        }
-      }
-
-      // If there's too many enemies, moving won't do much good
-      // - Objectively, more than 2 enemies is overkill for securing a kill
-      // - The AI may need to run past MORE enemies to escape
-      // Thus, don't penalise for this tough position
-      else {
-        //return minimumCost;
-      }
-    }
-  }
-
-  // Are we ending a turn with the least amount of resources wasted? 
-  // - Ending turn applies a penalty equal to remaining AP and MP
-  else if (action.tag == Action::Tag::EndTurn) {
-
-    // Count number of enemies
-    unsigned int startEnemyCount = 0;
-    for (const auto& t : start.teams) {
-      if (t.first != team) {
-        startEnemyCount += t.second;
-      }
-    }
-    unsigned int enemyCount = 0;
-    unsigned int allyCount = 0;
-    for (const auto& t : from.teams) {
-      if (t.first != team) {
-        enemyCount += t.second;
-      }
-      else {
-        allyCount += t.second;
-      }
-    }
-
-    // Work out how many enemies have been killed
-    unsigned int enemiesKilled = enemyCount < startEnemyCount ?
-        startEnemyCount - enemyCount : 0;
-
-    // Count how many enemies were in sight
-    // - This stops expecting kills when the enemy wasn't in sight
-    const auto& counts = getAlliesAndEnemiesInRange(start, team);
-    const unsigned int recomendedKillcount = std::min(std::min(
-        counts.second, allyCount), (unsigned int) start.remainingAP);
-
-    // Count the difference in kills
-    const unsigned int killsMissed = enemiesKilled < recomendedKillcount
-        ? recomendedKillcount - enemiesKilled : 0;
-
-    // Accumulate cost based on enemies remaining and MP/AP wasted
-    cost.value = from.remainingMP * Cost::Penalty::unusedMP
-        + from.remainingAP * Cost::Penalty::unusedAP
-        + killsMissed * Cost::Penalty::enemyLeftAlive;
-  }
-
-  // Return the calculated cost of this action
-  return cost;
-}
 
 // Attempt to take action on a gamestate
 std::pair<bool, Strategy::GameState>
@@ -1621,7 +1289,7 @@ Strategy::Game::getAllPossibleActions(const GameState& state) {
         action.location = Coord(-1, -1);
       }
 
-      // Add action to action list
+      // Add action tohas ended
       actions.push_back(action);
     }
   }
@@ -1638,9 +1306,9 @@ Strategy::Game::getAllPossibleActions(const GameState& state) {
   return actions;
 }
 
-// Check to see if a State is an endpoint for decision making
+// Check to see if a turn has ended
 bool 
-Strategy::Game::isStateEndpoint(const GameState& a, const GameState& b) {
+Strategy::Game::hasTurnEnded(const GameState& a, const GameState& b) {
 
   // Return true if any of the following are true:
   // - Game is over in state
@@ -1708,6 +1376,14 @@ Strategy::Game::indexToCoord(const Map& m, unsigned int index) {
   const unsigned int rem = index % m.size.x;
   return Coord( rem, (index - rem) / m.size.x);
 }
+
+
+///////////////////////////////////////////
+// PRIVATE PURE FUNCTIONS:
+// - Functions without side effects
+// - Used to transform or read game states
+///////////////////////////////////////////
+
 
 // Get a default map layout of units
 Strategy::Map 
@@ -1803,26 +1479,19 @@ Strategy::Game::continueGame() {
           Controller::Random::decide<GameState, Action>,
               state,
               getAllPossibleActions,
-              isStateEndpoint,
+              hasTurnEnded,
               takeAction);
     }
 
     // If the controller is an A* variation, use pathfinding
-    else {
+    else if (controller == Controller::Type::AStarOne) {
 
       // Invoke decide() to make AStar pathfind to a decision
       isAIThinking_ = true;
+      static AI::CaseOne ai;
+      aiFunctor_ = &ai;
       aiDecision_ = std::async(std::launch::async,
-          std::ref(controllerAStar_),
-              state,
-              minimumCost,
-              maximumCost,
-              getAllPossibleActions,
-              isStateEndpoint,
-              heuristic,
-              weighAction,
-              takeAction,
-              std::less<Cost>());
+          std::ref(ai), state);
     }
   }
 

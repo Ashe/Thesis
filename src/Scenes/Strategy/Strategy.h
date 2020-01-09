@@ -21,10 +21,10 @@
 #include "../../Controller/AStar/AStar.h"
 
 #include "Common.h"
+#include "AI/Common.h"
 #include "GameState.h"
 #include "Map.h"
 #include "Action.h"
-#include "Cost.h"
 
 // Encapsulate Strategy related classes
 namespace Strategy {
@@ -66,85 +66,12 @@ namespace Strategy {
       // Add details to debug windows
       void addDebugDetails() override;
 
-    private:
-
-      // Track the currently viewed state
-      unsigned int currentState_;
-
-      // Store all states for the game
-      std::vector<GameState> states_;
-
-      // Current map to start with
-      Map currentMap_;
-
-      // Currently hovered tile by mouse
-      Coord hoveredTile_;
-
-      // Controllers used to play the game
-      std::map<Team, Controller::Type> controllers_;
-      const Controller::Type defaultController_ = Controller::Type::Human;
-
-      // Get the decision from the AI controllers
-      Controller::AStar<GameState, Action, Cost> controllerAStar_;
-      std::future<std::pair<bool, std::stack<Action>>> aiDecision_;
-      bool isAIThinking_ = false;
-
-      // Player pathfinding route
-      std::vector<Action> path_;
-
-      // The grid of the playing field to draw
-      sf::VertexArray grid_;
-
-      // Line of sights
-      std::vector<Coord> lineOfSight_;
-      std::vector<std::pair<Coord, Range>> unitsInSight_;
-
-      // Should turns or states be recorded?
-      bool isRecordingStates_ = true;
-
-      // Should a unit move or attack
-      bool isInAttackMode_;
-
-      // Costs for actions to show player on HUD
-      Points mpCost_;
-      Points apCost_;
-
-      // Sizes and positions of game graphics
-      float maxGameLength_;
-      float tileLength_;
-      sf::Vector2f center_;
-      float left_;
-      float top_;
-      float right_;
-      float bottom_;
-
-      // Buttons for the game
-      sf::RectangleShape modeButton_;
-      sf::RectangleShape endTurnButton_;
-
-      // Map editor variables
-      bool enableEditor_ = false;
-      Team editorTeam_ = Team(0);
-      Object editorObject_ = Object::Nothing;
-
-      // AI viewer variables
-      bool enableAIViewer_ = false;
-
       ///////////////////////////////////////////
-      // PURE FUNCTIONS:
+      // PUBLIC PURE FUNCTIONS:
+      // - Useful in case studies
       // - Functions without side effects
       // - Used to transform or read game states
       ///////////////////////////////////////////
-
-      // Estimate the Cost of completing a turn from the current State 
-      static Cost heuristic(const GameState& state);
-
-      // Evaluate how good an action is going to be
-      static Cost weighAction(
-          const GameState& start,
-          const GameState& from, 
-          const GameState& to,
-          const Action& action);
 
       // Attempt to take action on a gamestate
       static std::pair<bool, GameState> takeAction(
@@ -203,8 +130,8 @@ namespace Strategy {
       // Get all possible actions one could take
       static std::vector<Action> getAllPossibleActions(const GameState& state);
 
-      // Check to see if a State is an endpoint for decision making
-      static bool isStateEndpoint(const GameState& a, const GameState& b);
+      // Check to see if a turn has ended
+      static bool hasTurnEnded(const GameState& a, const GameState& b);
 
       // Check if there's a winning team and retrieve it if so
       static std::pair<GameStatus, Team> getGameStatus(const GameState& state);
@@ -214,6 +141,77 @@ namespace Strategy {
 
       // Translate map index into a coord
       static Coord indexToCoord(const Map& m, unsigned int index);
+
+
+    private:
+
+      // Track the currently viewed state
+      unsigned int currentState_;
+
+      // Store all states for the game
+      std::vector<GameState> states_;
+
+      // Current map to start with
+      Map currentMap_;
+
+      // Currently hovered tile by mouse
+      Coord hoveredTile_;
+
+      // Controllers used to play the game
+      std::map<Team, Controller::Type> controllers_;
+      const Controller::Type defaultController_ = Controller::Type::Human;
+
+      // Get the decision from the AI controllers
+      Strategy::AI::BaseCase* aiFunctor_ = nullptr;
+      std::future<std::pair<bool, std::stack<Action>>> aiDecision_;
+      bool isAIThinking_ = false;
+
+      // Player pathfinding route
+      std::vector<Action> path_;
+
+      // The grid of the playing field to draw
+      sf::VertexArray grid_;
+
+      // Line of sights
+      std::vector<Coord> lineOfSight_;
+      std::vector<std::pair<Coord, Range>> unitsInSight_;
+
+      // Should turns or states be recorded?
+      bool isRecordingStates_ = true;
+
+      // Should a unit move or attack
+      bool isInAttackMode_;
+
+      // Costs for actions to show player on HUD
+      Points mpCost_;
+      Points apCost_;
+
+      // Sizes and positions of game graphics
+      float maxGameLength_;
+      float tileLength_;
+      sf::Vector2f center_;
+      float left_;
+      float top_;
+      float right_;
+      float bottom_;
+
+      // Buttons for the game
+      sf::RectangleShape modeButton_;
+      sf::RectangleShape endTurnButton_;
+
+      // Map editor variables
+      bool enableEditor_ = false;
+      Team editorTeam_ = Team(0);
+      Object editorObject_ = Object::Nothing;
+
+      // AI viewer variables
+      bool enableAIViewer_ = false;
+
+      ///////////////////////////////////////////
+      // PRIVATE PURE FUNCTIONS:
+      // - Functions without side effects
+      // - Used to transform or read game states
+      ///////////////////////////////////////////
 
       // Get a default map layout of units
       static Map getDefaultUnitPlacement(const Map& map);
