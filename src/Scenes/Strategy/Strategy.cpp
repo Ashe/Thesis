@@ -629,7 +629,7 @@ Strategy::Game::addDebugDetails() {
         ImGui::Text("%s", Controller::typeToString(controller).c_str());
 
         // AStar
-        if (controller == Controller::Type::AStar) {
+        if (controller >= Controller::Type::AStarOne) {
           ImGui::Text("States processed: %u", 
               controllerAStar_.getStatesProcessed());
           ImGui::Spacing();
@@ -1785,6 +1785,17 @@ Strategy::Game::continueGame() {
       return;
     }
 
+    // If the controller was Controller::Idle, do nothing
+    else if (controller == Controller::Type::Idle) {
+      isAIThinking_ = true;
+      aiDecision_ = std::async(std::launch::async,
+          [this]() { 
+            std::stack<Action> stack;
+            stack.push(Action(Action::Tag::EndTurn));
+            return std::make_pair(true, stack);
+          });
+    }
+
     // If the controller was Controller::Random, decide randomly
     else if (controller == Controller::Type::Random) {
       isAIThinking_ = true;
@@ -1796,8 +1807,8 @@ Strategy::Game::continueGame() {
               takeAction);
     }
 
-    // If the controller is Controller::AStar, use pathfinding
-    else if (controller == Controller::Type::AStar) {
+    // If the controller is an A* variation, use pathfinding
+    else {
 
       // Invoke decide() to make AStar pathfind to a decision
       isAIThinking_ = true;

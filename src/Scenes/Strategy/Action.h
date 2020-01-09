@@ -12,12 +12,6 @@ namespace Strategy {
   // Encapsulate the different types of actions
   struct Action {
 
-    // Default constructor
-    Action() { 
-      tag = Tag::EndTurn;
-      location = Coord(-1, -1);
-    }
-
     // Tag enum to determine action this is
     enum Tag {
       EndTurn,
@@ -26,6 +20,14 @@ namespace Strategy {
       MoveUnit,
       Attack
     };
+
+    // Default constructor
+    Action(Tag t = Tag::EndTurn, Coord l = Coord(-1, -1)) {
+      tag = t;
+      location = l;
+    }
+
+    // What kind of action is this
     Tag tag = Tag::EndTurn;
 
     // Data to help fulfill the different possible actions

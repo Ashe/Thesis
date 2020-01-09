@@ -11,22 +11,25 @@
 namespace Controller {
 
   // Type of controller
-  static const char* typeList[] = {"Human", "Random", "AStar"};
+  static const char* typeList[] = {
+      "Human", "Idle", "Random", "AStarOne", "AStarTwo"};
   enum class Type {
     Human,
+    Idle,
     Random,
-    AStar,
-    COUNT
+    AStarOne,
+    AStarTwo
   };
 
   // Convert controller enum to string
   inline std::string typeToString(const Controller::Type& controller) {
-    switch(controller) {
-      case Type::Human: return "Human"; break;
-      case Type::Random: return "Random"; break;
-      case Type::AStar: return "AStar"; break;
-      default: return "UNKNOWN"; break;
-    }
+    return typeList[(int)controller];
+   //switch(controller) {
+   //  case Type::Human: return "Human"; break;
+   //  case Type::Random: return "Random"; break;
+   //  case Type::AStarOne: return "AStar(1)"; break;
+   //  default: return "UNKNOWN"; break;
+   //}
   }
 }
 
