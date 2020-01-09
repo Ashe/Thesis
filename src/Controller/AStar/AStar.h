@@ -135,7 +135,7 @@ namespace Controller {
           std::stack<A> actionsTaken;
 
           // Build the path of actions from finish to start
-          while (!(pathNode == startingState)) {
+          while (pathNode != startingState) {
 
             // Find how we got to the current state
             const auto& it = history.find(pathNode);

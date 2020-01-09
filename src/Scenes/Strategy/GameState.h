@@ -47,6 +47,9 @@ namespace Strategy {
       && a.map.size == b.map.size
       && a.map.field == b.map.field;
   }
+  inline bool operator!= (const GameState& a, const GameState& b) {
+    return !(a == b);
+  }
 }
 
 // Hash function

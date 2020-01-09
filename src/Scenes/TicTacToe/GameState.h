@@ -55,6 +55,9 @@ namespace TicTacToe {
     }
     return true;
   }
+  inline bool operator!= (const GameState& a, const GameState& b) {
+    return !(a == b);
+  }
 }
 
 // Hash function
