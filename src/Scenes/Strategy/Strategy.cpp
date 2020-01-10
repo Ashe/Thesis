@@ -3,6 +3,7 @@
 
 #include "Strategy.h"
 #include "AI/CaseOne/CaseOne.h"
+#include "AI/CaseTwo/CaseTwo.h"
 
 ///////////////////////////////////////////
 // SCENE FUNCTIONS:
@@ -621,22 +622,35 @@ Strategy::Game::addDebugDetails() {
   if (enableAIViewer_) {
     if (ImGui::Begin("AI Viewer", &enableAIViewer_)) {
       auto it = controllers_.find(state.currentTeam);
-      ImGui::Text("Current Controller:");
-      ImGui::SameLine();
       if (it != controllers_.end()) {
 
         // Print the current controller
         const auto& controller = it->second;
+        ImGui::Text("Current Controller:");
+        ImGui::SameLine();
         ImGui::Text("%s", Controller::typeToString(controller).c_str());
 
-        // AStar
+        // Get index of current controller
+        const unsigned int index = getAIIndex(state.currentTeam);
+
+        // Find A* AI if possible
+        const auto& it = aiFunctors_.find(index);
         if (controller >= Controller::Type::AStarOne 
-            && aiFunctor_ != nullptr) {
+            && it != aiFunctors_.end()
+            && it->second != nullptr) {
+
+          // Show AI number
+          ImGui::SameLine();
+          ImGui::Text("(AI %u)", index);
+
+          // Show debugging information for AI
+          auto& ai = it->second;
           ImGui::Text("States processed: %u", 
-              aiFunctor_->getStatesProcessed());
+              ai->getStatesProcessed());
           ImGui::Text("Open states remaining: %u", 
-              aiFunctor_->getOpenStatesRemaining());
+              ai->getOpenStatesRemaining());
           ImGui::Spacing();
+          ai->debug();
         }
       }
       else {
@@ -1426,7 +1440,7 @@ Strategy::Game::getDefaultUnitPlacement(const Map& map) {
 
 ///////////////////////////////////////////
 // IMPURE FUNCTIONS:
-// - Mutate the state of the scene
+// - Mutate or uses the state of the scene
 ///////////////////////////////////////////
 
 // Recursively push states by querying AI controllers
@@ -1484,14 +1498,32 @@ Strategy::Game::continueGame() {
     }
 
     // If the controller is an A* variation, use pathfinding
-    else if (controller == Controller::Type::AStarOne) {
+    else {
 
-      // Invoke decide() to make AStar pathfind to a decision
-      isAIThinking_ = true;
-      static AI::CaseOne ai;
-      aiFunctor_ = &ai;
-      aiDecision_ = std::async(std::launch::async,
-          std::ref(ai), state);
+      // Determine index for where to store this AI
+      const unsigned int index = getAIIndex(state.currentTeam);
+
+      // Try to look for the current controller
+      auto it = aiFunctors_.find(index);
+
+      // Case Study One:
+      if (controller == Controller::Type::AStarOne) {
+        useAIFromIndex<AI::CaseOne>(index, state);
+      }
+
+      // Case Study Two:
+      else if (controller == Controller::Type::AStarTwo) {
+        if (it == aiFunctors_.end()) {
+          aiFunctors_.insert(std::make_pair(index, new AI::CaseTwo()));
+          it = aiFunctors_.find(index);
+        }
+        if (it != aiFunctors_.end()) {
+          isAIThinking_ = true;
+          auto& ai = *(it->second);
+          aiDecision_ = std::async(std::launch::async,
+              std::ref(ai), state);
+        }
+      }
     }
   }
 
@@ -1674,6 +1706,13 @@ Strategy::Game::getController(const Team& team) const {
   
   // If nothing is found, return Type::Human
   return Controller::Type::Human;
+}
+
+// Get the AI index for a team
+unsigned int 
+Strategy::Game::getAIIndex(const Team& team) const {
+  return team * (unsigned int)Controller::Type::COUNT + 
+      (unsigned int)getController(team);
 }
 
 // Get the reference to a controller for a team (inserts HUMAN if not found)

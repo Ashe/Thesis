@@ -4,6 +4,11 @@
 #ifndef STRATEGY_AI_COMMON_H
 #define STRATEGY_AI_COMMON_H
 
+#include <utility>
+#include <stack>
+#include "../Action.h"
+#include "../GameState.h"
+
 // Encapsulate all strategy AIs
 namespace Strategy::AI {
 
@@ -19,6 +24,10 @@ namespace Strategy::AI {
 
       // Optional function for adding additional debugging
       virtual void debug() {}
+
+      // All cases use the () operator as they're functors
+      virtual std::pair<bool, std::stack<Strategy::Action>> 
+          operator()(const GameState&) = 0;
   };
 }
 

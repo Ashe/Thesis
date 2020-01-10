@@ -161,8 +161,11 @@ namespace Strategy {
       std::map<Team, Controller::Type> controllers_;
       const Controller::Type defaultController_ = Controller::Type::Human;
 
+      // Store AIs based on their controller type
+      // The index is team + controllertype
+      std::map<unsigned int, Strategy::AI::BaseCase*> aiFunctors_;
+
       // Get the decision from the AI controllers
-      Strategy::AI::BaseCase* aiFunctor_ = nullptr;
       std::future<std::pair<bool, std::stack<Action>>> aiDecision_;
       bool isAIThinking_ = false;
 
@@ -205,7 +208,7 @@ namespace Strategy {
       Object editorObject_ = Object::Nothing;
 
       // AI viewer variables
-      bool enableAIViewer_ = false;
+      bool enableAIViewer_ = true;
 
       ///////////////////////////////////////////
       // PRIVATE PURE FUNCTIONS:
@@ -218,7 +221,7 @@ namespace Strategy {
 
       ///////////////////////////////////////////
       // IMPURE FUNCTIONS:
-      // - Mutate the state of the scene
+      // - Mutate or uses the state of the scene
       ///////////////////////////////////////////
 
       // Recursively push states by querying AI controllers
@@ -247,6 +250,9 @@ namespace Strategy {
       // Get the controller for a team
       Controller::Type getController(const Team& team) const;
 
+      // Get the AI index for a team
+      unsigned int getAIIndex(const Team& team) const;
+
       // Get the reference to the controller for a team
       Controller::Type& getControllerRef(const Team& team);
 
@@ -258,6 +264,28 @@ namespace Strategy {
 
       // Retrieve units that are in sight
       void recalculateUnitsInSight();
+
+      // Add an AI to storage, or use one thats already there
+      template<typename T>
+      void useAIFromIndex(unsigned int i, const GameState& s) {
+
+        // Try to look for the current controller
+        auto it = aiFunctors_.find(i);
+
+        // Create the AI if necessary
+        if (it == aiFunctors_.end()) {
+          aiFunctors_.insert(std::make_pair(i, new T()));
+          it = aiFunctors_.find(i);
+        }
+
+        // Use it if possible
+        if (it != aiFunctors_.end()) {
+          isAIThinking_ = true;
+          auto& ai = *(it->second);
+          aiDecision_ = std::async(std::launch::async,
+              std::ref(ai), s);
+        }
+      }
 
       ///////////////////////////////////////////
       // GRAPHICAL / LOGGING:

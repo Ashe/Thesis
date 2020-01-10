@@ -1,8 +1,8 @@
-// CaseOne.h
+// CaseTwo.h
 // A wrapper containing the A* class
 
-#ifndef CASEONE_H
-#define CASEONE_H
+#ifndef CASETWO_H
+#define CASETWO_H
 
 #include <utility>
 #include "../../../../Controller/AStar/AStar.h"
@@ -14,7 +14,7 @@
 namespace Strategy::AI {
 
   // Functor for using A*
-  class CaseOne : public BaseCase {
+  class CaseTwo : public BaseCase {
     public:
 
       // Process the decision
@@ -25,7 +25,6 @@ namespace Strategy::AI {
       const unsigned int getStatesProcessed() const override;
       const unsigned int getOpenStatesRemaining() const override;
       void debug() override;
-
 
       // Store values to help evaluate the cost of taking an Action
       // Remember that its a COST system so that larger costs can be ruled out
@@ -40,12 +39,18 @@ namespace Strategy::AI {
         // Used to increase chances of survival by staying hidden
         unsigned int alliesAtRiskPenalty = 0;
 
+        // Used to make the AI use their resources
+        unsigned int unusedMPPenalty = 0;
+        unsigned int unusedAPPenalty = 0;
+
         // Combine Costs by adding their components
         inline Cost operator+ (const Cost& c) const {
           return Cost{
             remainingEnemyPenalty + c.remainingEnemyPenalty,
             lostAlliesPenalty + c.lostAlliesPenalty,
-            alliesAtRiskPenalty + c.alliesAtRiskPenalty
+            alliesAtRiskPenalty + c.alliesAtRiskPenalty,
+            unusedMPPenalty + c.unusedMPPenalty,
+            unusedAPPenalty + c.unusedAPPenalty,
           };
         }
 
@@ -54,7 +59,9 @@ namespace Strategy::AI {
           return Cost{
             remainingEnemyPenalty * m,
             lostAlliesPenalty * m,
-            alliesAtRiskPenalty * m
+            alliesAtRiskPenalty * m,
+            unusedMPPenalty * m,
+            unusedAPPenalty * m
           };
         }
       };
@@ -66,6 +73,8 @@ namespace Strategy::AI {
       float remainingEnemyMultiplier = 1.f;
       float lostAlliesMultiplier = 1.f;
       float alliesAtRiskMultiplier = 1.f;
+      float unusedMPMultiplier = 1.f;
+      float unusedAPMultiplier = 1.f;
 
       // Ask the personality to compare two costs
       constexpr bool operator()(const Cost& a, const Cost& b) const {
@@ -75,11 +84,15 @@ namespace Strategy::AI {
         const float costA = 
             a.remainingEnemyPenalty * remainingEnemyMultiplier +
             a.lostAlliesPenalty * lostAlliesMultiplier +
-            a.alliesAtRiskPenalty * alliesAtRiskMultiplier;
+            a.alliesAtRiskPenalty * alliesAtRiskMultiplier +
+            a.unusedMPPenalty * unusedMPMultiplier +
+            a.unusedAPPenalty * unusedAPMultiplier;
         const float costB = 
             b.remainingEnemyPenalty * remainingEnemyMultiplier +
             b.lostAlliesPenalty * lostAlliesMultiplier +
-            b.alliesAtRiskPenalty * alliesAtRiskMultiplier;
+            b.alliesAtRiskPenalty * alliesAtRiskMultiplier +
+            b.unusedMPPenalty * unusedMPMultiplier +
+            b.unusedAPPenalty * unusedAPMultiplier;
 
         // Compare ultimate values
         return costA < costB;
@@ -93,6 +106,9 @@ namespace Strategy::AI {
 
       // AI's personality
       Personality personality;
+
+      // Overall cost multiplier when ending the turn
+      static unsigned int endTurnMultiplier;
 
       // Determine what a goal is
       static bool isStateEndpoint(const GameState& a, const GameState& b);
@@ -108,8 +124,9 @@ namespace Strategy::AI {
           const Action& action);
 
       // Important Cost instances
-      static constexpr Cost minimumCost = Cost{0, 0, 0};
-      static constexpr Cost maximumCost = Cost{UINT_MAX, UINT_MAX, UINT_MAX};
+      static constexpr Cost minimumCost = Cost{0, 0, 0, 0, 0};
+      static constexpr Cost maximumCost = Cost{UINT_MAX, UINT_MAX, UINT_MAX,
+          UINT_MAX, UINT_MAX};
   };
 }
 
