@@ -4,6 +4,7 @@
 #include "Strategy.h"
 #include "AI/CaseOne/CaseOne.h"
 #include "AI/CaseTwo/CaseTwo.h"
+#include "AI/CaseThree/CaseThree.h"
 
 ///////////////////////////////////////////
 // SCENE FUNCTIONS:
@@ -1506,23 +1507,19 @@ Strategy::Game::continueGame() {
       // Try to look for the current controller
       auto it = aiFunctors_.find(index);
 
-      // Case Study One:
+      // Case Study 1:
       if (controller == Controller::Type::AStarOne) {
         useAIFromIndex<AI::CaseOne>(index, state);
       }
 
-      // Case Study Two:
+      // Case Study 2:
       else if (controller == Controller::Type::AStarTwo) {
-        if (it == aiFunctors_.end()) {
-          aiFunctors_.insert(std::make_pair(index, new AI::CaseTwo()));
-          it = aiFunctors_.find(index);
-        }
-        if (it != aiFunctors_.end()) {
-          isAIThinking_ = true;
-          auto& ai = *(it->second);
-          aiDecision_ = std::async(std::launch::async,
-              std::ref(ai), state);
-        }
+        useAIFromIndex<AI::CaseTwo>(index, state);
+      }
+
+      // Case study 3:
+      else if (controller == Controller::Type::AStarThree) {
+        useAIFromIndex<AI::CaseThree>(index, state);
       }
     }
   }
@@ -1892,7 +1889,9 @@ Strategy::Game::logAction(const GameState& state, const Action& action) {
       Console::log("%s End of turn %u.", s.c_str(), state.turnNumber); 
       break;
     case Action::Tag::SelectUnit:
-      Console::log("%s Selected unit: %s.", s.c_str(), toString(location.second));
+      Console::log("%s Selected unit: %s at (%d, %d).", 
+          s.c_str(), toString(location.second), 
+          action.location.x, action.location.y);
       break;
     case Action::Tag::CancelSelection:
       Console::log("%s Cancelled selection of (%d, %d).", 

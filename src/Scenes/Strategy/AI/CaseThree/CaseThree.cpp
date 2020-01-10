@@ -1,7 +1,7 @@
-// CaseOne.cpp
+// CaseThree.cpp
 // A wrapper containing the A* class
 
-#include "CaseOne.h"
+#include "CaseThree.h"
 
 ///////////////////////////////////////////
 // AI CONTROLLER FUNCTIONS
@@ -9,7 +9,7 @@
 
 // Start making the decision
 std::pair<bool, std::stack<Strategy::Action>> 
-Strategy::AI::CaseOne::operator()(const GameState& state) {
+Strategy::AI::CaseThree::operator()(const GameState& state) {
   return astar(
       state, 
       minimumCost, 
@@ -24,19 +24,19 @@ Strategy::AI::CaseOne::operator()(const GameState& state) {
 
 // Get number of states processed so far
 const unsigned int
-Strategy::AI::CaseOne::getStatesProcessed() const {
+Strategy::AI::CaseThree::getStatesProcessed() const {
   return astar.getStatesProcessed();
 }
 
 // Get number of open states remaining
 const unsigned int
-Strategy::AI::CaseOne::getOpenStatesRemaining() const {
+Strategy::AI::CaseThree::getOpenStatesRemaining() const {
   return astar.getRemaining().size();
 }
 
 // Debugging functionality
 void
-Strategy::AI::CaseOne::debug() {
+Strategy::AI::CaseThree::debug() {
   const auto& actionAndCost = astar.getCurrentAction();
   ImGui::Columns(2);
   ImGui::Text("%s (%d, %d)",
@@ -63,20 +63,20 @@ Strategy::AI::CaseOne::debug() {
 
 // Check to see if a State is an endpoint for decision making
 bool 
-Strategy::AI::CaseOne::isStateEndpoint(const GameState& a, const GameState& b) {
+Strategy::AI::CaseThree::isStateEndpoint(const GameState& a, const GameState& b) {
   return Game::hasTurnEnded(a, b);
 }
 
 
 // Estimate the Cost of completing a turn from the current State 
-Strategy::AI::CaseOne::Cost 
-Strategy::AI::CaseOne::heuristic(const GameState& state) {
+Strategy::AI::CaseThree::Cost 
+Strategy::AI::CaseThree::heuristic(const GameState& state) {
   return minimumCost;
 }
 
 // Evaluate how good an action is going to be
-Strategy::AI::CaseOne::Cost 
-Strategy::AI::CaseOne::weighAction(
+Strategy::AI::CaseThree::Cost 
+Strategy::AI::CaseThree::weighAction(
     const GameState& start,
     const GameState& from, 
     const GameState& to,

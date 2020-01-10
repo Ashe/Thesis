@@ -68,6 +68,8 @@ target_sources(${EXECUTABLE_NAME} PRIVATE
   src/Scenes/Strategy/AI/CaseOne/CaseOne.cpp
   src/Scenes/Strategy/AI/CaseTwo/CaseTwo.h
   src/Scenes/Strategy/AI/CaseTwo/CaseTwo.cpp
+  src/Scenes/Strategy/AI/CaseThree/CaseThree.h
+  src/Scenes/Strategy/AI/CaseThree/CaseThree.cpp
 
   # Development
   src/Console.h

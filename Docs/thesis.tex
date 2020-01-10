@@ -530,7 +530,14 @@ This case is almost identical to case study one from section \ref{subsec:caseStu
 
 \subsubsection{Observations}
 
-Initially, when playing on the map \ref{sec:mapDefault5x5} the AI didn't move at all and repeated the behaviour of case study one in section \ref{subsec:caseStudyOne}. After manipulating the multiplier for MP and AP penalties, the AI was quickly compelled to win the game against both the idle and random team controllers. This is because the penalty for wasting MP and AP becomes great enough that ending a turn with less resources and killing more enemies is favourable to doing nothing, which is promising. It doesn't matter how high these penalties were set; when the same amount of resources have been spent, the AI will take the other penalties into consideration to find the absolute minimum.
+Initially, when playing on the map \ref{sec:mapDefault5x5} the AI didn't move at all and repeated the behaviour of case study one in section \ref{subsec:caseStudyOne}. After manipulating the multiplier for MP and AP penalties, the AI was quickly compelled to win the game against both the idle and random team controllers. This is because the penalty for wasting MP and AP becomes great enough that ending a turn with less resources and killing more enemies is favourable to doing nothing, which is promising. It doesn't matter how high these penalties were set; when the same amount of resources have been spent, the AI will take the other penalties into consideration to find the absolute minimum. One humorous event that occured when making the AI play against itself: because the second case's AI greatly valued spending resources, it actually eliminated itself when there was only one unit of its squad left after being wiped them out in the first turn. Figure \ref{fig:caseStudyTwoSuicide} shows this AI in action as well as this comedic moment.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=12cm]{img/case_two_suicide.png}
+  \caption{Log of the game where case study two played against itself}
+  \label{fig:caseStudyTwoSuicide}
+\end{figure}
 
 Increasing the total turn multiplier from one slowed down the turn dramatically, becoming impractical at multipliers higher than 3. It is suspected that this is because A* cannot terminate computation until it reaches a goal node or it runs out of open nodes, and doing this postpones the evaluation of all end turn \emph{Actions} until every other \emph{Action} has been processed. This is unhelpful and inefficient.
 
@@ -538,9 +545,50 @@ This AI heavily struggled with map \ref{sec:mapCrossWall5x5}. The AI took a lot 
 
 \begin{itemize}
   \item Using a heuristic function to perform best-first searches, which could be difficult because `best' is subjective when it comes to gameplay.
-  \item Limiting the depth of the search, although there needs to be some sort of backup in place. If an end turn \emph{Action} was already found it would have been used, therefore there wouldn't be any backups other than ending the turn doing nothing, which is another problem.
+  \item Limiting the depth of the search, although there needs to be some sort of backup in place.
   \item Changing penalties in some way so that the AI isn't penalised for performing \emph{Actions} in a bad situation.
 \end{itemize}
+
+\subsection{Case study three}
+\label{subsec:caseStudyThree}
+
+\subsubsection{Configuration}
+
+\begin{itemize}
+  \item \textbf{Goal:} End the current turn.
+  \item \textbf{Cost:} A single integer value that increases based on the penalties applied.
+  \item \textbf{Cost comparison:} Standard integer comparison using $<$ operator.
+  \item \textbf{Heuristic function:} No useful heuristic given.
+  \item \textbf{Weighing function:} New implementation. The new function is long and cluttered, but avoids applying penalties to any \emph{Action} that could be considered a good move. The body of the function is split between every type of \emph{Action} and will only penalise if the resulting \emph{GameState} is worse than the previous. The \emph{Action} for unit selection has a fixed to stop infinite loops since selecting units does not do anything destructive to the \emph{GameState}.
+\end{itemize}
+
+Following from case study two in section \ref{subsec:caseStudyTwo}, this case is only interested in changing the approach to assigning \emph{Costs} to \emph{Actions}. The previous cases have challenged the AI to choose the least penalised option, but this caused complications in situations where no sequence of \emph{Actions} could be seen as an objectively good move from the AI's perspective. In this case, a large amount of \emph{Actions} can have zero \emph{Cost}. Only the \emph{Actions} that aren't effective are penalised; moving units out of sight or range and eliminating units are examples of \emph{Actions} that are potentially free depending on the situation. One final thing to note is that this weighing function has a goal embedded into, where survival is only prioritised when on a low unit number, and eliminating the enemy is the standard objective --- this is so that the AI is encouraged to fight rather than hiding in a corner, which could otherwise be considered the better move. This embedded goal could be factored out later when experimenting with goal nodes. When ending the turn, the \emph{GameState} is compared to the starting state and penalties are applied for the amount of enemies left alive. 
+
+The AI will use these zero-cost edges to identify all possible end points. It will then expand any non-free edges that have an $f(n)$ lower than the lowest-costing end point. Unless anything else is found, the sequence that leads to the end point with the fewest penalties is chosen. This algorithm may be slow if there's a large number of free options, which is why a thorough weighing function is required to ensure that a large portion of \emph{Actions} are non-free. This will effectively give us something similar to what happened in case study two, where the evaluation of the end-turn \emph{Actions} happen later on, but this time the pool of nodes to be expanded should be smaller and therefore the AI should be able to handle more situations.
+
+\subsubsection{Observations}
+
+The AI won swiftly and intelligently on maps \ref{sec:mapDefault5x5} and \ref{sec:mapCrossWall5x5} against the idle and random controllers. Figure \ref{fig:caseStudyThreeGame} shows how differently this AI plays on map \ref{sec:mapDefault5x5} when compared to case study two in figure \ref{fig:caseStudyTwoSuicide}. In this case, team 0 eliminated three members of the opposing squad quicker than case study two and also tries to retaliate when losing.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=12cm]{img/case_three_game.png}
+  \caption{Log of the game between case study three played against itself}
+  \label{fig:caseStudyThreeGame}
+\end{figure}
+
+This AI is very promising, but there isn't enough space to create maps that produce interesting gameplay when limited to 5x5. Moreover, without testing for the limits of each AI, it is difficult to answer the research question from section \ref{subsec:researchMethodologies}: "how plausible is it to use A* in a decision making process for game AI?" With this, it has been decided that the preferred map size should be 7x7 so that a greater variety of behaviour can be observed. Map \ref{sec:mapDefault7x7} has been creating as the new default map. Unlike the previous AIs, this AI can handle a map this large although there is a noticeable reduction of speed.
+
+After two minutes in real time, this AI processed over 1500 possible \emph{GameStates} with 2000 unexplored before taking its turn on map \ref{sec:mapDefault7x7}. Since eliminations were made, the subsequent turns were processed almost instantaneously when playing against any of the controllers so far. On its first turn, the AI made use of the blaster and laser units. It chose the high-cost laser unit over the sniper unit to ensure that it used up all of its resources; both units have the same effective range as shown in table \ref{table:unitOverview}, but with the squads being far apart from each other no other unit could have attacked and so the AI would have wasted at least 1 AP. Figure \ref{fig:caseStudyThree7x7Game} demonstrates this: the human controller shows visualisations of the range and sight of units when attacking, from this it can be calculated that the blaster and sniper units could not have made two eliminations, and so the AI found the one unit that could make the attack.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=10cm]{img/case_three_7x7_game.png}
+  \caption{Screenshot showing how the blaster unit could not have attacked in turn one}
+  \label{fig:caseStudyThree7x7Game}
+\end{figure}
+
+This shows that this AI can be intelligent by choosing the lowest costing route. Applying a heuristic function could make this process faster, as even though the AI plays well on both map \ref{sec:mapDefault7x7} and map \ref{sec:mapCrossWithBlock7x7}, it has to process thousands of states before making a decision. In particular, over 5000 states were in the open list on the second turn of map \ref{sec:mapCrossWithBlock7x7} against an idle controller --- this is expensive in terms of both speed and memory consumption. Game AI doesn't always have to make the best decision, so further case studies should attempt to reduce the number of states processed while preserving an acceptable amount of intelligence.
 
 \textbf{END}
 
@@ -621,21 +669,46 @@ Figure \ref{fig:mapDefault5x5} shows the default map. 5x5 is big enough for basi
 \begin{figure}[!h]
   \centering
   \includegraphics[width=10cm]{img/map_default_5x5.png}
-  \caption{A symmetrical square 5x5 map}
+  \caption{A symmetrical, 5x5 square map}
   \label{fig:mapDefault5x5}
 \end{figure}
 
 \section{Cross-wall 5x5 map}
 \label{sec:mapCrossWall5x5}
 
-Figure \ref{fig:mapWithCrossWalls5x5} shows the default map with an orthogonal cross placed in the center. This cross obstructs line of sight and the AI must attack the walls to remove them and attack the enemy. This map requires teams to do more \emph{Actions} to win, and therefore requires multiple turns to be beaten. Teams on this map start with 5 MP and 3 AP per turn.
+Figure \ref{fig:mapWithCrossWalls5x5} shows the default map with an orthogonal cross placed in the centre. This cross obstructs line of sight and the AI must attack the walls to remove them and attack the enemy. This map requires teams to do more \emph{Actions} to win, and therefore requires multiple turns to be beaten. Teams on this map start with 5 MP and 3 AP per turn.
 
 \begin{figure}[!h]
   \centering
   \includegraphics[width=10cm]{img/map_cross_wall_5x5.png}
-  \caption{A symmetrical square map with obstacles obstructing lines of sight}
+  \caption{A symmetrical, 5x5 square map with obstacles dividing the map}
   \label{fig:mapWithCrossWalls5x5}
 \end{figure}
+
+\section{Default 7x7 map}
+\label{sec:mapDefault7x7}
+
+Figure \ref{fig:mapDefault7x7} shows the default map. 7x7 is a big improvement than a 5x5 map but requires more resources to process. Recall that pathfinding is already an expensive process, so layering a lot of \emph{Actions} on top of all the possible movement possibilities means that the total number of nodes in a graph can easily go into the thousands. Teams on this map start with 5 MP and 3AP, this acts as a restriction that requires careful planning to work with.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=10cm]{img/map_default_7x7.png}
+  \caption{A symmetrical, 7x7 square map}
+  \label{fig:mapDefault7x7}
+\end{figure}
+
+\section{Cross-with-block 7x7 map}
+\label{sec:mapCrossWithBlock7x7}
+
+Figure \ref{fig:mapCrossWithBlock7x7} shows an extension of the map shown in section \ref{sec:mapCrossWall5x5}. The additional block in the middle makes going through the centre an alternative route to going around the sides. Teams start with 5 MP and 3 AP, making this map less about which team goes first and more about positioning and resources which is the true aim of the strategy game as noted in section \ref{subsec:designingStrategyGame}.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=10cm]{img/map_cross_with_block_7x7.png}
+  \caption{A symmetrical, 7x7 square map with obstacles dividing the map}
+  \label{fig:mapCrossWithBlock7x7}
+\end{figure}
+
 
 \addtocontents{toc}{\endgroup}
 \end{appendices}

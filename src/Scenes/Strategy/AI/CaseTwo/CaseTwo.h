@@ -72,8 +72,8 @@ namespace Strategy::AI {
       float remainingEnemyMultiplier = 1.f;
       float lostAlliesMultiplier = 1.f;
       float alliesAtRiskMultiplier = 1.f;
-      float unusedMPMultiplier = 1.f;
-      float unusedAPMultiplier = 1.f;
+      float unusedMPMultiplier = 5.f;
+      float unusedAPMultiplier = 5.f;
 
       // Ask the personality to compare two costs
       constexpr bool operator()(const Cost& a, const Cost& b) const {

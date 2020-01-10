@@ -1,20 +1,19 @@
-// CaseOne.h
+// CaseThree.h
 // A wrapper containing the A* class
 
-#ifndef CASEONE_H
-#define CASEONE_H
+#ifndef CASETHREE_H
+#define CASETHREE_H
 
 #include <utility>
 #include "../../../../Controller/AStar/AStar.h"
 #include "../../Strategy.h"
-#include "../Common.h"
-
+#include "../BaseCase.h"
 
 // Encapsulate Strategy AIs
 namespace Strategy::AI {
 
   // Functor for using A*
-  class CaseOne : public BaseCase {
+  class CaseThree : public BaseCase {
     public:
 
       // Process the decision
@@ -64,7 +63,7 @@ namespace Strategy::AI {
     private:
 
       // Store an A* functor
-      Controller::AStar<GameState, Action, CaseOne::Cost> astar;
+      Controller::AStar<GameState, Action, Cost> astar;
 
       // Determine what a goal is
       static bool isStateEndpoint(const GameState& a, const GameState& b);
