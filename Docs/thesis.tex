@@ -505,7 +505,7 @@ This approach is very similar to the way the AI in tic-tac-toe compared differen
 
 \subsubsection{Observations}
 
-The AI displayed no behaviour regardless of which map was selected. It ended its turn straight away much like one of the trivial controllers. This reinforces how poor tic-tac-toe was for experimentation; the lack of depth meant that this flaw remained unexposed. As discussed in \ref{subsec:definingTheNotionOfCost}, A* uses non-negative cost values so that higher-costed action sequences can be deferred. With every move being penalised on some scale, performing two \emph{Actions} in a row will typically cost more than performing a single \emph{Action} even if the resulting \emph{GameState} is more favourable. Since there wasn't a non-zero \emph{Cost} for ending the turn, there wasn't a combination of \emph{Actions} that was preferable to doing nothing. 
+The AI displayed no behaviour regardless of which map was selected, although it still managed to win due to the random controller killing its own units. It ended its turn straight away much like one of the trivial controllers. This reinforces how poor tic-tac-toe was for experimentation; the lack of depth meant that this flaw remained unexposed. As discussed in \ref{subsec:definingTheNotionOfCost}, A* uses non-negative cost values so that higher-costed action sequences can be deferred. With every move being penalised on some scale, performing two \emph{Actions} in a row will typically cost more than performing a single \emph{Action} even if the resulting \emph{GameState} is more favourable. Since there wasn't a non-zero \emph{Cost} for ending the turn, there wasn't a combination of \emph{Actions} that was preferable to doing nothing. 
 
 This case illustrates one flaw of developing game AI in this way: there must be extra consideration for possibly numerous areas of the AI in order to ensure that the behaviour is within expected parameters. Further cases need some way of deferring the ending of the turn.
 
@@ -522,7 +522,7 @@ This case illustrates one flaw of developing game AI in this way: there must be 
   \item \textbf{Weighing function:} Same as case study one with one exception. The end turn \emph{Action} applies a heavy penalty based on how much MP and AP is remaining.
 \end{itemize}
 
-This case is almost identical to case study one from section \ref{subsec:caseStudyOne}; in that case study, the AI chose to do nothing every time because the end turn \emph{Action} was weighed to have zero \emph{Cost}. This has been changed for this case, where ending the turn now incurs a penalty depending on how much MP and AP is remaining in an attempt to incentivise performing \emph{Actions} and spending these resources to lower the penalty.
+This case is almost identical to case study one from section \ref{subsec:caseStudyOne}; in that case study, the AI chose to do nothing every time because the end turn \emph{Action} was weighed to have zero \emph{Cost}. This has been changed for this case, where ending the turn now incurs a penalty depending on how much MP and AP is remaining in an attempt to incentivise performing \emph{Actions} and spending these resources to lower the penalty. An all new debugging interface was implemented for this case so that the \emph{Personality} of the AI can be changed at runtime, therefore allowing the value of the penalty for wasting resources can be adjusted.
 
 \subsection{Observations}
 

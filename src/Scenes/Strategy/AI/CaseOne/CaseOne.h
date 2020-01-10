@@ -30,41 +30,70 @@ namespace Strategy::AI {
       // Remember that its a COST system so that larger costs can be ruled out
       struct Cost {
 
-        // Static struct of penalties to apply
-        struct Penalty {
+        // Used to prioritise winning the game
+        unsigned int remainingEnemyPenalty = 0;
 
-          // Logic penalties
-          static constexpr unsigned int characterChoice = 1;
-          static constexpr unsigned int unusedMP = 5;
-          static constexpr unsigned int unusedAP = 10;
-          static constexpr unsigned int friendlyFire = 25;
-          static constexpr unsigned int missShot = 25;
+        // Used to prioritise staying alive
+        unsigned int lostAlliesPenalty = 0;
 
-          // Playstyle penalties: Defensive
-          static constexpr unsigned int exposedToEnemy = 5;
-          static constexpr unsigned int unnecessaryRisk = 5;
+        // Used to increase chances of survival by staying hidden
+        unsigned int alliesAtRiskPenalty = 0;
 
-          // Playstyle penalties: Offensive
-          static constexpr unsigned int poorTargetingPriority = 1;
-          static constexpr unsigned int notEngagingEnemy = 5;
-          static constexpr unsigned int enemyLeftAlive = 5;
-        };
+        // Combine Costs by adding their components
+        inline Cost operator+ (const Cost& c) const {
+          return Cost{
+            remainingEnemyPenalty + c.remainingEnemyPenalty,
+            lostAlliesPenalty + c.lostAlliesPenalty,
+            alliesAtRiskPenalty + c.alliesAtRiskPenalty,
+          };
+        }
 
-        // The actual value of the penalty
-        unsigned int value = 0;
-
-        // Operators
-        Cost operator+(const Cost& c) const { return Cost { value + c.value }; }
-        Cost operator*(unsigned int m) const { return Cost { value * m }; }
-        bool operator<(const Cost& c) const { return value < c.value; }
-        bool operator==(const Cost& c) const { return value == c.value; }
-
+        // Allow a cost to be scaled
+        inline Cost operator* (unsigned int m) const {
+          return Cost{
+            remainingEnemyPenalty * m,
+            lostAlliesPenalty * m,
+            alliesAtRiskPenalty * m
+          };
+        }
       };
+
+    // Use a personality to compare Cost components
+    struct Personality {
+
+      // Modification multipliers for prioritising aspects of the game
+      float remainingEnemyMultiplier = 1.f;
+      float lostAlliesMultiplier = 1.f;
+      float alliesAtRiskMultiplier = 1.f;
+      float unusedMPMultiplier = 1.f;
+      float unusedAPMultiplier = 1.f;
+
+      // Ask the personality to compare two costs
+      constexpr bool operator()(const Cost& a, const Cost& b) const {
+
+        // Use personality's preferences to modify 'true' values
+        // This allows the AI to ignore or prioritise things
+        const float costA = 
+            a.remainingEnemyPenalty * remainingEnemyMultiplier +
+            a.lostAlliesPenalty * lostAlliesMultiplier +
+            a.alliesAtRiskPenalty * alliesAtRiskMultiplier;
+        const float costB = 
+            b.remainingEnemyPenalty * remainingEnemyMultiplier +
+            b.lostAlliesPenalty * lostAlliesMultiplier +
+            b.alliesAtRiskPenalty * alliesAtRiskMultiplier;
+
+        // Compare ultimate values
+        return costA < costB;
+      }
+    };
 
     private:
 
       // Store an A* functor
       Controller::AStar<GameState, Action, CaseOne::Cost> astar;
+
+      // AI's personality
+      Personality personality;
 
       // Determine what a goal is
       static bool isStateEndpoint(const GameState& a, const GameState& b);
@@ -80,8 +109,8 @@ namespace Strategy::AI {
           const Action& action);
 
       // Important Cost instances
-      static constexpr Cost minimumCost = Cost{0};
-      static constexpr Cost maximumCost = Cost{UINT_MAX};
+      static constexpr Cost minimumCost = Cost{0, 0, 0};
+      static constexpr Cost maximumCost = Cost{UINT_MAX, UINT_MAX, UINT_MAX};
   };
 }
 
