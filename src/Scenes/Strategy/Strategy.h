@@ -21,7 +21,7 @@
 #include "../../Controller/AStar/AStar.h"
 
 #include "Common.h"
-#include "AI/Common.h"
+#include "AI/BaseCase.h"
 #include "GameState.h"
 #include "Map.h"
 #include "Action.h"

@@ -7,8 +7,7 @@
 #include <utility>
 #include "../../../../Controller/AStar/AStar.h"
 #include "../../Strategy.h"
-#include "../Common.h"
-
+#include "../BaseCase.h"
 
 // Encapsulate Strategy AIs
 namespace Strategy::AI {

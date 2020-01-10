@@ -1,8 +1,8 @@
-// Strategy/AI/Common.h
+// Strategy/AI/BaseCase.h
 // Common code for all case studies to share
 
-#ifndef STRATEGY_AI_COMMON_H
-#define STRATEGY_AI_COMMON_H
+#ifndef STRATEGY_AI_BASECASE_H
+#define STRATEGY_AI_BASECASE_H
 
 #include <utility>
 #include <stack>

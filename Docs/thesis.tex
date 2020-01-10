@@ -398,6 +398,8 @@ Figure \ref{fig:mapEditor} shows the four main parts to the map editor that are 
 
 Figure \ref{fig:stateBrowser} shows how the state browser window should look. A simple scroll bar will suffice as a way of searching the collection --- the variable \emph{currentState} in \emph{Game} as shown in figure \ref{fig:strategyGameUML} is an index referring to which state in the collection \emph{states} to render on screen, so a scroll bar representing a range of values from zero to the size of \emph{states} creates an easy way of examine all states of the game. This window also displays information about the state, such as the amount of MP and AP as well as the number of members in each team. It makes sense to also include the ability to change the controller for each team since each team is already being displayed, this will allow the alteration of which algorithm is controlling which team at any given moment. Finally, the ability to reset and continue the game, clearing the state collection and starting the process illustrated in figure \ref{fig:gameLoop} respectively, will be introduced with the `reset game' and `continue game' buttons that can be seen at the bottom of the window. 
 
+\emph{TODO: Talk about AI viewer, and storing different AIs based on team and controller}
+
 \subsection{Designing the process of investigation}
 \label{subsec:designingInvestigation process}
 
@@ -419,6 +421,8 @@ Figure \ref{fig:stateBrowser} shows how the state browser window should look. A 
 \end{table}
 
 With the majority of the requirements in section \ref{subsec:requirements} designed, the only one unsatisfied is the actual implementation of the A* algorithm --- this will be programmed generically and be tuned for each use case during experimentation, with each variation of the algorithm being derived from interesting parts of previous iterations. The components of A* each variation is going to change is listed in table \ref{table:designingAStarVariations}; the changes made will be decided based on the studies of the other variations. For example, if a flaw in one variation's approach can be determined based on its observed behaviour, the next iteration might be adapted in an attempt to improve on the current approach.
+
+\emph{TODO: Mention how cases will be stored somewhere?}
 
 \section{Development}
 \label{sec:development}
@@ -505,14 +509,14 @@ This approach is very similar to the way the AI in tic-tac-toe compared differen
 
 \subsubsection{Observations}
 
-The AI displayed no behaviour regardless of which map was selected, although it still managed to win due to the random controller killing its own units. It ended its turn straight away much like one of the trivial controllers. This reinforces how poor tic-tac-toe was for experimentation; the lack of depth meant that this flaw remained unexposed. As discussed in \ref{subsec:definingTheNotionOfCost}, A* uses non-negative cost values so that higher-costed action sequences can be deferred. With every move being penalised on some scale, performing two \emph{Actions} in a row will typically cost more than performing a single \emph{Action} even if the resulting \emph{GameState} is more favourable. Since there wasn't a non-zero \emph{Cost} for ending the turn, there wasn't a combination of \emph{Actions} that was preferable to doing nothing. 
+The AI displayed no behaviour regardless of which map from appendix \ref{appendix:strategyGameMaps} was selected, although it still managed to win due to the random controller killing its own units. It ended its turn straight away much like one of the trivial controllers. This reinforces how poor tic-tac-toe was for experimentation; the lack of depth meant that this flaw remained unexposed. As discussed in \ref{subsec:definingTheNotionOfCost}, A* uses non-negative cost values so that higher-costed action sequences can be deferred. With every move being penalised on some scale, performing two \emph{Actions} in a row will typically cost more than performing a single \emph{Action} even if the resulting \emph{GameState} is more favourable. Since there wasn't a non-zero \emph{Cost} for ending the turn, there wasn't a combination of \emph{Actions} that was preferable to doing nothing. 
 
 This case illustrates one flaw of developing game AI in this way: there must be extra consideration for possibly numerous areas of the AI in order to ensure that the behaviour is within expected parameters. Further cases need some way of deferring the ending of the turn.
 
 \subsection{Case study two}
 \label{subsec:caseStudyTwo}
 
-\subsection{Configuration}
+\subsubsection{Configuration}
 
 \begin{itemize}
   \item \textbf{Goal:} End the current turn.
@@ -522,11 +526,21 @@ This case illustrates one flaw of developing game AI in this way: there must be 
   \item \textbf{Weighing function:} Same as case study one with one exception. The end turn \emph{Action} applies a heavy penalty based on how much MP and AP is remaining.
 \end{itemize}
 
-This case is almost identical to case study one from section \ref{subsec:caseStudyOne}; in that case study, the AI chose to do nothing every time because the end turn \emph{Action} was weighed to have zero \emph{Cost}. This has been changed for this case, where ending the turn now incurs a penalty depending on how much MP and AP is remaining in an attempt to incentivise performing \emph{Actions} and spending these resources to lower the penalty. An all new debugging interface was implemented for this case so that the \emph{Personality} of the AI can be changed at runtime, therefore allowing the value of the penalty for wasting resources can be adjusted.
+This case is almost identical to case study one from section \ref{subsec:caseStudyOne}; in that case study, the AI chose to do nothing every time because the end turn \emph{Action} was weighed to have zero \emph{Cost}. This has been changed for this case, where ending the turn now incurs a penalty depending on how much MP and AP is remaining in an attempt to incentivise performing \emph{Actions} and spending these resources to lower the penalty. One final thing that was considered was the multiplying all elements of the \emph{Cost} value when the turn is ended. This is so that additive and multiplicative penalties can be tested in case one is more effective than the other. The AI viewer will allow the manipulation of these values so that different behaviours can be found during play. 
 
-\subsection{Observations}
+\subsubsection{Observations}
 
-The AI finally moves, although it took an impractically long time to generate a solution. While it did play, it didn't seem to be very intelligent and it felt like it was still choosing to end it's turn unexpectedly. When the penalty per MP and per AP was increased, more \emph{Actions} were made --- the problem from case study one was delayed, not eliminated. The more that the penalty for ending the turn is increased, the more \emph{Actions} that are taken before the turn is ended. \emph{TODO: CREATE A NEW CONTROLLER FOR EACH CASE STUDY}
+Initially, when playing on the map \ref{sec:mapDefault5x5} the AI didn't move at all and repeated the behaviour of case study one in section \ref{subsec:caseStudyOne}. After manipulating the multiplier for MP and AP penalties, the AI was quickly compelled to win the game against both the idle and random team controllers. This is because the penalty for wasting MP and AP becomes great enough that ending a turn with less resources and killing more enemies is favourable to doing nothing, which is promising. It doesn't matter how high these penalties were set; when the same amount of resources have been spent, the AI will take the other penalties into consideration to find the absolute minimum.
+
+Increasing the total turn multiplier from one slowed down the turn dramatically, becoming impractical at multipliers higher than 3. It is suspected that this is because A* cannot terminate computation until it reaches a goal node or it runs out of open nodes, and doing this postpones the evaluation of all end turn \emph{Actions} until every other \emph{Action} has been processed. This is unhelpful and inefficient.
+
+This AI heavily struggled with map \ref{sec:mapCrossWall5x5}. The AI took a lot longer to win the game in real time, taking almost 10 minutes with the MP and AP multipliers set to 5 and the end turn multiplier set to 1. This demonstrates another flaw in using penalties to influence AI --- A*, or in this case, Dijkstra's algorithm, was constantly evaluating nodes with the lowest \emph{Cost}, and so because there was no way of ending the current turn without incurring a large penalty, the algorithm had to process the majority of possibilities before an end turn \emph{Action} would be considered the next thing to process. Multiple sets of values were tested, but a solution to speeding up the AI could not be found. Further cases will need to consider the following: 
+
+\begin{itemize}
+  \item Using a heuristic function to perform best-first searches, which could be difficult because `best' is subjective when it comes to gameplay.
+  \item Limiting the depth of the search, although there needs to be some sort of backup in place. If an end turn \emph{Action} was already found it would have been used, therefore there wouldn't be any backups other than ending the turn doing nothing, which is another problem.
+  \item Changing penalties in some way so that the AI isn't penalised for performing \emph{Actions} in a bad situation.
+\end{itemize}
 
 \textbf{END}
 
@@ -590,11 +604,38 @@ The AI finally moves, although it took an impractically long time to generate a 
 \makeatother
 
 \chapter{Generic A* implementation}
-
 \label{appendix:genericAStarImplementation}
+
 \linespread{0.8}
 \lstinputlisting[language=C++, firstline=65, lastline=260]{../src/Controller/AStar/AStar.h}
 \linespread{1.5}
+
+\chapter{Strategy game maps}
+\label{appendix:strategyGameMaps}
+
+\section{Default 5x5 map}
+\label{sec:mapDefault5x5}
+
+Figure \ref{fig:mapDefault5x5} shows the default map. 5x5 is big enough for basic play but small enough to keep processing fast. A good gauge of how well the AI performs is how well it copes with bigger map sizes, but 5x5 is the base requirement to be considered worth investigating. Teams on this map start with 5 MP and 3 AP per turn.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=10cm]{img/map_default_5x5.png}
+  \caption{A symmetrical square 5x5 map}
+  \label{fig:mapDefault5x5}
+\end{figure}
+
+\section{Cross-wall 5x5 map}
+\label{sec:mapCrossWall5x5}
+
+Figure \ref{fig:mapWithCrossWalls5x5} shows the default map with an orthogonal cross placed in the center. This cross obstructs line of sight and the AI must attack the walls to remove them and attack the enemy. This map requires teams to do more \emph{Actions} to win, and therefore requires multiple turns to be beaten. Teams on this map start with 5 MP and 3 AP per turn.
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=10cm]{img/map_cross_wall_5x5.png}
+  \caption{A symmetrical square map with obstacles obstructing lines of sight}
+  \label{fig:mapWithCrossWalls5x5}
+\end{figure}
 
 \addtocontents{toc}{\endgroup}
 \end{appendices}
