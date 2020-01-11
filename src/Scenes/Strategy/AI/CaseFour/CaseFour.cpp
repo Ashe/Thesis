@@ -107,6 +107,8 @@ Strategy::AI::CaseFour::debug() {
       (int*)&penalties.turnEnded, 0, 30);
   ImGui::InputInt("Attacked nothing", 
       (int*)&penalties.attackedNothing, 0, 30);
+  ImGui::InputInt("Attacked wall", 
+      (int*)&penalties.attackedWall, 0, 30);
   ImGui::InputInt("Attacked friendly", 
       (int*)&penalties.attackedFriendly, 0, 30);
   ImGui::InputInt("Ally needs saving", 
@@ -277,8 +279,13 @@ Strategy::AI::CaseFour::weighAction(
       cost.value += penalties.attackedNothing;
     }
 
+    // Check for hitting a wall
+    else if (hit.second == Object::Wall) {
+      cost.value += penalties.attackedWall;
+    }
+
     // Check for hitting allies
-    else if (hit.second != Object::Wall && hit.first == from.currentTeam) {
+    else if (hit.first == from.currentTeam) {
       cost.value += penalties.attackedFriendly;
     }
   }

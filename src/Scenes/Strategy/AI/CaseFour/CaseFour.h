@@ -36,6 +36,7 @@ namespace Strategy::AI {
           unsigned int spentAP = 2;
           unsigned int turnEnded = 2;
           unsigned int attackedNothing = 20;
+          unsigned int attackedWall = 10;
           unsigned int attackedFriendly = 20;
         };
 
@@ -44,7 +45,7 @@ namespace Strategy::AI {
           unsigned int alliesFurtherExposed = 4;
           unsigned int enemyNeedsEliminating = 10;
           unsigned int enemyNeedsExposing = 2;
-          unsigned int needToMoveCloser = 2;
+          unsigned int needToMoveCloser = 10;
         };
 
         // The actual value of the penalty
