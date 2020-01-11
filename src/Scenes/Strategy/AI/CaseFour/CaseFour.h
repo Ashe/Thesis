@@ -30,22 +30,20 @@ namespace Strategy::AI {
 
         // Static struct of penalties to apply
         struct Penalty {
+          static unsigned int optionalActionPenalty;
+          static unsigned int selectUnit;
+          static unsigned int spentMP;
+          static unsigned int spentAP;
+          static unsigned int turnEnded;
+          static unsigned int attackedNothing;
+          static unsigned int attackedFriendly;
+        };
 
-          // Logic penalties
-          static unsigned int characterChoice;
-          static unsigned int unusedMP;
-          static unsigned int unusedAP;
-          static unsigned int friendlyFire;
-          static unsigned int missShot;
-
-          // Playstyle penalties: Defensive
-          static unsigned int exposedToEnemy;
-          static unsigned int unnecessaryRisk;
-
-          // Playstyle penalties: Offensive
-          static unsigned int poorTargetingPriority;
-          static unsigned int notEngagingEnemy;
-          static unsigned int enemyLeftAlive;
+        struct Predictions {
+          static unsigned int allyNeedsSaving;
+          static unsigned int alliesFurtherExposed;
+          static unsigned int enemyNeedsEliminating;
+          static unsigned int enemyNeedsExposing;
         };
 
         // The actual value of the penalty
@@ -59,6 +57,18 @@ namespace Strategy::AI {
 
       };
 
+      // Heuristic functor that takes the starting state
+      // Used for checking if conditions are worsening etc.
+      struct HeuristicFunctor {
+        GameState startingState;
+        HeuristicFunctor(const GameState& state);
+        unsigned int allyCount = 0;
+        unsigned int enemyCount = 0;
+        unsigned int alliesInRange = 0;
+        unsigned int enemiesInRange = 0;
+        Cost operator()(const GameState& state);
+      };
+
     private:
 
       // Store an A* functor
@@ -69,6 +79,15 @@ namespace Strategy::AI {
 
       // Estimate the Cost of completing a turn from the current State 
       static Cost heuristic(const GameState& state);
+
+      // Should the AI be forced to get closer?
+      static bool enableGoalMoveOrKill;
+
+      // Store how far away the squad is
+      static float previousAverageDistanceToEnemies;
+
+      // Store how many enemies there were
+      static int previousEnemyCount;
 
       // Evaluate how good an action is going to be
       static Cost weighAction(
