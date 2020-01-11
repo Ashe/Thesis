@@ -1,8 +1,8 @@
-// CaseThree.h
+// CaseFour.h
 // A wrapper containing the A* class
 
-#ifndef CASETHREE_H
-#define CASETHREE_H
+#ifndef CASEFOUR_H
+#define CASEFOUR_H
 
 #include <utility>
 #include "../../../../Controller/AStar/AStar.h"
@@ -13,7 +13,7 @@
 namespace Strategy::AI {
 
   // Functor for using A*
-  class CaseThree : public BaseCase {
+  class CaseFour : public BaseCase {
     public:
 
       // Process the decision

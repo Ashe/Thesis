@@ -1,19 +1,19 @@
-// CaseThree.cpp
+// CaseFour.cpp
 // A wrapper containing the A* class
 
-#include "CaseThree.h"
+#include "CaseFour.h"
 
 // Static initialisations
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::characterChoice = 1;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::unusedMP = 5;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::unusedAP = 10;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::friendlyFire = 25;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::missShot = 25;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::exposedToEnemy = 5;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::unnecessaryRisk = 5;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::poorTargetingPriority = 1;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::notEngagingEnemy = 5;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::enemyLeftAlive = 5;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::characterChoice = 1;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::unusedMP = 5;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::unusedAP = 10;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::friendlyFire = 25;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::missShot = 25;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::exposedToEnemy = 5;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::unnecessaryRisk = 5;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::poorTargetingPriority = 1;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::notEngagingEnemy = 5;
+unsigned int Strategy::AI::CaseFour::Cost::Penalty::enemyLeftAlive = 5;
 
 ///////////////////////////////////////////
 // AI CONTROLLER FUNCTIONS
@@ -21,7 +21,7 @@ unsigned int Strategy::AI::CaseThree::Cost::Penalty::enemyLeftAlive = 5;
 
 // Start making the decision
 std::pair<bool, std::stack<Strategy::Action>> 
-Strategy::AI::CaseThree::operator()(const GameState& state) {
+Strategy::AI::CaseFour::operator()(const GameState& state) {
   return astar(
       state, 
       minimumCost, 
@@ -36,19 +36,19 @@ Strategy::AI::CaseThree::operator()(const GameState& state) {
 
 // Get number of states processed so far
 const unsigned int
-Strategy::AI::CaseThree::getStatesProcessed() const {
+Strategy::AI::CaseFour::getStatesProcessed() const {
   return astar.getStatesProcessed();
 }
 
 // Get number of open states remaining
 const unsigned int
-Strategy::AI::CaseThree::getOpenStatesRemaining() const {
+Strategy::AI::CaseFour::getOpenStatesRemaining() const {
   return astar.getRemaining().size();
 }
 
 // Debugging functionality
 void
-Strategy::AI::CaseThree::debug() {
+Strategy::AI::CaseFour::debug() {
   const auto& actionAndCost = astar.getCurrentAction();
   ImGui::Columns(2);
   ImGui::Text("%s (%d, %d)",
@@ -94,20 +94,20 @@ Strategy::AI::CaseThree::debug() {
 
 // Check to see if a State is an endpoint for decision making
 bool 
-Strategy::AI::CaseThree::isStateEndpoint(const GameState& a, const GameState& b) {
+Strategy::AI::CaseFour::isStateEndpoint(const GameState& a, const GameState& b) {
   return Game::hasTurnEnded(a, b);
 }
 
 
 // Estimate the Cost of completing a turn from the current State 
-Strategy::AI::CaseThree::Cost 
-Strategy::AI::CaseThree::heuristic(const GameState& state) {
+Strategy::AI::CaseFour::Cost 
+Strategy::AI::CaseFour::heuristic(const GameState& state) {
   return minimumCost;
 }
 
 // Evaluate how good an action is going to be
-Strategy::AI::CaseThree::Cost 
-Strategy::AI::CaseThree::weighAction(
+Strategy::AI::CaseFour::Cost 
+Strategy::AI::CaseFour::weighAction(
     const GameState& start,
     const GameState& from, 
     const GameState& to,
@@ -122,8 +122,7 @@ Strategy::AI::CaseThree::weighAction(
   // The penalty for failing the question should be relative to the satisfaction
   const auto& team = start.currentTeam;
   
-  // There is nothing wrong in switching characters, but there must be
-  // some penalty to stop infinite loops
+  // There is no penalty in switching characters
   if (action.tag == Action::Tag::SelectUnit || 
       action.tag == Action::Tag::CancelSelection) {
     cost.value = Cost::Penalty::characterChoice;

@@ -5,6 +5,7 @@
 #include "AI/CaseOne/CaseOne.h"
 #include "AI/CaseTwo/CaseTwo.h"
 #include "AI/CaseThree/CaseThree.h"
+#include "AI/CaseFour/CaseFour.h"
 
 ///////////////////////////////////////////
 // SCENE FUNCTIONS:
@@ -1504,9 +1505,6 @@ Strategy::Game::continueGame() {
       // Determine index for where to store this AI
       const unsigned int index = getAIIndex(state.currentTeam);
 
-      // Try to look for the current controller
-      auto it = aiFunctors_.find(index);
-
       // Case Study 1:
       if (controller == Controller::Type::AStarOne) {
         useAIFromIndex<AI::CaseOne>(index, state);
@@ -1520,6 +1518,11 @@ Strategy::Game::continueGame() {
       // Case study 3:
       else if (controller == Controller::Type::AStarThree) {
         useAIFromIndex<AI::CaseThree>(index, state);
+      }
+
+      // Case study 4:
+      else if (controller == Controller::Type::AStarFour) {
+        useAIFromIndex<AI::CaseFour>(index, state);
       }
     }
   }

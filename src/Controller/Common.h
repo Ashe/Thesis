@@ -12,7 +12,8 @@ namespace Controller {
 
   // Type of controller
   static const char* typeList[] = {
-      "Human", "Idle", "Random", "AStarOne", "AStarTwo", "AStarThree"};
+      "Human", "Idle", "Random", "AStarOne", "AStarTwo", "AStarThree",
+      "AStarFour"};
   enum class Type {
     Human,
     Idle,
@@ -20,6 +21,7 @@ namespace Controller {
     AStarOne,
     AStarTwo,
     AStarThree,
+    AStarFour,
     COUNT
   };
 
