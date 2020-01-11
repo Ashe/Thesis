@@ -16,6 +16,9 @@ namespace Strategy::AI {
   class BaseCase {
     public:
 
+      // Virtual distructor
+      virtual ~BaseCase() {}
+
       // Cases must allow for grabbing state
       virtual const unsigned int getStatesProcessed() const = 0;
 

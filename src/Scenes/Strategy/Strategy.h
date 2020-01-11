@@ -142,7 +142,6 @@ namespace Strategy {
       // Translate map index into a coord
       static Coord indexToCoord(const Map& m, unsigned int index);
 
-
     private:
 
       // Track the currently viewed state
@@ -265,9 +264,12 @@ namespace Strategy {
       // Retrieve units that are in sight
       void recalculateUnitsInSight();
 
-      // Add an AI to storage, or use one thats already there
+      // Create and use AI for the case studies
+      void createOrUseAI(const GameState& s, bool use = true);
+
+      // Create an AI and add to storage
       template<typename T>
-      void useAIFromIndex(unsigned int i, const GameState& s) {
+      AI::BaseCase* getAIFromIndex(unsigned int i) {
 
         // Try to look for the current controller
         auto it = aiFunctors_.find(i);
@@ -276,12 +278,27 @@ namespace Strategy {
         if (it == aiFunctors_.end()) {
           aiFunctors_.insert(std::make_pair(i, new T()));
           it = aiFunctors_.find(i);
+          Console::log("[Note] Instanced AI %u", i);
         }
 
-        // Use it if possible
+        // If it was succesfully created, return
         if (it != aiFunctors_.end()) {
+          return it->second;
+        }
+        return nullptr;
+      }
+
+      // Add an AI to storage, or use one thats already there
+      template<typename T>
+      void useAIFromIndex(unsigned int i, const GameState& s, bool use = true) {
+
+        // Get the AI from a given index
+        AI::BaseCase* aiPtr = getAIFromIndex<T>(i);
+
+        // Use it if desired and possible
+        if (use && aiPtr != nullptr) {
           isAIThinking_ = true;
-          auto& ai = *(it->second);
+          auto& ai = *aiPtr;
           aiDecision_ = std::async(std::launch::async,
               std::ref(ai), s);
         }

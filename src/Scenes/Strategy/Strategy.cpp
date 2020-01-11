@@ -637,22 +637,33 @@ Strategy::Game::addDebugDetails() {
 
         // Find A* AI if possible
         const auto& it = aiFunctors_.find(index);
-        if (controller >= Controller::Type::AStarOne 
-            && it != aiFunctors_.end()
-            && it->second != nullptr) {
+        if (controller >= Controller::Type::AStarOne) { 
 
-          // Show AI number
-          ImGui::SameLine();
-          ImGui::Text("(AI %u)", index);
+          // Check if it's already been instanced
+          if (it != aiFunctors_.end() && it->second != nullptr) {
 
-          // Show debugging information for AI
-          auto& ai = it->second;
-          ImGui::Text("States processed: %u", 
-              ai->getStatesProcessed());
-          ImGui::Text("Open states remaining: %u", 
-              ai->getOpenStatesRemaining());
-          ImGui::Spacing();
-          ai->debug();
+            // Show AI number
+            ImGui::SameLine();
+            ImGui::Text("(AI %u)", index);
+
+            // Show debugging information for AI
+            auto& ai = it->second;
+            ImGui::Text("States processed: %u", 
+                ai->getStatesProcessed());
+            ImGui::Text("Open states remaining: %u", 
+                ai->getOpenStatesRemaining());
+            ImGui::Spacing();
+            ai->debug();
+          }
+
+          // Allow instancing if not created
+          else {
+            ImGui::Text("AI is created automatically when playing.");
+            ImGui::Text("AI can be set up manually using the button below.");
+            if (ImGui::Button("Instantiate AI")) {
+              createOrUseAI(state, false);
+            }
+          }
         }
       }
       else {
@@ -1468,9 +1479,7 @@ Strategy::Game::continueGame() {
     }
 
     // Check what controller is currently playing
-    const auto& it = controllers_.find(state.currentTeam);
-    if (it == controllers_.end()) { return; }
-    const auto& controller = it->second;
+    const auto& controller = getController(state.currentTeam);
 
     // If the controller is HUMAN, do nothing
     if (controller == Controller::Type::Human) {
@@ -1502,28 +1511,8 @@ Strategy::Game::continueGame() {
     // If the controller is an A* variation, use pathfinding
     else {
 
-      // Determine index for where to store this AI
-      const unsigned int index = getAIIndex(state.currentTeam);
-
-      // Case Study 1:
-      if (controller == Controller::Type::AStarOne) {
-        useAIFromIndex<AI::CaseOne>(index, state);
-      }
-
-      // Case Study 2:
-      else if (controller == Controller::Type::AStarTwo) {
-        useAIFromIndex<AI::CaseTwo>(index, state);
-      }
-
-      // Case study 3:
-      else if (controller == Controller::Type::AStarThree) {
-        useAIFromIndex<AI::CaseThree>(index, state);
-      }
-
-      // Case study 4:
-      else if (controller == Controller::Type::AStarFour) {
-        useAIFromIndex<AI::CaseFour>(index, state);
-      }
+      // Perform the case study using a custom AI per team and controller
+      createOrUseAI(state);
     }
   }
 
@@ -1864,6 +1853,41 @@ Strategy::Game::recalculateUnitsInSight() {
   // Find every unit that see's the tile selected
   if (validateCoords(state.map, state.selection)) {
     unitsInSight_ = getUnitsInSight(state.map, state.selection);
+  }
+}
+
+// Create and use AI for the case studies
+void
+Strategy::Game::createOrUseAI(const GameState& state, bool use) {
+
+  // Find which team is currently playing and which AI that corresponds to
+  const auto& controller = getController(state.currentTeam);
+  const unsigned int index = getAIIndex(state.currentTeam);
+
+  // Case Study 1:
+  if (controller == Controller::Type::AStarOne) {
+    useAIFromIndex<AI::CaseOne>(index, state, use);
+  }
+
+  // Case Study 2:
+  else if (controller == Controller::Type::AStarTwo) {
+    useAIFromIndex<AI::CaseTwo>(index, state, use);
+  }
+
+  // Case study 3:
+  else if (controller == Controller::Type::AStarThree) {
+    useAIFromIndex<AI::CaseThree>(index, state, use);
+  }
+
+  // Case study 4:
+  else if (controller == Controller::Type::AStarFour) {
+    useAIFromIndex<AI::CaseFour>(index, state, use);
+  }
+
+  // Report error if case couldn't be found
+  else {
+    Console::log("[Error] Couldn't create AI %u for controller %s",
+        index, typeToString(controller).c_str());
   }
 }
 
