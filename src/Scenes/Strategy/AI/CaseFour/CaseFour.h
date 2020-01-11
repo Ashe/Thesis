@@ -44,6 +44,7 @@ namespace Strategy::AI {
           static unsigned int alliesFurtherExposed;
           static unsigned int enemyNeedsEliminating;
           static unsigned int enemyNeedsExposing;
+          static unsigned int needToMoveCloser;
         };
 
         // The actual value of the penalty
@@ -61,11 +62,12 @@ namespace Strategy::AI {
       // Used for checking if conditions are worsening etc.
       struct HeuristicFunctor {
         GameState startingState;
-        HeuristicFunctor(const GameState& state);
+        HeuristicFunctor(const GameState& state, bool& goal);
         unsigned int allyCount = 0;
         unsigned int enemyCount = 0;
         unsigned int alliesInRange = 0;
         unsigned int enemiesInRange = 0;
+        bool& useGoal;
         Cost operator()(const GameState& state);
       };
 
@@ -82,12 +84,6 @@ namespace Strategy::AI {
 
       // Should the AI be forced to get closer?
       static bool enableGoalMoveOrKill;
-
-      // Store how far away the squad is
-      static float previousAverageDistanceToEnemies;
-
-      // Store how many enemies there were
-      static int previousEnemyCount;
 
       // Evaluate how good an action is going to be
       static Cost weighAction(

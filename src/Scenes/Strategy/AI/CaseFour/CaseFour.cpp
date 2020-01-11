@@ -17,6 +17,7 @@ unsigned int CaseFourCost::Predictions::allyNeedsSaving = 2;
 unsigned int CaseFourCost::Predictions::alliesFurtherExposed = 4;
 unsigned int CaseFourCost::Predictions::enemyNeedsEliminating = 10;
 unsigned int CaseFourCost::Predictions::enemyNeedsExposing = 2;
+unsigned int CaseFourCost::Predictions::needToMoveCloser = 2;
 
 bool Strategy::AI::CaseFour::enableGoalMoveOrKill = true;
 
@@ -33,7 +34,7 @@ Strategy::AI::CaseFour::operator()(const GameState& state) {
       maximumCost, 
       Game::getAllPossibleActions,
       isStateEndpoint,
-      HeuristicFunctor(state),
+      HeuristicFunctor(state, enableGoalMoveOrKill),
       weighAction,
       Game::takeAction,
       std::less<Cost>());
@@ -94,12 +95,14 @@ Strategy::AI::CaseFour::debug() {
       (int*)&Cost::Penalty::attackedFriendly, 0, 30);
   ImGui::InputInt("Ally needs saving", 
       (int*)&Cost::Predictions::allyNeedsSaving, 0, 30);
-  ImGui::InputInt("allies further exposed", 
+  ImGui::InputInt("Allies further exposed", 
       (int*)&Cost::Predictions::alliesFurtherExposed, 0, 30);
-  ImGui::InputInt("enemy needs eliminating", 
+  ImGui::InputInt("Enemy needs eliminating", 
       (int*)&Cost::Predictions::enemyNeedsEliminating, 0, 30);
-  ImGui::InputInt("enemy needs exposing", 
+  ImGui::InputInt("Enemy needs exposing", 
       (int*)&Cost::Predictions::enemyNeedsExposing, 0, 30);
+  ImGui::InputInt("Need to move closer", 
+      (int*)&Cost::Predictions::needToMoveCloser, 0, 30);
   ImGui::PopItemWidth();
 }
 
@@ -108,6 +111,7 @@ Strategy::AI::CaseFour::debug() {
 ///////////////////////////////////////////
 
 // Check to see if a State is an endpoint for decision making
+// A is the starting state, B is the current state
 bool 
 Strategy::AI::CaseFour::isStateEndpoint(
     const GameState& a, const GameState& b) {
@@ -182,7 +186,7 @@ Strategy::AI::CaseFour::isStateEndpoint(
 
 // Constructor for heuristic functor
 Strategy::AI::CaseFour::HeuristicFunctor::HeuristicFunctor
-    (const GameState& state) : startingState(state) {
+    (const GameState& state, bool& goal) : startingState(state), useGoal(goal) {
 
   // Count allies and enemies
   const auto& counts = Game::countTeams(state.map);
@@ -252,6 +256,15 @@ Strategy::AI::CaseFour::HeuristicFunctor::operator()(const GameState& state) {
   if (enemyCount > inRange.second) {
     cost.value += (enemyCount - inRange.second) * 
         Cost::Predictions::enemyNeedsExposing;
+  }
+
+  // If the goal is in use, penalise based on closest distance from enemies
+  if (useGoal) {
+
+    // Get the current closest distance
+    float d = Game::getDistanceToClosestEnemy(
+        state.map, startingState.currentTeam);
+    cost.value += floor(d) * Cost::Predictions::needToMoveCloser;
   }
 
   // Return the heuristic cost of reaching the goal from this state

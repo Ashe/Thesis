@@ -121,6 +121,9 @@ namespace Strategy {
           const GameState& state,
           const Team& team);
 
+      // Get the smallest distance between an allied and enemy unit
+      static float getDistanceToClosestEnemy(const Map& map, const Team& team);
+
       // Get possible moves from the current Coord in a state
       static std::vector<Action> getPossibleMoves(const GameState& state);
 

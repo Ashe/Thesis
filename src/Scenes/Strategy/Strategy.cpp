@@ -1144,6 +1144,56 @@ Strategy::Game::getAlliesAndEnemiesInRange(
       enemiesInRangeOfAllies.size());
 }
 
+// Get the smallest distance between an allied and enemy unit
+float 
+Strategy::Game::getDistanceToClosestEnemy(const Map& map, const Team& team) {
+
+  // Prepare to collect allies and enemies
+  std::vector<Coord> allies;
+  std::vector<Coord> enemies;
+
+  // Collect allies and enemy positions
+  for (const auto& e : map.field) {
+    const auto& pos = Game::indexToCoord(map, e.first);
+    if (e.second.first == team) {
+      allies.push_back(pos);
+    }
+    else {
+      enemies.push_back(pos);
+    }
+  }
+
+  // If there are no allies, the distance to the closest enemy is invalid
+  if (allies.empty()) {
+    return FLT_MAX;
+  }
+
+  // If there are no enemies, the distance to the closest enemy is 0
+  else if (enemies.empty()) {
+    return 0.f;
+  }
+
+  // Find shortest distance
+  unsigned int distanceSqrd = UINT_MAX;
+  for (const auto& ally : allies) {
+    for (const auto& enemy : enemies) {
+
+      auto comps = sf::Vector2u(
+        abs(ally.x - enemy.x),
+        abs(ally.y - enemy.y));
+      comps.x *= comps.x;
+      comps.y *= comps.y;
+      unsigned int tempDist = comps.x + comps.y;
+      if (tempDist < distanceSqrd) {
+        distanceSqrd = tempDist;
+      }
+    }
+  }
+
+  // Get the real distance and return
+  return (float)sqrt(distanceSqrd);
+}
+
 // Get possible moves from the current Coord in a state
 std::vector<Strategy::Action> 
 Strategy::Game::getPossibleMoves(const GameState& state) {
