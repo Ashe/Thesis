@@ -30,21 +30,21 @@ namespace Strategy::AI {
 
         // Static struct of penalties to apply
         struct Penalty {
-          static unsigned int optionalActionPenalty;
-          static unsigned int selectUnit;
-          static unsigned int spentMP;
-          static unsigned int spentAP;
-          static unsigned int turnEnded;
-          static unsigned int attackedNothing;
-          static unsigned int attackedFriendly;
+          unsigned int optionalActionPenalty = 1;
+          unsigned int selectUnit = 3;
+          unsigned int spentMP = 1;
+          unsigned int spentAP = 2;
+          unsigned int turnEnded = 2;
+          unsigned int attackedNothing = 20;
+          unsigned int attackedFriendly = 20;
         };
 
         struct Predictions {
-          static unsigned int allyNeedsSaving;
-          static unsigned int alliesFurtherExposed;
-          static unsigned int enemyNeedsEliminating;
-          static unsigned int enemyNeedsExposing;
-          static unsigned int needToMoveCloser;
+          unsigned int allyNeedsSaving = 2;
+          unsigned int alliesFurtherExposed = 4;
+          unsigned int enemyNeedsEliminating = 10;
+          unsigned int enemyNeedsExposing = 2;
+          unsigned int needToMoveCloser = 2;
         };
 
         // The actual value of the penalty
@@ -58,35 +58,34 @@ namespace Strategy::AI {
 
       };
 
-      // Heuristic functor that takes the starting state
-      // Used for checking if conditions are worsening etc.
-      struct HeuristicFunctor {
-        GameState startingState;
-        HeuristicFunctor(const GameState& state, bool& goal);
-        unsigned int allyCount = 0;
-        unsigned int enemyCount = 0;
-        unsigned int alliesInRange = 0;
-        unsigned int enemiesInRange = 0;
-        bool& useGoal;
-        Cost operator()(const GameState& state);
-      };
-
     private:
 
       // Store an A* functor
       Controller::AStar<GameState, Action, Cost> astar;
 
-      // Determine what a goal is
-      static bool isStateEndpoint(const GameState& a, const GameState& b);
-
-      // Estimate the Cost of completing a turn from the current State 
-      static Cost heuristic(const GameState& state);
-
       // Should the AI be forced to get closer?
-      static bool enableGoalMoveOrKill;
+      bool enableGoalMoveOrKill = true;
+
+      // Variables of starting node
+      GameState startingState;
+      float startingDistanceToClosestEnemy = 0.f;
+      unsigned int startingAllyCount = 0;
+      unsigned int startingEnemyCount = 0;
+      unsigned int startingAlliesInRange = 0;
+      unsigned int startingEnemiesInRange = 0;
+
+      // Store values for evaluating actions
+      Cost::Penalty penalties;
+      Cost::Predictions predictions;
+
+      // Determine what a goal is
+      bool isStateEndpoint(const GameState& a, const GameState& b);
+
+      // How far away is the current node from a goal
+      Cost heuristic(const GameState& state);
 
       // Evaluate how good an action is going to be
-      static Cost weighAction(
+      Cost weighAction(
           const GameState& start,
           const GameState& from, 
           const GameState& to,

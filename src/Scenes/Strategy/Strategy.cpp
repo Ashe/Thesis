@@ -521,13 +521,18 @@ Strategy::Game::addDebugDetails() {
       ImGui::SameLine();
       ImGui::TextColored(col, "(%u members left)", teamIt->second);
     }
-    if (ImGui::Button("Reset Game")) { resetGame(); }
-    ImGui::SameLine();
     if (!isAIThinking_) {
+      if (ImGui::Button("Reset Game")) { 
+        resetGame(); 
+      }
+      ImGui::SameLine();
       if (ImGui::Button("Continue Game")) { 
         clearFutureStates();
         continueGame(); 
       }
+    }
+    else {
+      ImGui::Text("AI is thinking. Restart program to terminate.");
     }
   }
   ImGui::End();

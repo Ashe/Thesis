@@ -3,24 +3,6 @@
 
 #include "CaseFour.h"
 
-// Static initialisations
-typedef Strategy::AI::CaseFour::Cost CaseFourCost;
-unsigned int CaseFourCost::Penalty::optionalActionPenalty = 1;
-unsigned int CaseFourCost::Penalty::selectUnit = 3;
-unsigned int CaseFourCost::Penalty::spentMP = 1;
-unsigned int CaseFourCost::Penalty::spentAP = 2;
-unsigned int CaseFourCost::Penalty::turnEnded = 2;
-unsigned int CaseFourCost::Penalty::attackedNothing = 20;
-unsigned int CaseFourCost::Penalty::attackedFriendly = 20;
-
-unsigned int CaseFourCost::Predictions::allyNeedsSaving = 2;
-unsigned int CaseFourCost::Predictions::alliesFurtherExposed = 4;
-unsigned int CaseFourCost::Predictions::enemyNeedsEliminating = 10;
-unsigned int CaseFourCost::Predictions::enemyNeedsExposing = 2;
-unsigned int CaseFourCost::Predictions::needToMoveCloser = 2;
-
-bool Strategy::AI::CaseFour::enableGoalMoveOrKill = true;
-
 ///////////////////////////////////////////
 // AI CONTROLLER FUNCTIONS
 ///////////////////////////////////////////
@@ -28,14 +10,48 @@ bool Strategy::AI::CaseFour::enableGoalMoveOrKill = true;
 // Start making the decision
 std::pair<bool, std::stack<Strategy::Action>> 
 Strategy::AI::CaseFour::operator()(const GameState& state) {
+
+  // Count allies and enemies
+  const auto& counts = Game::countTeams(state.map);
+  startingAlliesInRange = 0;
+  startingEnemiesInRange = 0;
+
+  // Iterate through teams
+  for (const auto& kvp : counts) {
+
+    // If they're allies, use the value for ally count
+    if (kvp.first == state.currentTeam) {
+      startingAlliesInRange = kvp.second;
+    }
+
+    // Sum the counts of the other teams into the enemy count
+    else {
+      startingEnemiesInRange += kvp.second;
+    }
+  }
+
+  // Prepare to check allies and enemies in range
+  const auto& inRange = Game::getAlliesAndEnemiesInRange(
+      startingState, startingState.currentTeam);
+  startingAllyCount = inRange.first;
+  startingEnemyCount = inRange.second;
+
+  // Perform decision
   return astar(
       state, 
       minimumCost, 
       maximumCost, 
       Game::getAllPossibleActions,
-      isStateEndpoint,
-      HeuristicFunctor(state, enableGoalMoveOrKill),
-      weighAction,
+      std::bind(&CaseFour::isStateEndpoint, this,
+        std::placeholders::_1,
+        std::placeholders::_2),
+      std::bind(&CaseFour::heuristic, this,
+        std::placeholders::_1),
+      std::bind(&CaseFour::weighAction, this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3,
+        std::placeholders::_4),
       Game::takeAction,
       std::less<Cost>());
 }
@@ -80,29 +96,29 @@ Strategy::AI::CaseFour::debug() {
   ImGui::Text("Penalty customisation:");
   ImGui::Text("Remember, most of these are applied at the end of a turn.");
   ImGui::InputInt("Action cost", 
-      (int*)&Cost::Penalty::optionalActionPenalty, 0, 30);
+      (int*)&penalties.optionalActionPenalty, 0, 30);
   ImGui::InputInt("Select unit", 
-      (int*)&Cost::Penalty::selectUnit, 0, 30);
+      (int*)&penalties.selectUnit, 0, 30);
   ImGui::InputInt("Spent MP", 
-      (int*)&Cost::Penalty::spentMP, 0, 30);
+      (int*)&penalties.spentMP, 0, 30);
   ImGui::InputInt("Spent AP", 
-      (int*)&Cost::Penalty::spentAP, 0, 30);
+      (int*)&penalties.spentAP, 0, 30);
   ImGui::InputInt("End turn", 
-      (int*)&Cost::Penalty::turnEnded, 0, 30);
+      (int*)&penalties.turnEnded, 0, 30);
   ImGui::InputInt("Attacked nothing", 
-      (int*)&Cost::Penalty::attackedNothing, 0, 30);
+      (int*)&penalties.attackedNothing, 0, 30);
   ImGui::InputInt("Attacked friendly", 
-      (int*)&Cost::Penalty::attackedFriendly, 0, 30);
+      (int*)&penalties.attackedFriendly, 0, 30);
   ImGui::InputInt("Ally needs saving", 
-      (int*)&Cost::Predictions::allyNeedsSaving, 0, 30);
+      (int*)&predictions.allyNeedsSaving, 0, 30);
   ImGui::InputInt("Allies further exposed", 
-      (int*)&Cost::Predictions::alliesFurtherExposed, 0, 30);
+      (int*)&predictions.alliesFurtherExposed, 0, 30);
   ImGui::InputInt("Enemy needs eliminating", 
-      (int*)&Cost::Predictions::enemyNeedsEliminating, 0, 30);
+      (int*)&predictions.enemyNeedsEliminating, 0, 30);
   ImGui::InputInt("Enemy needs exposing", 
-      (int*)&Cost::Predictions::enemyNeedsExposing, 0, 30);
+      (int*)&predictions.enemyNeedsExposing, 0, 30);
   ImGui::InputInt("Need to move closer", 
-      (int*)&Cost::Predictions::needToMoveCloser, 0, 30);
+      (int*)&predictions.needToMoveCloser, 0, 30);
   ImGui::PopItemWidth();
 }
 
@@ -151,72 +167,19 @@ Strategy::AI::CaseFour::isStateEndpoint(
       return true;
     }
 
-    // Otherwise, check average distances
-    float previousAverageDistanceToEnemies = 0.f;
-    for (const auto& e : a.map.field) {
-      const auto& pos = Game::indexToCoord(a.map, e.first);
-      auto comps = sf::Vector2f(
-        abs((int)a.selection.x - (int)pos.x),
-        abs((int)a.selection.y - (int)pos.y));
-      comps.x *= comps.x;
-      comps.y *= comps.y;
-      const auto dist = sqrt(comps.x + comps.y);
-      previousAverageDistanceToEnemies += dist;
-    }
-
-    float currentAverageDistanceToEnemies = 0.f;
-    for (const auto& e : b.map.field) {
-      const auto& pos = Game::indexToCoord(b.map, e.first);
-      auto comps = sf::Vector2f(
-        abs((int)b.selection.x - (int)pos.x),
-        abs((int)b.selection.y - (int)pos.y));
-      comps.x *= comps.x;
-      comps.y *= comps.y;
-      const auto dist = sqrt(comps.x + comps.y);
-      currentAverageDistanceToEnemies += dist;
-    }
-
     // Whether this is a goal depends if the team has moved closer
-    return currentAverageDistanceToEnemies < previousAverageDistanceToEnemies;
+    float currentDistanceToClosestEnemy = Game::getDistanceToClosestEnemy(
+        b.map, a.currentTeam);
+    return currentDistanceToClosestEnemy < startingDistanceToClosestEnemy;
   }
 
   // Return true if no goals restrictions enabled
   return true;
 }
 
-// Constructor for heuristic functor
-Strategy::AI::CaseFour::HeuristicFunctor::HeuristicFunctor
-    (const GameState& state, bool& goal) : startingState(state), useGoal(goal) {
-
-  // Count allies and enemies
-  const auto& counts = Game::countTeams(state.map);
-  allyCount = 0;
-  enemyCount = 0;
-
-  // Iterate through teams
-  for (const auto& kvp : counts) {
-
-    // If they're allies, use the value for ally count
-    if (kvp.first == state.currentTeam) {
-      alliesInRange = kvp.second;
-    }
-
-    // Sum the counts of the other teams into the enemy count
-    else {
-      enemyCount += kvp.second;
-    }
-  }
-
-  // Prepare to check allies and enemies in range
-  const auto& inRange = Game::getAlliesAndEnemiesInRange(
-      startingState, startingState.currentTeam);
-  alliesInRange = inRange.first;
-  enemiesInRange = inRange.second;
-}
-
 // Estimate the Cost of completing a turn from the current State 
 Strategy::AI::CaseFour::Cost 
-Strategy::AI::CaseFour::HeuristicFunctor::operator()(const GameState& state) {
+Strategy::AI::CaseFour::heuristic(const GameState& state) {
 
   // Turn hasn't ended, so prepare to calculate heuristic
   Cost cost = minimumCost;
@@ -229,7 +192,7 @@ Strategy::AI::CaseFour::HeuristicFunctor::operator()(const GameState& state) {
     // If the game is in progress, has a character been selected? 
     // - Predict that a character will need to be chosen to reach the goal
     if (state.selection == Coord(-1, -1)) {
-      cost.value += Cost::Penalty::selectUnit;
+      cost.value += penalties.selectUnit;
     }
   }
 
@@ -240,31 +203,31 @@ Strategy::AI::CaseFour::HeuristicFunctor::operator()(const GameState& state) {
 
   // Are there allies that need to be secured?
   // - Predict that each exposed ally needs saving
-  cost.value += inRange.first * Cost::Predictions::allyNeedsSaving;
+  cost.value += inRange.first * predictions.allyNeedsSaving;
 
   // If there are more allies exposed than previously, add penalty
-  if (inRange.first > alliesInRange) {
-    cost.value += Cost::Predictions::alliesFurtherExposed;
+  if (inRange.first > startingAlliesInRange) {
+    cost.value += predictions.alliesFurtherExposed;
   }
 
   // Are there enemies that need eliminating?
   // - Predict that each enemy needs killing
-  cost.value += inRange.second * Cost::Predictions::enemyNeedsEliminating;
+  cost.value += inRange.second * predictions.enemyNeedsEliminating;
 
   // Are there hidden enemies that need exposing?
   // - Predict that each unexposed enemy needs exposing
-  if (enemyCount > inRange.second) {
-    cost.value += (enemyCount - inRange.second) * 
-        Cost::Predictions::enemyNeedsExposing;
+  if (startingEnemyCount > inRange.second) {
+    cost.value += (startingEnemyCount - inRange.second) * 
+        predictions.enemyNeedsExposing;
   }
 
   // If the goal is in use, penalise based on closest distance from enemies
-  if (useGoal) {
+  if (enableGoalMoveOrKill) {
 
     // Get the current closest distance
     float d = Game::getDistanceToClosestEnemy(
         state.map, startingState.currentTeam);
-    cost.value += floor(d) * Cost::Predictions::needToMoveCloser;
+    cost.value += floor(d) * predictions.needToMoveCloser;
   }
 
   // Return the heuristic cost of reaching the goal from this state
@@ -283,18 +246,18 @@ Strategy::AI::CaseFour::weighAction(
   Cost cost = minimumCost;
 
   // Apply optional forced penalty
-  cost.value += Cost::Penalty::optionalActionPenalty;
+  cost.value += penalties.optionalActionPenalty;
 
   // Flat penalty for selecting units
   if (action.tag == Action::Tag::SelectUnit
       || action.tag == Action::Tag::CancelSelection) {
-    cost.value += Cost::Penalty::selectUnit;
+    cost.value += penalties.selectUnit;
   }
 
   // Apply resources spent on movement as a penalty
   else if (action.tag == Action::MoveUnit) {
     cost.value += 
-        (from.remainingMP - to.remainingMP) * Cost::Penalty::spentMP;
+        (from.remainingMP - to.remainingMP) * penalties.spentMP;
   }
 
   // Apply resources spent on attacking as a penalty
@@ -302,7 +265,7 @@ Strategy::AI::CaseFour::weighAction(
 
     // Equate the cost of the action to the resources spent
     cost.value += 
-        (from.remainingAP - to.remainingAP) * Cost::Penalty::spentAP;
+        (from.remainingAP - to.remainingAP) * penalties.spentAP;
 
     // Did this attack do anything useful?
     // - Apply a penalty for not hitting anything
@@ -311,12 +274,12 @@ Strategy::AI::CaseFour::weighAction(
 
     // Check for hitting nothing
     if (hit.second == Object::Nothing) {
-      cost.value += Cost::Penalty::attackedNothing;
+      cost.value += penalties.attackedNothing;
     }
 
     // Check for hitting allies
     else if (hit.second != Object::Wall && hit.first == from.currentTeam) {
-      cost.value += Cost::Penalty::attackedFriendly;
+      cost.value += penalties.attackedFriendly;
     }
   }
 
@@ -324,11 +287,11 @@ Strategy::AI::CaseFour::weighAction(
   else if (action.tag == Action::Tag::EndTurn) {
 
     // Cost for ending the turn
-    cost.value += Cost::Penalty::turnEnded;
+    cost.value += penalties.turnEnded;
 
     // 'Spend' the remaining MP and AP
-    cost.value += from.remainingMP * Cost::Penalty::spentMP
-        + from.remainingAP * Cost::Penalty::spentAP;
+    cost.value += from.remainingMP * penalties.spentMP
+        + from.remainingAP * penalties.spentAP;
   }
 
   // Return the calculated cost of this action
