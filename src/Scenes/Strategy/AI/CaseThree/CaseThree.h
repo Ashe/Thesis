@@ -32,20 +32,20 @@ namespace Strategy::AI {
         struct Penalty {
 
           // Logic penalties
-          static unsigned int characterChoice;
-          static unsigned int unusedMP;
-          static unsigned int unusedAP;
-          static unsigned int friendlyFire;
-          static unsigned int missShot;
+          unsigned int characterChoice = 1;
+          unsigned int unusedMP = 5;
+          unsigned int unusedAP = 10;
+          unsigned int friendlyFire = 25;
+          unsigned int missShot = 25;
 
           // Playstyle penalties: Defensive
-          static unsigned int exposedToEnemy;
-          static unsigned int unnecessaryRisk;
+          unsigned int exposedToEnemy = 5;
+          unsigned int unnecessaryRisk = 5;
 
           // Playstyle penalties: Offensive
-          static unsigned int poorTargetingPriority;
-          static unsigned int notEngagingEnemy;
-          static unsigned int enemyLeftAlive;
+          unsigned int poorTargetingPriority = 1;
+          unsigned int notEngagingEnemy = 5;
+          unsigned int enemyLeftAlive = 5;
         };
 
         // The actual value of the penalty
@@ -64,14 +64,17 @@ namespace Strategy::AI {
       // Store an A* functor
       Controller::AStar<GameState, Action, Cost> astar;
 
+      // Store values for giving penalties
+      Cost::Penalty penalties;
+
       // Determine what a goal is
-      static bool isStateEndpoint(const GameState& a, const GameState& b);
+      bool isStateEndpoint(const GameState& a, const GameState& b);
 
       // Estimate the Cost of completing a turn from the current State 
-      static Cost heuristic(const GameState& state);
+      Cost heuristic(const GameState& state);
 
       // Evaluate how good an action is going to be
-      static Cost weighAction(
+      Cost weighAction(
           const GameState& start,
           const GameState& from, 
           const GameState& to,

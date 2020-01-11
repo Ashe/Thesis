@@ -168,8 +168,8 @@ Strategy::AI::CaseFour::isStateEndpoint(
     }
 
     // Whether this is a goal depends if the team has moved closer
-    float currentDistanceToClosestEnemy = Game::getDistanceToClosestEnemy(
-        b.map, a.currentTeam);
+    const float currentDistanceToClosestEnemy = 
+        Game::getDistanceToClosestEnemy( b.map, a.currentTeam);
     return currentDistanceToClosestEnemy < startingDistanceToClosestEnemy;
   }
 

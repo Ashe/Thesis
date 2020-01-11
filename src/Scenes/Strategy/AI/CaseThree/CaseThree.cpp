@@ -3,18 +3,6 @@
 
 #include "CaseThree.h"
 
-// Static initialisations
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::characterChoice = 1;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::unusedMP = 5;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::unusedAP = 10;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::friendlyFire = 25;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::missShot = 25;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::exposedToEnemy = 5;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::unnecessaryRisk = 5;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::poorTargetingPriority = 1;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::notEngagingEnemy = 5;
-unsigned int Strategy::AI::CaseThree::Cost::Penalty::enemyLeftAlive = 5;
-
 ///////////////////////////////////////////
 // AI CONTROLLER FUNCTIONS
 ///////////////////////////////////////////
@@ -27,9 +15,16 @@ Strategy::AI::CaseThree::operator()(const GameState& state) {
       minimumCost, 
       maximumCost, 
       Game::getAllPossibleActions,
-      isStateEndpoint,
-      heuristic,
-      weighAction,
+      std::bind(&CaseThree::isStateEndpoint, this, 
+          std::placeholders::_1,
+          std::placeholders::_2),
+      std::bind(&CaseThree::heuristic, this,
+        std::placeholders::_1),
+      std::bind(&CaseThree::weighAction, this,
+        std::placeholders::_1,
+        std::placeholders::_2,
+        std::placeholders::_3,
+        std::placeholders::_4),
       Game::takeAction,
       std::less<Cost>());
 }
@@ -70,20 +65,20 @@ Strategy::AI::CaseThree::debug() {
   ImGui::PushItemWidth(30.f);
   ImGui::Text("Penalty customisation:");
   ImGui::Text("Remember, most of these are applied at the end of a turn.");
-  ImGui::InputInt("Select unit", (int*)&Cost::Penalty::characterChoice, 0, 30);
-  ImGui::InputInt("Unused MP", (int*)&Cost::Penalty::unusedMP, 0, 30);
-  ImGui::InputInt("Unused AP", (int*)&Cost::Penalty::unusedAP, 0, 30);
-  ImGui::InputInt("Friendly fire", (int*)&Cost::Penalty::friendlyFire, 0, 30);
-  ImGui::InputInt("Shot missed", (int*)&Cost::Penalty::missShot, 0, 30);
-  ImGui::InputInt("Ally exposed", (int*)&Cost::Penalty::exposedToEnemy, 0, 30);
+  ImGui::InputInt("Select unit", (int*)&penalties.characterChoice, 0, 30);
+  ImGui::InputInt("Unused MP", (int*)&penalties.unusedMP, 0, 30);
+  ImGui::InputInt("Unused AP", (int*)&penalties.unusedAP, 0, 30);
+  ImGui::InputInt("Friendly fire", (int*)&penalties.friendlyFire, 0, 30);
+  ImGui::InputInt("Shot missed", (int*)&penalties.missShot, 0, 30);
+  ImGui::InputInt("Ally exposed", (int*)&penalties.exposedToEnemy, 0, 30);
   ImGui::InputInt("Unnecessary risk", 
-      (int*)&Cost::Penalty::unnecessaryRisk, 0, 30);
+      (int*)&penalties.unnecessaryRisk, 0, 30);
   ImGui::InputInt("Poor targeting priority", 
-      (int*)&Cost::Penalty::poorTargetingPriority, 0, 30);
+      (int*)&penalties.poorTargetingPriority, 0, 30);
   ImGui::InputInt("Not engaging enemy", 
-      (int*)&Cost::Penalty::notEngagingEnemy, 0, 30);
+      (int*)&penalties.notEngagingEnemy, 0, 30);
   ImGui::InputInt("Enemy left alive", 
-      (int*)&Cost::Penalty::enemyLeftAlive, 0, 30);
+      (int*)&penalties.enemyLeftAlive, 0, 30);
   ImGui::PopItemWidth();
 }
 
@@ -126,7 +121,7 @@ Strategy::AI::CaseThree::weighAction(
   // some penalty to stop infinite loops
   if (action.tag == Action::Tag::SelectUnit || 
       action.tag == Action::Tag::CancelSelection) {
-    cost.value = Cost::Penalty::characterChoice;
+    cost.value = penalties.characterChoice;
   }
 
   // Are we killing an enemy with an attack?
@@ -135,7 +130,7 @@ Strategy::AI::CaseThree::weighAction(
     const auto& object = Game::readMap(from.map, action.location);
     if (isUnit(object.second)) {
       if (object.first == team) {
-         cost.value = Cost::Penalty::friendlyFire;
+         cost.value = penalties.friendlyFire;
       }
     }
 
@@ -145,7 +140,7 @@ Strategy::AI::CaseThree::weighAction(
       // Are we shooting something worthwhile?
       // - Penalise shooting nothing
       if (object.second == Object::Nothing) {
-        cost.value = Cost::Penalty::missShot;
+        cost.value = penalties.missShot;
       }
 
       // If we're shooting a wall
@@ -156,7 +151,7 @@ Strategy::AI::CaseThree::weighAction(
         const auto& previousInSight = 
             Game::getUnitsInSight(from.map, from.selection);
         if (!previousInSight.empty()) {
-          cost.value = Cost::Penalty::notEngagingEnemy;
+          cost.value = penalties.notEngagingEnemy;
         }
         else {
 
@@ -164,7 +159,7 @@ Strategy::AI::CaseThree::weighAction(
           // - Penalise the destruction of walls that don't reveal enemies
           const auto& inSight = Game::getUnitsInSight(to.map, to.selection);
           if (inSight.empty()) {
-            cost.value = Cost::Penalty::poorTargetingPriority;
+            cost.value = penalties.poorTargetingPriority;
           }
         }
       }
@@ -269,14 +264,14 @@ Strategy::AI::CaseThree::weighAction(
 
             // Penalise for wasting MP on getting closer than necessary
             if (currentClosestEnemy.second < previousClosestEnemy.second) {
-              cost.value = Cost::Penalty::unnecessaryRisk;
+              cost.value = penalties.unnecessaryRisk;
             }
           }
 
           // Is there STILL an enemy in the range of the current unit?
           // - Penalise if there's no longer an attackable enemy
           else {
-            cost.value = Cost::Penalty::notEngagingEnemy;
+            cost.value = penalties.notEngagingEnemy;
           }
         }
 
@@ -289,7 +284,7 @@ Strategy::AI::CaseThree::weighAction(
             // Are we moving closer to an enemy unit?
             // - Penalise making the distance to the enemy larger
             if (currentClosestEnemy.second >= previousClosestEnemy.second) {
-              cost.value = Cost::Penalty::notEngagingEnemy;
+              cost.value = penalties.notEngagingEnemy;
             }
           }
         }
@@ -308,35 +303,17 @@ Strategy::AI::CaseThree::weighAction(
         else {
 
           // Simply penalise moving away from enemies
-          float previousAverageDistanceToEnemies = 0.f;
-          for (const auto& e : from.map.field) {
-            const auto& pos = Game::indexToCoord(from.map, e.first);
-            auto comps = sf::Vector2f(
-              abs((int)from.selection.x - (int)pos.x),
-              abs((int)from.selection.y - (int)pos.y));
-            comps.x *= comps.x;
-            comps.y *= comps.y;
-            const auto dist = sqrt(comps.x + comps.y);
-            previousAverageDistanceToEnemies += dist;
-          }
+          const float previousAverageDistanceToEnemies = 
+            Game::getDistanceToClosestEnemy(from.map, from.currentTeam);
 
-          float currentAverageDistanceToEnemies = 0.f;
-          for (const auto& e : to.map.field) {
-            const auto& pos = Game::indexToCoord(to.map, e.first);
-            auto comps = sf::Vector2f(
-              abs((int)to.selection.x - (int)pos.x),
-              abs((int)to.selection.y - (int)pos.y));
-            comps.x *= comps.x;
-            comps.y *= comps.y;
-            const auto dist = sqrt(comps.x + comps.y);
-            currentAverageDistanceToEnemies += dist;
-          }
+          const float currentAverageDistanceToEnemies = 
+              Game::getDistanceToClosestEnemy(to.map, from.currentTeam);
 
           // Are we moving closer to the enemy to try and get in LoS?
           // - Penalise making the average distance to the enemy larger
           if (currentAverageDistanceToEnemies >=
               previousAverageDistanceToEnemies) {
-            cost.value = Cost::Penalty::notEngagingEnemy;
+            cost.value = penalties.notEngagingEnemy;
           }
         }
       }
@@ -349,7 +326,7 @@ Strategy::AI::CaseThree::weighAction(
       // - Penalise making the number of threats greater from movement
       if (previousThreats == 0) {
         if (currentThreats > 1) {
-          cost.value = Cost::Penalty::exposedToEnemy;
+          cost.value = penalties.exposedToEnemy;
         }
       }
 
@@ -357,10 +334,10 @@ Strategy::AI::CaseThree::weighAction(
       // - Penalise losing the target or running into more enemies
       else if (previousThreats == 1) {
         if (currentThreats == 0) {
-          cost.value = Cost::Penalty::notEngagingEnemy;
+          cost.value = penalties.notEngagingEnemy;
         }
         else if(currentThreats >= previousThreats) {
-          cost.value = Cost::Penalty::exposedToEnemy;
+          cost.value = penalties.exposedToEnemy;
         }
       }
 
@@ -411,9 +388,9 @@ Strategy::AI::CaseThree::weighAction(
         ? recomendedKillcount - enemiesKilled : 0;
 
     // Accumulate cost based on enemies remaining and MP/AP wasted
-    cost.value = from.remainingMP * Cost::Penalty::unusedMP
-        + from.remainingAP * Cost::Penalty::unusedAP
-        + killsMissed * Cost::Penalty::enemyLeftAlive;
+    cost.value = from.remainingMP * penalties.unusedMP
+        + from.remainingAP * penalties.unusedAP
+        + killsMissed * penalties.enemyLeftAlive;
   }
 
   // Return the calculated cost of this action
