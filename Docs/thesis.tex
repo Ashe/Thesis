@@ -615,6 +615,29 @@ With the heuristic function playing the largest role, the role of the weighing f
 
 \subsubsection{Observations}
 
+The AI shows a wide variety of behaviour, from total inactivity to winning the game, depending on the values for penalties provided. The algorithm also finished execution much faster than case study three in section \ref{subsec:caseStudyThree}, and was much easier to test on the default 7x7 map in appendix \ref{sec:mapDefault7x7}. Below is a list of notable tests involving case four:
+
+\begin{description}
+
+\item[Map \ref{sec:mapDefault5x5} against case study three:] Case three won regardless of which team went first. Case three has a more elaborate weighing function and can tell the difference between a good and bad \emph{Action} better. After processing a large amount of possibilities, it chooses the best one, and so in most situations it will win. Case four doesn't evaluate a lot of states because of the heuristic, allowing it to make decisions much faster. Unfortunately, regardless of the amount of combinations of attempted, it was difficult to make case four a stronger AI. It played the game and served well as an opponent, but on this map it is relatively easy to eliminate three units in a single turn; case four doesn't attempt to eliminate more than one.
+
+\item[Map \ref{sec:mapCrossWall5x5} against itself:] All of the AIs so far have struggled with maps with walls. Unfortunately, so did this one, taking a couple of minutes to process approximately 1500 nodes. While it didn't take as long to generate a solution as the previous AIs, it still took an impractical amount of time. The AI chose to destroy the center block and attack diagonally to minimise the amount of blocks destroyed, rather than creating more space. This was probably the smartest decision, as the team that destroys the walls waste their AP just to expose themselves to the enemy.
+
+\item[Map \ref{sec:mapDefault7x7} against itself:] Towards the end of the game, the AI ended its turn early. When the \emph{GameState} was revisited and the AI was restarted, it made the decision to attack and eliminate the remaining unit and win the game rather than spare them like it did before. After adjusting the values for each penalty, it appeared that using MP and AP to weigh edges wasn't important to the process but was in fact detrimental. After setting the cost of spending MP and AP to 0, these kinds of judgements stopped occurring. The previous tests were re-ran to ensure with the new numbers in case anything changed but nothing was noticeably different.
+
+\item[Map \ref{sec:mapDefault7x7} against study three:] In contrast to when playing on map \ref{sec:mapDefault5x5}, case four won against case three when going first. On the 5x5 map, it was illogical to not eliminate the majority of the enemy squad which is why it lost. On this map however, eliminating the enemies one by one sufficed to win the game. This was still unexpected, as case three has proven to be highly capable when given enough time to process, and it was expected that would calculate a counter attack --- not doing so suggests that such a tactic was not an option. This result suggests that case three doesn't excel at every type of problem when not in control, and that even when given control, case four isn't guaranteed to be intelligent.
+
+\item[Map \ref{sec:mapCrossWithBlock7x7} against anything:] Unfortunately, none of the AIs managed to play on this map without requiring a large amount of time. 
+
+\end{description}
+
+Case four's AI was very difficult to experiment with. Without embedded behaviour like case three, it entirely relied on the value and relationships between penalties. Trying to make the AI prioritise eliminating enemy units instead of ending the turn was frustrating as trial and error is the only way to determine which combination of values do what. The higher the value of a penalty, the higher priority it will be to be avoided. This appeared to be useful in the beginning, but unlike state machines or behaviour trees there is no easy way of knowing why the AI chooses to do what it does. When trying to make case four's AI stronger, it was difficult to determine which penalties translated to gameplay strength. The easiest way of making a stronger AI would be to expand the heuristic and weighing functions to be more like the one in case three, but that would make it less flexible.
+
+\subsection{Summary}
+\label{subsec:summaryAndConclusion}
+
+TODO: Why were no more variations created, did the case studies prove enough?
+
 \textbf{END}
 
 - This area can be further subdivided
@@ -629,7 +652,6 @@ With the heuristic function playing the largest role, the role of the weighing f
     - If a criteria has been failed, assess why it did not happen 
       - Was the criteria faulty? If so, explain how knowledge of the problem domain has changed
     - How does what I did prove the criteria?
-
 
 \chapter{Conclusions}
 \label{chapter:conclusions}

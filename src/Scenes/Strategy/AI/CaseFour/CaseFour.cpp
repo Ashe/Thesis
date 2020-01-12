@@ -140,8 +140,6 @@ Strategy::AI::CaseFour::getActions(const GameState& state) {
     return Game::getAllPossibleActions(state);
   }
 
-  Console::log("WRONG TEAM");
-
   // Otherwise return an empty vector
   return std::vector<Action>();
 }
