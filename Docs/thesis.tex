@@ -475,6 +475,8 @@ With the simple game built in section \ref{subsec:buildingASampleGame}, it was t
 
 While the AI did play the game successfully, it didn't prove whether game AI using A* was actually plausible. Each turn in a game of tic-tac-toe consists of exactly one move, and so the A* algorithm was creating a sequence containing a single action --- it compared all possible moves and chose the option that was penalised the least by the weighing function. From this, more requirements for the experiment could be identified; a game where the AI can do multiple actions per turn would provide results with greater detail and would be a more realistic use case. The requirements in section \ref{subsec:requirements} and the design of the game in section \ref{subsec:designingStrategyGame} were changed to reflect this realisation. Additionally, since this game is going to feature a lot more states than tic-tac-toe and the only way of revisiting previous states was to click the arrow buttons shown in figure \ref{fig:ticTacToeGame}, the design of the state viewer in section \ref{subsec:designingToolsForInvestigation} was changed to include a scrollbar for faster browsing of states.
 
+\emph{TODO:} Talk about how `isEndpoint' takes start node because it's common to check if the turn has ended
+
 \subsection[Building the final game]{Milestone 4 --- Building the final game}
 \label{subsec:buildingTheFinalGame}
 
@@ -589,6 +591,29 @@ After two minutes in real time, this AI processed over 1500 possible \emph{GameS
 \end{figure}
 
 This shows that this AI can be intelligent by choosing the lowest costing route. Applying a heuristic function could make this process faster, as even though the AI plays well on both map \ref{sec:mapDefault7x7} and map \ref{sec:mapCrossWithBlock7x7}, it has to process thousands of states before making a decision. In particular, over 5000 states were in the open list on the second turn of map \ref{sec:mapCrossWithBlock7x7} against an idle controller --- this is expensive in terms of both speed and memory consumption. Game AI doesn't always have to make the best decision, so further case studies should attempt to reduce the number of states processed while preserving an acceptable amount of intelligence.
+
+\subsection{Case study four}
+\label{subsec:caseStudyFour}
+
+\subsubsection{Configuration}
+
+\begin{itemize}
+  \item \textbf{Goal:} Eliminate a unit or move closer to the enemy. This goal can be toggled on or off using the AI viewer.
+  \item \textbf{Cost:} A single integer value that increases based on the penalties applied.
+  \item \textbf{Cost comparison:} Standard integer comparison using $<$ operator.
+  \item \textbf{Heuristic function:} New implementation. The heuristic attempts to predict upcoming penalties. Separate from penalties, prediction values are a rough estimate of the penalties the AI will take when meeting the prediction. Every enemy that is alive and every ally that needs to be hidden behind cover contributes to the heuristic cost using these prediction values. When the goal is enabled, the distance to the closest enemy will also be factored in if an enemy hasn't been eliminated.
+  \item \textbf{Weighing function:} New implementation. Lightweight function that only penalises unproductive \emph{Actions} such as attacking allied units or nothing at all. There are various optional penalties to manipulate, such as cost per resource spent, the cost of performing any \emph{Action} and the cost of ending the turn.
+\end{itemize}
+
+This case aims to improve case study three in section \ref{subsec:caseStudyThree} through the introduction of heuristics. As discussed in section \ref{subsec:aStarAlgorithm}, the heuristic function allows A* a balance between speed and accuracy; this case aims to replicate the intelligence of case three while being more capable of processing the 7x7 maps such as \ref{sec:mapDefault7x7} and \ref{sec:mapCrossWithBlock7x7}. 
+
+A* uses the fitness of a node, $f(n)$, to determine whether it should be explored next. So far, only the real cost of navigating to that node, $g(n)$, has been investigated through the weighing function. The effectiveness of A* relies on \emph{Costs} being non-negative and never losing value, so $g(n)$ of a node shouldn't decrease. When using A* for game AI, this means that the \emph{Actions} performed later can never make up for \emph{Costs} incurred by the \emph{Actions} done previously in a sequence. This is where heuristics are helpful, as $h(n)$ can decrease and potentially lower $f(n)$ as a result. In standard pathfinding, the heuristic distance decreases as the goal node is approached; this is reinterpreted in this case's heuristic function. The previous cases preferred nodes that had a lower cost to perform, whereas this case prefers a node because it improves the fitness of the sequence in some way. 
+
+The notion of a goal has also been introduced in an attempt to influence the AI towards engaging enemy units. Case study three worked very well with its elaborate weighing function, but its goal was hard-coded into the weighing function so that it preferred \emph{Actions} that resulted in conflict. This case uses the \emph{isEndPoint} function to restrict which nodes are considered goals. This isn't a trivial function to implement --- the goal must always be achievable, otherwise the algorithm will finish execution with a failed result and, in the case of this game, nothing will happen. If the goal was to kill an enemy unit each turn, the AI would be unable to act in situations where attacking is impossible, such as if the enemy was too far away. The goal node is not what is expected; it is what is required. That is why the goal for this case was to kill an enemy unit \emph{or} move closer. \emph{Actions} that end the current turn are considered dead-ends instead of goals if they haven't fulfilled the requirements of the goal. The heuristic function can also take this goal into account. At first, nodes are generally unfit, but moving towards the enemy is an easy way to lower and improve $f(n)$. Eliminating an enemy unit removes this component of the heuristic entirely to further incentivise the AI to attack when possible. 
+
+With the heuristic function playing the largest role, the role of the weighing function is to value an \emph{Action} based on what is sacrificed permanently. Shooting allies and ending the turn are both examples of choices with consequences. Shooting an ally reduces the fitness of the rest of the sequence, which is what $g(n)$ should truly represent. The only reason for the algorithm to explore a node with a higher $g(n)$ will be if $h(n)$ is low enough to compensate, the aim being to give the AI the ability to make sacrifices. This case also investigates the idea of resource investment: there is an optional penalty for using the MP and AP spent in the weighing of an \emph{Action}. These penalties are also applied when the turn is over so that the AI can decide between spending resources to end the turn and spending them to perform more \emph{Actions}. Hopefully, a result similar to that of case three's usage of free \emph{Actions} will be found without needing to make everything free.
+
+\subsubsection{Observations}
 
 \textbf{END}
 

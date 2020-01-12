@@ -32,18 +32,18 @@ namespace Strategy::AI {
         struct Penalty {
           unsigned int optionalActionPenalty = 1;
           unsigned int selectUnit = 3;
-          unsigned int spentMP = 1;
-          unsigned int spentAP = 2;
+          unsigned int spentMP = 0;
+          unsigned int spentAP = 0;
           unsigned int turnEnded = 2;
           unsigned int attackedNothing = 20;
           unsigned int attackedWall = 10;
-          unsigned int attackedFriendly = 20;
+          unsigned int attackedFriendly = 50;
         };
 
         struct Predictions {
           unsigned int allyNeedsSaving = 2;
           unsigned int alliesFurtherExposed = 4;
-          unsigned int enemyNeedsEliminating = 10;
+          unsigned int enemyNeedsEliminating = 15;
           unsigned int enemyNeedsExposing = 2;
           unsigned int needToMoveCloser = 10;
         };
@@ -56,7 +56,6 @@ namespace Strategy::AI {
         Cost operator*(unsigned int m) const { return Cost { value * m }; }
         bool operator<(const Cost& c) const { return value < c.value; }
         bool operator==(const Cost& c) const { return value == c.value; }
-
       };
 
     private:
@@ -78,6 +77,9 @@ namespace Strategy::AI {
       // Store values for evaluating actions
       Cost::Penalty penalties;
       Cost::Predictions predictions;
+
+      // Get actions only if the turn hasn't ended
+      std::vector<Action> getActions(const GameState& state);
 
       // Determine what a goal is
       bool isStateEndpoint(const GameState& a, const GameState& b);

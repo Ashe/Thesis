@@ -11,6 +11,9 @@
 std::pair<bool, std::stack<Strategy::Action>> 
 Strategy::AI::CaseFour::operator()(const GameState& state) {
 
+  // Save starting state
+  startingState = state;
+
   // Count allies and enemies
   const auto& counts = Game::countTeams(state.map);
   startingAlliesInRange = 0;
@@ -41,7 +44,8 @@ Strategy::AI::CaseFour::operator()(const GameState& state) {
       state, 
       minimumCost, 
       maximumCost, 
-      Game::getAllPossibleActions,
+      std::bind(&CaseFour::getActions, this,
+        std::placeholders::_1),
       std::bind(&CaseFour::isStateEndpoint, this,
         std::placeholders::_1,
         std::placeholders::_2),
@@ -94,7 +98,6 @@ Strategy::AI::CaseFour::debug() {
   ImGui::Checkbox("Enable goal 'eliminate one unit or move closer'", 
       &enableGoalMoveOrKill);
   ImGui::Text("Penalty customisation:");
-  ImGui::Text("Remember, most of these are applied at the end of a turn.");
   ImGui::InputInt("Action cost", 
       (int*)&penalties.optionalActionPenalty, 0, 30);
   ImGui::InputInt("Select unit", 
@@ -127,6 +130,21 @@ Strategy::AI::CaseFour::debug() {
 ///////////////////////////////////////////
 // AI COMPONENTS
 ///////////////////////////////////////////
+
+// Get actions only if the turn hasn't ended
+std::vector<Strategy::Action>
+Strategy::AI::CaseFour::getActions(const GameState& state) {
+
+  // Only perform the usual function if the current team matches
+  if (!Game::hasTurnEnded(startingState, state)) {
+    return Game::getAllPossibleActions(state);
+  }
+
+  Console::log("WRONG TEAM");
+
+  // Otherwise return an empty vector
+  return std::vector<Action>();
+}
 
 // Check to see if a State is an endpoint for decision making
 // A is the starting state, B is the current state
@@ -226,10 +244,23 @@ Strategy::AI::CaseFour::heuristic(const GameState& state) {
   // If the goal is in use, penalise based on closest distance from enemies
   if (enableGoalMoveOrKill) {
 
-    // Get the current closest distance
-    float d = Game::getDistanceToClosestEnemy(
-        state.map, startingState.currentTeam);
-    cost.value += floor(d) * predictions.needToMoveCloser;
+    // Count number of enemies
+    unsigned int enemyCount = 0;
+    const auto& teams = Game::countTeams(state.map);
+    for (const auto& kvp : teams) {
+      if (kvp.first != startingState.currentTeam) {
+        enemyCount += kvp.second;
+      }
+    }
+
+    // If an enemy hasn't been eliminated, penalise based on distance
+    if (startingEnemyCount >= enemyCount) {
+
+      // Get the current closest distance
+      float d = Game::getDistanceToClosestEnemy(
+          state.map, startingState.currentTeam);
+      cost.value += floor(d) * predictions.needToMoveCloser;
+    }
   }
 
   // Return the heuristic cost of reaching the goal from this state
