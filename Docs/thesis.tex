@@ -41,7 +41,9 @@
 
 \renewcommand\abstractname{\textbf{Abstract}}
 \begin{abstract}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras justo velit, vestibulum sit amet turpis in, interdum rhoncus magna. Proin pulvinar posuere iaculis. Duis vulputate tristique arcu, id pretium ante blandit ut. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam augue tellus, mattis quis consequat id, facilisis eu lectus. Vivamus euismod non quam sed condimentum. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus vitae consequat nisi. Morbi vulputate tellus ut nibh vulputate, vitae blandit ex faucibus.
+The complexity and depth of video games are always growing, with AI being an important aspect of many modern-day games. Game AI has a variety of uses from being used as a plot device in a narrative game to being a replacement for human opponents in a competitive game, but the approach of choice to developing game AI is still the traditional state machine. Techniques such as behaviour trees aim to make development more flexible and modular while being easy to implement. Pathfinding is a key element in the majority of these AIs; a decision would be made to navigate to somewhere, and an algorithm such as A* is used to generate a path for the AI to follow to get to its destination. The problem with this is that there's no way of knowing if the destination can be reached and the way of getting there without pre-calculation. Moreover, information found when pathfinding, such as the destination being inaccessible, cannot be given back to the decision making system without restarting the whole process, occasionally resulting in unexpected behaviour. 
+
+This paper investigated how the pathfinding and decision making processes could be combined to make a new approach to game AI using the A* algorithm. Through substitution of types, A* can search a graph of data that isn't necessarily spatial to generate a sequence of actions to perform rather than locations to move to. Unfortunately, the testing of the prototypes made with this approach was hindered by problems caused by the amount of nodes being expanded and processed by A*. This, combined with the difficult methods for configuring the AI, ultimately meant that the AIs created for this paper would be unsuitable for non-academic use-cases unless the problems identified were solved, minimised or eliminated in some way.
 \end{abstract}
 
 \cleardoublepage
@@ -491,7 +493,7 @@ After programming and testing the A* algorithm, the final piece before the case 
 
 The state viewer and information window created in section \ref{subsec:buildingASampleGame} was adjusted to show details about the new game, as well as being expanded to handle multiple teams playing a single game. Finally, the map editor as well as the ability to save and load maps were introduced. Overall, development went smoothly --- having the tic-tac-toe and strategy games share similar approaches using \emph{GameStates} and a variety of static functions meant that development was a matter of adapting and expanding previously written functions to suit the new game. With the human and trivial controllers properly set up to play the game, the case study could finally begin.
 
-\section{Results and Evaluation (11--12 pages including critical review)}
+\section{Results and Evaluation}
 \label{sec:resultsAndEvaluation}
 
 \subsection{Case study one}
@@ -662,44 +664,49 @@ Safe goals like the one used in this study doesn't produce behaviour that could 
 
 Changing the difficulty of the AI was attempted in case study four when playing against case study three from section \ref{subsec:caseStudyThree}. Case study three won in the majority of situations, only losing when playing second in a long-range game against case four. The values for the penalties used in case four were changed, but no combination strengthened behaviour. If there was such a combination that achieved a higher level of strength, the process of finding it would be cumbersome, further reinforcing the lack of plausibility of this approach to game AI. It could be speculated that the easiest way of introducing difficulty to the AI would be to select more effective goals; changing what the AI considers a goal is a somewhat simple way of changing how the AI plays, and case four already demonstrated how a weak goal resulted in weak behaviour. Alternatively, the implementation of the heuristic and weighing functions could be written with more complexity like the one in case three, although this would mean that each desired difficulty of AI would require alternative functions that then need to be tested independently for bugs.
 
-\subsubsection{Closing thoughts}
-
-Considering that the aim of using A* is to make the process of creating game AI flexible and modular, the methods used as a part of this research were unsuccessful in achieving the simplicity necessary to warrant their usage. It was hypothesised in section \ref{subsec:litReviewSummary} that the combination of decision making and pathfinding would improve the communication between various systems and the output of the perception, decision and interaction processes. This hypothesis was proven false from the difficulties experienced in creating and observing these case studies as evidence.
-
-\textbf{END}
-
-- This area can be further subdivided
-
-- Give summary of results in this case, results will be how the AI behaves in each case
-  - Evaluate through comparison between other products and other case studies
-  - Explain findings, especially if unexpected
- - Discuss further work if applicable
-- Demonstrate achievements and indicate how the results meets project requirements
-  - Evaluate against criteria with support of gathered data
-  - Assess meaning of results of testing 
-    - If a criteria has been failed, assess why it did not happen 
-      - Was the criteria faulty? If so, explain how knowledge of the problem domain has changed
-    - How does what I did prove the criteria?
-
 \chapter{Conclusions}
 \label{chapter:conclusions}
 
-\section{Conclusions and Critical Review}
+\section{Conclusions and critical review (2--3 pages)}
 \label{sec:conclusionsAndCriticalReview}
 
-- Compulsory chapter
-- (2--3 pages)
+\subsection{Project reflection}
+\label{subsec:projectReflection}
 
-- Evaluate to what extent the project objectives have been fulfilled 
-- Reflect on the project as a whole 
-- Describe limitations 
-  - Propose a set of recommendations for improving the methods used
-  - Give suggestions for further work
-- 'Step away' from the project and assess learning experience
-  - If I had to do it again and I knew at the beginning what I know now, what would be different?
+Considering that the aim of using A* is to make the process of creating game AI flexible and modular, the methods used as a part of this research were unsuccessful in achieving the simplicity necessary to warrant their usage. It was hypothesised in section \ref{subsec:litReviewSummary} that the combination of decision making and pathfinding would improve the communication between various systems and the output of the perception, decision and interaction processes. This hypothesis was proven false from the difficulties experienced in creating and observing these case studies as evidence, and therefore this project has failed to produce a suitable method of creating game AI using A*.
+
+However, the project as a whole wasn't a total failure. This research was performed because of the lack of knowledge in this area; GOAP is the only successful approach to have used A* for implementing decision making in game AI, and so this project investigated whether there were potential improvements to be made. No improvements were made, but it is hoped that this project leads to a greater understanding of the ways an AI can take advantage of A*, or more specifically, how it cannot. The flaws found in section \ref{subsec:summaryOfCaseStudies} brought attention to the reasons not to use A* for AI, but it is possible that there are benefits for using A* that couldn't be identified in the scope of this project.
+
+\subsection{Limitations}
+\label{subsec:limitations}
+
+The investigation for this project could have produced better results, but unfortunately there was one major bottleneck that hindered the project as a whole --- the processing speed the nodes during the execution of the A* algorithm. A* can be a very expensive algorithm to use and the amount of nodes that were being processed as a part of this project meant that every AI created was unable to play on maps with walls. Each wall was a potential target, meaning that another \emph{Action} for attacking was added to every state for every wall a selected unit in a given \emph{GameState} could see. If it was easier to process this amount of data then there would have been more AIs to observe and more environments for them to be observed in. It was hoped that adding walls to maps would allow the AI to use different tactics which would have been compared and analysed to the other AIs. 
+
+One limitation that contributed to this bottleneck is the processing speed of today's hardware. While this is uncontrollable, it is important to remember that commercial games on the current market feature game AI that operates within this limitation. If A* is unable to run on current hardware it is highly unlikely that it would be able to compete against other techniques when it requires so much processing power. Even when technology advances, games using these other techniques would not have to sacrifice these advancements to make their AI functional and instead be able to redirect the additional processing power to where it'd be needed most. Overcoming this limitation would require heavy optimisation of the containers and functions used in the implementation of A*, possibly using parallel processing to expand nodes simultaneously rather than sequentially.
+
+Another limitation that hindered the project was the way that pathfinding and decision making were combined. In this project, moving one tile in any direction and attacking any target are considered single \emph{Actions} and therefore each distinct \emph{Action} leads to a potential \emph{GameState}. GOAP doesn't have this limitation as the destinations and targets assigned to these behaviours are generated elsewhere. It was unforeseen that combining decision making and pathfinding the way this project did would lead to the problems experienced in section \ref{sec:resultsAndEvaluation}. Overcoming this limitation would involve lowering the amount of nodes created such as in GOAP or taking special care when creating the heuristic function so that it can ignore routes that won't lead to a successful sequence of \emph{Actions}. One such way of doing this is by collecting \emph{Actions} together using similar techniques to those used in hierarchical pathfinding as discussed in section \ref{subsec:processingACharactersPerception} so that entire collections can be ignored by A* would significantly decrease the amount of data to process for a given \emph{GameState}. 
+
+\subsection{Learning experience and further work}
+\label{subsec:learningExperienceAndFurtherWork}
+
+Working on this project has been a big learning experience for me. In the beginning I had no idea GOAP from section \ref{subsec:makingDecisionsWithAStarUsingGOAP} existed and I was working under the assumption that A* hasn't been used for AI before. It was a pleasant surprise to see that not only has A* been experimented with before, but it was also used in a commercial game. I took this and tried to improve on it, but I now know that GOAP was probably created after many tests that ended in a similar way to mine did. I prototyped the tic-tac-toe game with A* support and felt confident that I could scale this up, but I experienced the limitations mentioned above in section \ref{subsec:limitations}. When trying to overcome this limitation, I had several eureka moments, one of which was learning about hashing and how an \emph{std::unordered\_map} stored my \emph{GameState} class --- initially, I didn't provide a hashing function which made the program default to using the $==$ operator. It was only when I encountered the limitation that I learned about buckets and how much goes into indexing custom classes. 
+
+Another learning moment was when I thought implementing the `free' \emph{Actions} of case three in section \ref{subsec:caseStudyThree}. The previous cases were pretty slow and indecisive, and so I came at the problem from a different angle: if the previous cases asked the AI to choose the smallest mountain, which the AI struggled with, then case three asked the AI to follow the rivers that travelled downstream. Keeping the \emph{Actions} free allowed the AI to delay evaluation of the sequence until the end while also filtering disadvantageous \emph{Actions} out. From case three, I learned that no matter how well you think you've implemented something, sometimes starting over is the best choice. Even though it was a weaker AI overall, I thought this was the case with case four in section \ref{subsec:caseStudyFour} as well due to the fact that it could be controlled to some degree using its heuristic function. I would have loved to have gone further, but the limitations described in section \ref{subsec:limitations} would have kept obfuscating and devaluing any results obtained from further AIs. 
+
+If I could start over, I would definitely change the way I combined decision making and pathfinding, and instead of experimenting on the behaviours of multiple AIs I would have focused on experimenting with different implementations of \emph{Actions} and \emph{GameStates}. If these classes were created and generated in a more manageable way, research like the one carried out in this project would have greatly benefited. Now that there is a greater understanding of the benefits and drawbacks of using A* for game AI, it is in my opinion that starting over and looking for a new perspective, just like what I did with case three in section \ref{subsec:caseStudyThree}, would be the most effective starting point for further investigation. GOAP elegantly uses A*, but there's always room for improvement, even if it means extending GOAP just as others have extended the A* algorithm as mentioned in section \ref{subsec:algorithmSelection}.
 
 \section{Conclusions and recommendations}
 \label{sec:conclusionsAndRecommendations}
+
+This project aimed to combine the decision making and pathfinding processes so that information gathered while pathfinding can be used when making a decision. In a lot of games, the AI gives the pathfinding system a destination and an algorithm like A* will navigate the AI to its desired location, but the designation of this destination doesn't typically pre-calculate a path to test whether the destination is valid or suitable. The AIs created in this project have the pathfinding process integrated into their decision making so that opportunities found during the calculation of a path can be factored into the end decision.
+
+Unfortunately, it was found that the disadvantages of combining these systems heavily outweighed the advantages; none of the AIs were capable of playing on the interesting maps prepared for testing because of the sheer amount of nodes involved. While there were a few points of interest, ultimately it was implausible for the AIs created to have a purpose outside of this project. They were difficult to configure, test and control, and without any meaningful benefits their expensive requirements for processing data make them unsuitable for most use cases. Each AI was observed and analysed in their own case study so that the result of the overall study had evidence from multiple AIs. The AIs were developed based on the findings of the previous iterations in an attempt to discover the most appropriate way of building an AI if this approach was adopted by someone else.
+
+To create and observe each AI, a testing environment was developed in the form of a turn-based strategy game. This was part of a bigger program that featured a tic-tac-toe prototype for testing the programming of A* along with debugging tools used to record and observe the behaviour of the AIs. The rules of the strategy game are to position your units and attack the enemy squad to be the last surviving team. The range of moment and attacks each unit can perform are limited by the movement and action point resources to create the need to manage resources and plan turns accordingly. The game can be played by a variety of controllers, including humans, a random algorithm and all the case studies featuring the A* algorithm. Each action performed is recorded so that states of the game can be revisited and altered so that alternative courses of action can be experienced. A map editor was also built so that different scenarios for the AIs to play out could be made, although the usefulness of this addition is debatable considering that the AIs struggled to play on maps with walls to attack. It could be said that the program itself should have served its purpose well if it weren't for the limitations experienced, and that the reimplementation of a few of the game-related classes could allow for better results to be obtained from the program.
+
+Although the AIs did not perform as well as expected, the reasons causing them to under-perform where identified and would be useful to anyone looking to create an alternative to GOAP or just investigating AIs using the A* algorithm in general. These findings are also examples of how difficult it is to experiment and use AI that translates a series of values into behaviour, and that any developers wanting to include a simple difficulty-slider in their game need to consider what behaviour would be considered difficult. 
+
+Overall, this project was a great learning experience. Firstly, I learned how difficult it was to design and perform an experiment and how unanticipated factors can change the focus of the experiment completely. I learned that it's hard to plan everything upfront and that a balance needs to be struck with planning while developing. Finally, for me personally, this project was a fun introduction to academia and learning to gather and read academic papers was insightful to the point where I'm going to consider reading academic papers for my own hobby projects. While the experiment side of the research wasn't appealing to me, learning through reading and consolidating knowledge with purpose was very engaging for me and I would definitely consider undergoing more research now that I know what's involved.
 
 - This section should briefly summarise:
   - The project objectives
