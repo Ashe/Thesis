@@ -404,7 +404,7 @@ The requirements of a map editor and some way of browsing through the collection
 
 Figure \ref{fig:mapEditor} shows the four main parts to the map editor that are explained below:
 \begin{itemize}
-  \item \textbf{Saving and loading:} This can be implemented with a text input for entering the name of a file combined with two buttons for handling saving and loading respectively. 
+  \item \textbf{Saving and loading:} This can be implemented with a text input for entering the name of a file combined with two buttons for handling the saving and loading functionality respectively. 
   \item \textbf{Creating and deleting objects:} As shown in figure \ref{fig:strategyGameUML}, an \emph{Object} is just an enum that can represent nothing, a wall or a unit. When paired with a \emph{Team} (represented as an integer value), a controller will then be assigned to that unit. This means that this part of the editor needs a drop-down box to select an \emph{Object} and a number entry for specifying the \emph{Team}. When the map editor window is open, left clicking and right clicking on the map will create and destroy objects.
   \item \textbf{Recreating maps:} This can be achieved with a number entries for specifying the width and height and a button that recreates the map when clicked. 
   \item \textbf{Changing AP and MP:} Since changing the MP and AP requires the creation of a new \emph{GameState}, the only way to change these values is to push a duplicate of the current state with the new resources. This can be also be done after a new map has been generated before saving to set the MP and AP allocated per turn.
@@ -421,8 +421,11 @@ Figure \ref{fig:stateBrowser} shows how the state browser window should look. A 
 
 Finally, a tool for viewing and adjusting details specific to every AI will be necessary for answering the third and fourth research questions from section \ref{subsec:researchMethodologies}. These questions require experimenting with different configurations when building game AI; since it is difficult to decide what these settings are without building the AI, having a flexible space for each AI to use would be beneficial. Introducing a state viewer would allow every AI to implement its own debugging functionality meaning that the tool will adapt to the AI and expose relevant variables for changing the AI without recompilation. Another use for an AI viewer would be to set up the same AI in different ways --- if an AI exposes variables, it may be interesting to make the AI play against itself with different settings. Since the point of the AI viewer is that it adapts to the AI that is currently playing, it will have no use with the other team controllers.
 
+\pagebreak
 \subsection{Designing the process of investigation}
 \label{subsec:designingInvestigation process}
+
+With the majority of the requirements in section \ref{subsec:requirements} designed, the only one unsatisfied is the actual implementation of the A* algorithm. A* will be programmed generically so that it can operate on various types. To function, A* requires a state type to act as the node, an action type to act as the edges and finally a cost type to represent the costs involved with traversing nodes --- the \emph{GameState} and \emph{Action} classes from figure \ref{fig:strategyGameUML} will be used for the nodes and edges, whereas the type of cost will be left up to each case so that different methods of representing cost can be tested.
 
 \begin{table}[!h]
   \centering
@@ -437,11 +440,9 @@ Finally, a tool for viewing and adjusting details specific to every AI will be n
     \emph{Cost} comparison function & Determine which \emph{Cost} is preferable to another & Experiment with multiplying and ignoring elements of \emph{Cost} as an alternative way of changing the AI's preferences \\
     \hline
   \end{tabular}
-  \caption{The components of the A* algorithm and some examples of how they can be changed}
+  \caption{The components of the A* algorithm and some examples of potential changes}
   \label{table:designingAStarVariations}
 \end{table}
-
-With the majority of the requirements in section \ref{subsec:requirements} designed, the only one unsatisfied is the actual implementation of the A* algorithm. A* will be programmed generically so that it can operate on various types. To function, A* requires a state type to act as the node, an action type to act as the edges and finally a cost type to represent the costs involved with traversing nodes --- the \emph{GameState} and \emph{Action} classes from figure \ref{fig:strategyGameUML} will be used for the nodes and edges, whereas the type of cost will be left up to each case so that different methods of representing cost can be tested.
 
 Since cases will implement their own \emph{Cost} class as well as the functions that operate on \emph{GameStates} and \emph{Actions}, each case will be implemented as a self-containing functor. These functors will exist in a collection in the \emph{Game} class and will be created and used when necessary. The functions in \emph{Game} shown in figure \ref{fig:strategyGameUML} will be common to all AIs, but functions such as the heuristic function are case-specific and will be member functions of each case's functor. Each case will use the A* algorithm differently with each variation being derived from interesting parts of the studies of previous iterations; if a flaw in one variation's approach is identified based on the behaviour observed, the next iteration might be adapted in an attempt to improve the current approach. The elements each variation could potentially change are listed in table \ref{table:designingAStarVariations}.  
 
