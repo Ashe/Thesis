@@ -4,6 +4,9 @@ project (Project)
 message("Using CMake version ${CMAKE_VERSION}")
 message("Processing CMakeLists.txt")
 
+# Where should the project build to
+set (CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/Build)
+
 # Compiler version
 set (CMAKE_CXX_STANDARD 17)
 

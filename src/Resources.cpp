@@ -19,62 +19,69 @@ Resources::load() {
 
   // Declare that we're loading resources
   const std::string dir = "Assets/";
-  Console::log("Loading resources recursively from directory: '%s'..", 
-    dir.c_str());
 
-  // For every file in the directory
-  for (const auto& entry : 
-      std::filesystem::recursive_directory_iterator(dir)) {
-    const auto fp = entry.path();
-    if (entry.is_regular_file()) {// && fp.extension().string() == ".lua") {
+  // Try to iterate through the assets directory
+  try {
 
-      // Prepare to load resources
-      bool loaded = false;
+    // Get the directory to load
+    const auto& directory = std::filesystem::recursive_directory_iterator(dir);
+    Console::log("Loading resources recursively from directory: '%s'..",
+      dir.c_str());
 
-      // Get the extension to load the resource properly
-      auto ext = fp.extension().string();
-      std::transform(ext.begin(), ext.end(), ext.begin(),
+    // For every file in the directory
+    for (const auto& entry : directory) {
+      const auto fp = entry.path();
+      if (entry.is_regular_file()) {// && fp.extension().string() == ".lua") {
+
+        // Prepare to load resources
+        bool loaded = false;
+
+        // Get the extension to load the resource properly
+        auto ext = fp.extension().string();
+        std::transform(ext.begin(), ext.end(), ext.begin(),
           [](unsigned char c) { return std::tolower(c); });
 
-      // Textures
-      if (ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
-        auto tex = std::make_unique<sf::Texture>();
-        if (tex->loadFromFile(fp)) {
-          textures_.emplace(fp.stem(), std::move(tex));
-          Console::log("Loaded texture: %s as %s", 
+        // Textures
+        if (ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
+          auto tex = std::make_unique<sf::Texture>();
+          if (tex->loadFromFile(fp.string())) {
+            textures_.emplace(fp.stem().string(), std::move(tex));
+            Console::log("Loaded texture: %s as %s",
               fp.c_str(), fp.stem().c_str());
-          loaded = true;
+            loaded = true;
+          }
         }
-      }
 
-      // Fonts
-      else if (ext == ".ttf") {
-        auto font = std::make_unique<sf::Font>();
-        if (font->loadFromFile(fp)) {
-          fonts_.emplace(fp.stem(), std::move(font));
-          Console::log("Loaded font: %s as %s",
+        // Fonts
+        else if (ext == ".ttf") {
+          auto font = std::make_unique<sf::Font>();
+          if (font->loadFromFile(fp.string())) {
+            fonts_.emplace(fp.stem().string(), std::move(font));
+            Console::log("Loaded font: %s as %s",
               fp.c_str(), fp.stem().c_str());
-          loaded = true;
+            loaded = true;
+          }
         }
-      }
 
-      // Strategy maps
-      else if (ext == ".stratmap") {
-        std::ifstream infile(fp);
-        std::stringstream ss;
-        ss << infile.rdbuf();
-        strategyMaps_.emplace(fp.stem(), ss.str());
-        Console::log("Loaded strategy map: %s as %s",
+        // Strategy maps
+        else if (ext == ".stratmap") {
+          std::ifstream infile(fp);
+          std::stringstream ss;
+          ss << infile.rdbuf();
+          strategyMaps_.emplace(fp.stem().string(), ss.str());
+          Console::log("Loaded strategy map: %s as %s",
             fp.c_str(), fp.stem().c_str());
-        loaded = true;
-      }
+          loaded = true;
+        }
 
-      // If resource failed to load
-      if (!loaded) {
-        Console::log("[Error] Failed to load resource: %s", fp.c_str());
+        // If resource failed to load
+        if (!loaded) {
+          Console::log("[Error] Failed to load resource: %s", fp.c_str());
+        }
       }
     }
   }
+  catch (...) {}
 }
 
 // Retrieve all map names

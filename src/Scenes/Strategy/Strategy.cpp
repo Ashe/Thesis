@@ -2282,10 +2282,11 @@ Strategy::Game::renderResources(
 // Get the colour associated with a team
 sf::Color
 Strategy::Game::getTeamColour(const Team& team) {
-  const auto& coloursIt = teamColours.find(team);
-  auto col = sf::Color::White;
-  if (coloursIt != teamColours.end()) { 
-    col = coloursIt->second; 
+  switch (team) {
+    case 0: return sf::Color::Cyan; break;
+    case 1: return sf::Color::Red; break;
+    case 2: return sf::Color::Green; break;
+    case 3: return sf::Color::Yellow; break;
+    default: return sf::Color::White;
   }
-  return col;
 }

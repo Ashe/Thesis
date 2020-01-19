@@ -22,14 +22,6 @@ namespace Strategy {
   // Attack Range
   typedef int Range;
 
-  // Team colours
-  static std::map<Team, sf::Color> teamColours = {
-    {0, sf::Color::Cyan},
-    {1, sf::Color::Red},
-    {2, sf::Color::Green},
-    {3, sf::Color::Yellow}
-  };
-
   // Different methods of drawing an object
   enum class RenderStyle {
     NotPlaying,
