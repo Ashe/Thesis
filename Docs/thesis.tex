@@ -9,6 +9,7 @@
 \usepackage{listings}
 \usepackage{array}
 \usepackage[toc, title, page]{appendix}
+\usepackage{pdfpages}
 \usepackage[style=apa, backend=biber, language=english]{biblatex}
 \PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
 
@@ -734,6 +735,13 @@ Overall, this project was a great learning experience. Firstly, I learned how di
 
 \cleardoublepage
 \begin{appendices}
+
+\chapter{Project specification}
+\includepdf[pages=-]{project_specification.pdf}
+
+\chapter{Ethics}
+\includepdf[pages=-]{ethics.pdf}
+\includepdf[pages=-]{ethics_checklist.pdf}
 
 \chapter{Methodologies for the development of software}
 \label{appendix:softwareDevelopmentMethodologies}
