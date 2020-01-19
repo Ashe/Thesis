@@ -1,6 +1,9 @@
 // main.cpp
 // Entry point of program
 
+// NOTE: This file has been repurposed from my other project from:
+// https://github.com/Ashe/Relocate-Engine/blob/master/src/main.cpp
+
 #include "App.h"
 
 #ifdef linux

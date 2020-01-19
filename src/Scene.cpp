@@ -1,6 +1,9 @@
 // Scene.cpp
 // Non-engine oriented logic goes here
 
+// NOTE: This file has been repurposed from my other project from:
+// https://github.com/Ashe/Relocate-Engine/blob/master/src/Scene.cpp
+
 #include "Scene.h"
 
 // Constructor

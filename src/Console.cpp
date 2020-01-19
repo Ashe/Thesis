@@ -1,6 +1,9 @@
 // Console.cpp
 // Class to manage IMGUI console for debugging
 
+// NOTE: This file has been repurposed from my other project from:
+// https://github.com/Ashe/Relocate-Engine/blob/master/src/Console.cpp
+
 #include "Console.h"
 
 // Avoid cyclic dependencies

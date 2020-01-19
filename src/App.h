@@ -1,6 +1,9 @@
 // App.h
 // This is a static, high level manager for the app's cycle
 
+// NOTE: This file has been repurposed from my other project from:
+// https://github.com/Ashe/Relocate-Engine/blob/master/src/Game.h
+
 #ifndef APP_H
 #define APP_H
 
