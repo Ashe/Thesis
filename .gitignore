@@ -1,5 +1,6 @@
 # Ignore built program
 [Bb]uild/
+docs/result
 
 
 # Created by https://www.gitignore.io/api/c++,latex,cmake,visualstudio
